@@ -73,35 +73,33 @@ Follow these rules strictly:
 1. JSON ONLY. No text before or after.
 2. Structure: {
     "explanation": "### Topic 1\n...\n### Topic 2\n...",
-    "examInsight": "ONLY IF MODE IS EXAM: - Point 1\n- Point 2...",
+    "examInsight": "ONLY for EXAM mode: - Point 1\n- Point 2...",
     "arabic": { 
-        "explanation": "### موضوع 1...", 
-        "examInsight": "فقط لمود الامتحان: - نقطة 1..." 
+        "explanation": "Professional Arabic (### Heading structure)", 
+        "examInsight": "Arabic bullet points (EXAM mode only)" 
     },
     "quiz": [ 
-        { "q": "Question?", "options": ["A","B","C","D"], "a": 0, "reasoning": "..." } 
+        { "q": "...", "options": ["A","B","C","D"], "a": 0, "reasoning": "..." } 
     ]
 }
-3. MODE REQUIREMENTS:
-   - 'simple' or 'deep': Return an EMPTY "quiz" array [] and EMPTY "examInsight" string "".
-   - 'exam': Return EXACTLY 10 HARD MCQs in "quiz" and 3-4 bullet points in "examInsight".
-4. MATH (CRITICAL): 
-   - You MUST use LaTeX for ALL mathematical formulas and variables.
-   - Use SINGLE $ for inline math: $f(t)$.
-   - Use DOUBLE $$ for block math: $$\\int_{-\\infty}^{\\infty} f(t) dt$$.
-   - Ensure variables like mu are written as \\mu inside math mode: $\\mu$.`;
+3. MODE CONTENT RULES:
+   - 'simple': Return quiz: [] and examInsight: "". Focus on analogies.
+   - 'deep': Return quiz: [] and examInsight: "". Focus on deep theory.
+   - 'exam': YOU MUST RETURN EXACTLY 10 MCQ QUESTIONS in "quiz" and 3-4 points in "examInsight".
+4. MATH RENDERING (STRICT):
+   - Use LaTeX for ALL variables and math.
+   - Use SINGLE $ for inline math: e.g., $f(x)$.
+   - Use DOUBLE $$ for block math: e.g., $$\\frac{a}{b}$$.
+   - IMPORTANT: In your JSON response, ALWAYS use DOUBLE BACKSLASHES for LaTeX commands (e.g., Use \\\\frac instead of \\frac) to avoid escaping errors.`;
 
         const userPrompt = `
-            LATEST SLIDE CONTENT: ${isMulti ? slideContexts : (textContentArray?.[0] || "")}
-            CURRENT MODE: ${mode.toUpperCase()}
+            CONTENT: ${isMulti ? slideContexts : (textContentArray?.[0] || "")}
+            MODE: ${mode.toUpperCase()}
             
             INSTRUCTIONS:
-            - MODE is ${mode.toUpperCase()}.
-            ${mode === 'exam'
-                ? "-> Focus on exam definitions. YOU MUST PROVIDE EXACTLY 10 HARD MCQs and Exam Insights."
-                : "-> Focus on " + (mode === 'simple' ? "analogies" : "theory") + ". DO NOT PROVIDE A QUIZ OR EXAM INSIGHTS. Return quiz: [] and examInsight: ''."
-            }
-            - Ensure math rendering is perfect using the specified LaTeX delimiters.
+            - If MODE is EXAM: Provide EXACTLY 10 DIFFICULT QUESTIONS and EXAM INSIGHTS.
+            - If MODE is SIMPLE/DEEP: Provide 0 QUESTIONS (quiz: []) and 0 INSIGHTS (examInsight: "").
+            - Ensure math formulas are perfect with \\\\ commands.
         `;
 
         const messages: any[] = [{ role: "system", content: systemPrompt }];
@@ -110,7 +108,7 @@ Follow these rules strictly:
         const completion = await groq.chat.completions.create({
             messages,
             model: model,
-            temperature: mode === 'simple' ? 0.7 : 0.3,
+            temperature: 0.1, // Fixed low temperature for strict JSON and formatting
             response_format: { type: "json_object" }
         });
 
