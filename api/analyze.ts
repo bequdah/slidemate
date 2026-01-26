@@ -69,59 +69,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
         const systemPrompt = `You are an elite University Professor and Subject Matter Expert.
-Your goal is to provide high-level academic insights that help students master complex concepts.
+Your goal is to provide high-level academic insights tailored to the student's needs.
 
 CRITICAL INSTRUCTIONS:
-1. RETURN ONLY VALID JSON. No preamble, no markdown code blocks, no trailing text.
+1. RETURN ONLY VALID JSON. No preamble, no markdown.
 2. Structure: {
-    "explanation": "Markdown string. CRITICAL: Split the explanation into 2-4 distinct topics. Each topic MUST start with '### Topic Name'. DO NOT return a single block of text. Use bold for key terms. Use LaTeX for math like $E=mc^2$.",
-    "examInsight": "Markdown string. Return 3-4 bullet points using '-'. Predict what a professor would ask. Focus on tricky parts and common pitfalls.",
+    "explanation": "Markdown string (### Topics). Split into 2-4 distinct topics. Use bold for key terms. Use LaTeX for math.",
+    "examInsight": "Markdown string. 3-4 bullet points using '-'. Predict tricky professor questions.",
     "arabic": {
-        "explanation": "Professional Arabic version of the explanation. MUST follow the same '### اسم الموضوع' structure.",
+        "explanation": "Professional Arabic version of the explanation. MUST follow '### اسم الموضوع' structure.",
         "examInsight": "Arabic version as a bulleted list."
     },
     "quiz": [
-        { "q": "Question text?", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Explain why A is correct using academic logic." }
+        { "q": "Question text?", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Academic explanation for the answer." }
     ]
 }
-3. LANGUAGE: Use professional, encouraging, and highly educational tone.
+
+3. STYLE MODES:
+   - 'simple': Use layman's terms, catchy analogies, and focus on the "big picture". Avoid over-complex jargon.
+   - 'deep': Focus on theoretical foundations, mathematical proofs, and complex connections to other concepts. Use technical language.
+   - 'exam': Focus on definitions, edge cases, and "must-know" facts. MUST provide 10 HIGH-QUALITY MULTIPLE CHOICE QUESTIONS (Medium to Hard difficulty).
+
 4. MATH: Always wrap math in single $ for inline or double $$ for blocks. Example: $I(x,y)$.`;
 
         const userPrompt = isMulti ? `
             CONTEXT: Multiple slides from a lecture.
-            TASK: Synthesize these slides into a cohesive master explanation. Connect the dots between them.
             SLIDES CONTENT:
             ${slideContexts}
             
-            MODE: ${mode} (simple: use analogies; deep: focus on theory; exam: focus on definitions and likely questions)
+            MODE: ${mode}
             
-            OUTPUT: Provide the JSON structure as requested.
-        ` : `
+            TASK: 
+            - If mode is 'simple', use easy analogies.
+            - If mode is 'deep', provide deep theoretical synthesis.
+            - If mode is 'exam', focus on testable points and PROVIDE EXACTLY 10 MCQS (Medium/Hard).
+            
+            OUTPUT: Provide the JSON structure as requested.` : `
             CONTEXT: Slide ${slideNumbers[0]} from a lecture.
             CONTENT:
             ${textContentArray?.[0] || ""}
             
             MODE: ${mode}
             
-            TASK: Deeply analyze this specific slide. If it contains math or code, explain it line by line.
+            TASK:
+            - If mode is 'simple', use easy analogies and simple language.
+            - If mode is 'deep', perform a rigorous academic analysis with technical depth.
+            - If mode is 'exam', focus on strict definitions and PROVIDE EXACTLY 10 MCQS (Medium/Hard).
             
             OUTPUT: Provide the JSON structure as requested.
         `;
 
         const messages: any[] = [{ role: "system", content: systemPrompt }];
 
-        // Just handling text for now to keep this robust, or pass image URL if public.
-        // For simplicity in V1, we'll stick to text-heavy logical analysis unless we have a public URL.
-        // Note: thumbnail sent from client is dataURL, which can be huge. 
-        // Best practice: Store image in Firebase Storage -> Send signed URL to AI. 
-        // For now, let's rely on text extraction which is already robust.
-
         messages.push({ role: "user", content: userPrompt });
 
         const completion = await groq.chat.completions.create({
             messages,
             model: model,
-            temperature: 0.5,
+            temperature: mode === 'simple' ? 0.7 : 0.4, // Higher creativity for analogies in simple mode
             response_format: { type: "json_object" }
         });
 
