@@ -75,10 +75,10 @@ CRITICAL INSTRUCTIONS:
 1. RETURN ONLY VALID JSON. No preamble, no markdown code blocks, no trailing text.
 2. Structure: {
     "explanation": "Markdown string. CRITICAL: Split the explanation into 2-4 distinct topics. Each topic MUST start with '### Topic Name'. DO NOT return a single block of text. Use bold for key terms. Use LaTeX for math like $E=mc^2$.",
-    "examInsight": "Markdown string. Predict what a professor would ask. Focus on tricky parts and common pitfalls.",
+    "examInsight": "Markdown string. Return 3-4 bullet points using '-'. Predict what a professor would ask. Focus on tricky parts and common pitfalls.",
     "arabic": {
         "explanation": "Professional Arabic version of the explanation. MUST follow the same '### اسم الموضوع' structure.",
-        "examInsight": "Arabic version of the exam insight."
+        "examInsight": "Arabic version as a bulleted list."
     },
     "quiz": [
         { "q": "Question text?", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Explain why A is correct using academic logic." }

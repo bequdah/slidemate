@@ -292,7 +292,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     position: relative;
                     padding-left: 1.5rem;
                     margin-bottom: 0.75rem;
-                    color: #d1d5db !important; /* Slate-300 */
                 }
                 .exam-insight-content li::before {
                     content: '✦';
@@ -300,9 +299,21 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     left: 0;
                     top: 2px;
                     font-size: 0.8em;
-                    color: #818cf8 !important; /* Indigo-400 */
                     opacity: 0.8;
                 }
+                
+                /* Cycle colors for each point as requested by user */
+                .exam-insight-content li:nth-child(4n+1) { color: #fde68a !important; } /* Amber-200 */
+                .exam-insight-content li:nth-child(4n+1)::before { color: #f59e0b !important; }
+                
+                .exam-insight-content li:nth-child(4n+2) { color: #a5b4fc !important; } /* Indigo-300 */
+                .exam-insight-content li:nth-child(4n+2)::before { color: #6366f1 !important; }
+                
+                .exam-insight-content li:nth-child(4n+3) { color: #6ee7b7 !important; } /* Emerald-300 */
+                .exam-insight-content li:nth-child(4n+3)::before { color: #10b981 !important; }
+                
+                .exam-insight-content li:nth-child(4n+4) { color: #fca5a5 !important; } /* Rose-300 */
+                .exam-insight-content li:nth-child(4n+4)::before { color: #ef4444 !important; }
                 
                 /* Cycle colors for each point */
                 .exam-insight-content li:nth-child(4n+1) { color: #fde68a; } /* Amber-200 */
