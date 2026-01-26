@@ -167,14 +167,14 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                         ) : data ? (
                             <>
                                 {/* Detailed Explanation */}
-                                {mode !== 'exam' && currentContent.explanation ? (
+                                {currentContent.explanation ? (
                                     <section className="animate-in fade-in slide-in-from-bottom-6 duration-700">
                                         <h4 className="flex items-center gap-3 text-white font-black mb-6 uppercase text-xs tracking-[0.2em] opacity-80">
                                             <span className="w-1.5 h-6 bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] rounded-full" />
                                             {lang === 'en' ? 'Explanation' : 'الشرح التفصيلي'}
                                         </h4>
                                         <div className="p-8 bg-white/[0.03] rounded-[2.5rem] border border-white/5 shadow-inner">
-                                            <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-lg prose-li:font-medium prose-h3:!text-indigo-400 prose-h3:!uppercase prose-h3:!tracking-[0.3em] prose-h3:!text-[11px] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 prose-hr:border-white/10 max-w-none">
+                                            <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-lg prose-li:font-medium prose-h3:!text-indigo-400 prose-h3:!uppercase prose-h3:!tracking-[0.1em] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 prose-hr:border-white/10 max-w-none">
                                                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                                                     {renderMarkdown(currentContent.explanation)}
                                                 </ReactMarkdown>
@@ -185,9 +185,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
                                 {/* Exam Insight */}
                                 {currentContent.examInsight ? (
-                                    <section className="bg-amber-500/[0.04] border border-amber-500/20 p-8 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden group">
-                                        <h4 className="flex items-center gap-3 text-amber-500 font-black mb-4 text-sm uppercase tracking-[0.3em] shadow-amber-500/20 drop-shadow-md">🎯 {lang === 'en' ? 'Exam Insight' : 'نصيحة الامتحان'}</h4>
-                                        <div className="text-lg text-amber-100/90 leading-relaxed font-bold relative z-10 exam-insight-content pl-2">
+                                    <section className="bg-indigo-500/[0.04] border border-indigo-500/20 p-8 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden group">
+                                        <h4 className="flex items-center gap-3 text-indigo-400 font-black mb-4 text-sm uppercase tracking-[0.3em] shadow-indigo-500/20 drop-shadow-md">🎯 {lang === 'en' ? 'Exam Insight' : 'نصيحة الامتحان'}</h4>
+                                        <div className="text-lg text-slate-200 leading-relaxed font-bold relative z-10 exam-insight-content pl-2">
                                             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                                                 {renderMarkdown(currentContent.examInsight)}
                                             </ReactMarkdown>
@@ -292,6 +292,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     position: relative;
                     padding-left: 1.5rem;
                     margin-bottom: 0.75rem;
+                    color: #d1d5db !important; /* Slate-300 */
                 }
                 .exam-insight-content li::before {
                     content: '✦';
@@ -299,6 +300,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     left: 0;
                     top: 2px;
                     font-size: 0.8em;
+                    color: #818cf8 !important; /* Indigo-400 */
                     opacity: 0.8;
                 }
                 
