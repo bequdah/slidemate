@@ -73,27 +73,35 @@ Follow these rules strictly:
 1. JSON ONLY. No text before or after.
 2. Structure: {
     "explanation": "### Topic 1\n...\n### Topic 2\n...",
-    "examInsight": "- Point 1\n- Point 2...",
-    "arabic": { "explanation": "### موضوع 1...", "examInsight": "- نقطة 1..." },
-    "quiz": [ { "q": "...", "options": ["A","B","C","D"], "a": 0, "reasoning": "..." } ]
+    "examInsight": "ONLY IF MODE IS EXAM: - Point 1\n- Point 2...",
+    "arabic": { 
+        "explanation": "### موضوع 1...", 
+        "examInsight": "فقط لمود الامتحان: - نقطة 1..." 
+    },
+    "quiz": [ 
+        { "q": "Question?", "options": ["A","B","C","D"], "a": 0, "reasoning": "..." } 
+    ]
 }
 3. MODE REQUIREMENTS:
-   - 'simple': Use catchy analogies. QUIZ MUST HAVE EXACTLY 2 QUESTIONS.
-   - 'deep': Use technical/theoretical depth. QUIZ MUST HAVE EXACTLY 2 QUESTIONS.
-   - 'exam': Use strict academic definitions. QUIZ MUST HAVE EXACTLY 10 QUESTIONS.
-4. MATH: Use $...$ or $$...$$.`;
+   - 'simple' or 'deep': Return an EMPTY "quiz" array [] and EMPTY "examInsight" string "".
+   - 'exam': Return EXACTLY 10 HARD MCQs in "quiz" and 3-4 bullet points in "examInsight".
+4. MATH (CRITICAL): 
+   - You MUST use LaTeX for ALL mathematical formulas and variables.
+   - Use SINGLE $ for inline math: $f(t)$.
+   - Use DOUBLE $$ for block math: $$\\int_{-\\infty}^{\\infty} f(t) dt$$.
+   - Ensure variables like mu are written as \\mu inside math mode: $\\mu$.`;
 
         const userPrompt = `
             LATEST SLIDE CONTENT: ${isMulti ? slideContexts : (textContentArray?.[0] || "")}
             CURRENT MODE: ${mode.toUpperCase()}
             
-            INSTRUCTIONS FOR ${mode.toUpperCase()} MODE:
+            INSTRUCTIONS:
+            - MODE is ${mode.toUpperCase()}.
             ${mode === 'exam'
-                ? "-> Focus on exam definitions. YOU MUST PROVIDE EXACTLY 10 HARD MCQs in the 'quiz' array."
-                : "-> Focus on " + (mode === 'simple' ? "analogies" : "theory") + ". YOU MUST PROVIDE EXACTLY 2 MEDIUM MCQs in the 'quiz' array."
+                ? "-> Focus on exam definitions. YOU MUST PROVIDE EXACTLY 10 HARD MCQs and Exam Insights."
+                : "-> Focus on " + (mode === 'simple' ? "analogies" : "theory") + ". DO NOT PROVIDE A QUIZ OR EXAM INSIGHTS. Return quiz: [] and examInsight: ''."
             }
-            
-            TRANSLATION: All Arabic fields must be high-quality and professional.
+            - Ensure math rendering is perfect using the specified LaTeX delimiters.
         `;
 
         const messages: any[] = [{ role: "system", content: systemPrompt }];
