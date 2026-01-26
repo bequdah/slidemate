@@ -36,7 +36,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const decodedToken = await auth.verifyIdToken(idToken);
         const uid = decodedToken.uid;
 
-        // 3. Rate Limiting (10 requests per day)
+        // 3. Rate Limiting (50 requests per day)
         const today = new Date().toISOString().split('T')[0];
         const userRef = db.collection('users').doc(uid);
 
@@ -51,7 +51,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 usage.count = 0;
             }
 
-            if (usage.count >= 10) {
+            if (usage.count >= 50) {
                 throw new Error("RATE_LIMIT_EXCEEDED");
             }
 
@@ -137,7 +137,7 @@ CRITICAL INSTRUCTIONS:
     } catch (error: any) {
         console.error('API Error:', error);
         if (error.message === "RATE_LIMIT_EXCEEDED") {
-            res.status(429).json({ error: "Daily limit reached (10/10)" });
+            res.status(429).json({ error: "Daily limit reached (50/50)" });
         } else {
             res.status(500).json({ error: error.message });
         }
