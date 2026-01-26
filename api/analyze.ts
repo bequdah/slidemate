@@ -68,20 +68,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
-        const systemPrompt = `You are an expert university Professor. 
-CRITICAL: You MUST return ONLY a valid JSON object. Start with { and end with }.
-NO text before or after the JSON. NO markdown code blocks.`;
+        const systemPrompt = `You are an elite University Professor and Subject Matter Expert.
+Your goal is to provide high-level academic insights that help students master complex concepts.
+
+CRITICAL INSTRUCTIONS:
+1. RETURN ONLY VALID JSON. No preamble, no markdown code blocks, no trailing text.
+2. Structure: {
+    "explanation": "Markdown string. Use bold for key terms. Use LaTeX for math like $E=mc^2$. Highlight core logic.",
+    "examInsight": "Markdown string. Predict what a professor would ask. Focus on tricky parts and common pitfalls.",
+    "arabic": {
+        "explanation": "Professional level Arabic translation of the explanation. Use technical terms correctly.",
+        "examInsight": "Arabic version of the exam insight."
+    },
+    "quiz": [
+        { "q": "Question text?", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Explain why A is correct using academic logic." }
+    ]
+}
+3. LANGUAGE: Use professional, encouraging, and highly educational tone.
+4. MATH: Always wrap math in single $ for inline or double $$ for blocks.`;
 
         const userPrompt = isMulti ? `
-            Analyze these slides and create a connected synthesis.
-            SLIDES: ${slideContexts}
-            MODE: ${mode}
-            Return proper JSON with explanation, examInsight, arabic, and quiz.
+            CONTEXT: Multiple slides from a lecture.
+            TASK: Synthesize these slides into a cohesive master explanation. Connect the dots between them.
+            SLIDES CONTENT:
+            ${slideContexts}
+            
+            MODE: ${mode} (simple: use analogies; deep: focus on theory; exam: focus on definitions and likely questions)
+            
+            OUTPUT: Provide the JSON structure as requested.
         ` : `
-            Analyze this slide (Slide ${slideNumbers[0]}):
+            CONTEXT: Slide ${slideNumbers[0]} from a lecture.
+            CONTENT:
             ${textContentArray?.[0] || ""}
+            
             MODE: ${mode}
-            Return proper JSON with explanation, examInsight, arabic, and quiz.
+            
+            TASK: Deeply analyze this specific slide. If it contains math or code, explain it line by line.
+            
+            OUTPUT: Provide the JSON structure as requested.
         `;
 
         const messages: any[] = [{ role: "system", content: systemPrompt }];
