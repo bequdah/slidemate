@@ -64,7 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         // 5. Call AI (Logic from aiService.ts)
         const isMulti = slideNumbers.length > 1;
-        const model = (!!thumbnail && !isMulti) ? "llama-3.2-11b-vision-preview" : "llama-3.3-70b-versatile"; // Use Vision model if image present
+        const model = "llama-3.3-70b-versatile"; // Use a stable supported model
 
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
