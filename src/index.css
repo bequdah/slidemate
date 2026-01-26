@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+:root {
+  background-color: #0f172a;
+  color: white;
+  font-family: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+/* Custom Scrollbar for Premium Feel */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Presentation Scroll Styling */
+.presentation-scroll::-webkit-scrollbar {
+  height: 8px;
+}
+
+.presentation-scroll::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+.presentation-scroll::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.presentation-scroll::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Vertical Presentation Scroll */
+.presentation-vertical::-webkit-scrollbar {
+  width: 8px;
+}
+
+.presentation-vertical::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+
+.presentation-vertical::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+.presentation-vertical::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}

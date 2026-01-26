@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to check if user is signed in
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check ownership
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Users collection: specific user document
+    match /users/{userId} {
+      allow read: if isOwner(userId);
+      allow write: if isOwner(userId); // Explicitly allow write for initial creation
+      
+      // Slides subcollection
+      match /slides/{slideId} {
+        allow read, write: if isOwner(userId);
+      }
+      
+      // Chats subcollection
+      match /chats/{chatId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
