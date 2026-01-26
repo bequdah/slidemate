@@ -314,19 +314,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                 
                 .exam-insight-content li:nth-child(4n+4) { color: #fca5a5 !important; } /* Rose-300 */
                 .exam-insight-content li:nth-child(4n+4)::before { color: #ef4444 !important; }
-                
-                /* Cycle colors for each point */
-                .exam-insight-content li:nth-child(4n+1) { color: #fde68a; } /* Amber-200 */
-                .exam-insight-content li:nth-child(4n+1)::before { color: #f59e0b; }
-                
-                .exam-insight-content li:nth-child(4n+2) { color: #a5b4fc; } /* Indigo-300 */
-                .exam-insight-content li:nth-child(4n+2)::before { color: #6366f1; }
-                
-                .exam-insight-content li:nth-child(4n+3) { color: #6ee7b7; } /* Emerald-300 */
-                .exam-insight-content li:nth-child(4n+3)::before { color: #10b981; }
-                
-                .exam-insight-content li:nth-child(4n+4) { color: #fca5a5; } /* Rose-300 */
-                .exam-insight-content li:nth-child(4n+4)::before { color: #ef4444; }
             `}</style>
         </div>
     );
