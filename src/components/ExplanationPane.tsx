@@ -211,7 +211,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                                 <div className="grid grid-cols-1 gap-3 pl-4">
                                                     {item.options.map((option, oIndex) => (
                                                         <button key={oIndex} onClick={() => handleOptionSelect(qIndex, oIndex)} disabled={selectedOptions[qIndex] !== undefined} className={`p-5 rounded-2xl border text-left text-base font-bold transition-all shadow-sm active:scale-98 ${selectedOptions[qIndex] !== undefined ? (item.a === oIndex ? 'bg-green-500/20 border-green-500/40 text-green-400' : selectedOptions[qIndex] === oIndex ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.01] border-white/5 opacity-30') : 'bg-white/[0.03] border-white/5 hover:bg-white/10 hover:border-white/20'}`}>
-                                                            <span>{option}</span>
+                                                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                                                {renderMarkdown(option)}
+                                                            </ReactMarkdown>
                                                         </button>
                                                     ))}
                                                 </div>
@@ -219,7 +221,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                                     <div className="pl-4 animate-in zoom-in-95 duration-300">
                                                         <div className={`p-6 rounded-3xl border ${selectedOptions[qIndex] === item.a ? 'bg-green-500/[0.03] border-green-500/20' : 'bg-red-500/[0.03] border-red-500/20'}`}>
                                                             <div className="text-sm text-slate-400 font-bold leading-relaxed">
-                                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{item.reasoning}</ReactMarkdown>
+                                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{renderMarkdown(item.reasoning)}</ReactMarkdown>
                                                             </div>
                                                         </div>
                                                     </div>
