@@ -68,66 +68,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
-        const systemPrompt = `You are an elite University Professor and Subject Matter Expert.
-Your goal is to provide high-level academic insights tailored to the student's needs.
-
-CRITICAL INSTRUCTIONS:
-1. RETURN ONLY VALID JSON. No preamble, no markdown.
+        const systemPrompt = `You are an elite University Professor.
+Follow these rules strictly:
+1. JSON ONLY. No text before or after.
 2. Structure: {
-    "explanation": "Markdown string (### Topics). Split into 2-4 distinct topics. Use bold for key terms. Use LaTeX for math.",
-    "examInsight": "Markdown string. 3-4 bullet points using '-'. Predict tricky professor questions.",
-    "arabic": {
-        "explanation": "Professional Arabic version of the explanation. MUST follow '### اسم الموضوع' structure.",
-        "examInsight": "Arabic version as a bulleted list."
-    },
-    "quiz": [
-        { "q": "Question text?", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Academic explanation for the answer." }
-    ]
+    "explanation": "### Topic 1\n...\n### Topic 2\n...",
+    "examInsight": "- Point 1\n- Point 2...",
+    "arabic": { "explanation": "### موضوع 1...", "examInsight": "- نقطة 1..." },
+    "quiz": [ { "q": "...", "options": ["A","B","C","D"], "a": 0, "reasoning": "..." } ]
 }
+3. MODE REQUIREMENTS:
+   - 'simple': Use catchy analogies. QUIZ MUST HAVE EXACTLY 2 QUESTIONS.
+   - 'deep': Use technical/theoretical depth. QUIZ MUST HAVE EXACTLY 2 QUESTIONS.
+   - 'exam': Use strict academic definitions. QUIZ MUST HAVE EXACTLY 10 QUESTIONS.
+4. MATH: Use $...$ or $$...$$.`;
 
-3. STYLE MODES & QUIZ REQUIREMENTS:
-   - 'simple': Use layman's terms and analogies. QUIZ: Provide EXACTLY 2 MEDIUM-difficulty MCQs focusing on general understanding.
-   - 'deep': Focus on theory and technical depth. QUIZ: Provide EXACTLY 2 MEDIUM-difficulty MCQs focusing on complex logic.
-   - 'exam': Focus on definitions and edge cases. QUIZ: Provide EXACTLY 10 HIGH-QUALITY MCQs (Medium to Hard difficulty).
-   - IMPORTANT: Questions in 'simple' and 'deep' modes MUST be strictly different from those in 'exam' mode.
-
-4. MATH: Always wrap math in single $ for inline or double $$ for blocks. Example: $I(x,y)$.`;
-
-        const userPrompt = isMulti ? `
-            CONTEXT: Multiple slides from a lecture.
-            SLIDES CONTENT:
-            ${slideContexts}
+        const userPrompt = `
+            LATEST SLIDE CONTENT: ${isMulti ? slideContexts : (textContentArray?.[0] || "")}
+            CURRENT MODE: ${mode.toUpperCase()}
             
-            MODE: ${mode}
+            INSTRUCTIONS FOR ${mode.toUpperCase()} MODE:
+            ${mode === 'exam'
+                ? "-> Focus on exam definitions. YOU MUST PROVIDE EXACTLY 10 HARD MCQs in the 'quiz' array."
+                : "-> Focus on " + (mode === 'simple' ? "analogies" : "theory") + ". YOU MUST PROVIDE EXACTLY 2 MEDIUM MCQs in the 'quiz' array."
+            }
             
-            TASK: 
-            - If 'simple': use analogies + 2 medium MCQs.
-            - If 'deep': provide theoretical synthesis + 2 medium MCQs.
-            - If 'exam': focus on testable points + 10 Medium/Hard MCQs.
-            
-            OUTPUT: Provide the JSON structure as requested.` : `
-            CONTEXT: Slide ${slideNumbers[0]} from a lecture.
-            CONTENT:
-            ${textContentArray?.[0] || ""}
-            
-            MODE: ${mode}
-            
-            TASK:
-            - If 'simple': use easy analogies + 2 medium MCQs.
-            - If 'deep': technical depth analysis + 2 medium MCQs.
-            - If 'exam': strict definitions + 10 Medium/Hard MCQs.
-            
-            OUTPUT: Provide the JSON structure as requested.
+            TRANSLATION: All Arabic fields must be high-quality and professional.
         `;
 
         const messages: any[] = [{ role: "system", content: systemPrompt }];
-
         messages.push({ role: "user", content: userPrompt });
 
         const completion = await groq.chat.completions.create({
             messages,
             model: model,
-            temperature: mode === 'simple' ? 0.7 : 0.4,
+            temperature: mode === 'simple' ? 0.7 : 0.3,
             response_format: { type: "json_object" }
         });
 
