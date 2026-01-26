@@ -18,25 +18,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-            setUser(currentUser);
+            try {
+                setUser(currentUser);
 
-            if (currentUser) {
-                // Create user record if not exists
-                const userRef = doc(db, "users", currentUser.uid);
-                const userSnap = await getDoc(userRef);
+                if (currentUser) {
+                    // Create user record if not exists
+                    const userRef = doc(db, "users", currentUser.uid);
+                    const userSnap = await getDoc(userRef);
 
-                if (!userSnap.exists()) {
-                    await setDoc(userRef, {
-                        email: currentUser.email,
-                        name: currentUser.displayName,
-                        photoURL: currentUser.photoURL,
-                        createdAt: serverTimestamp(),
-                        dailyUsage: { count: 0, date: new Date().toISOString().split('T')[0] }
-                    });
+                    if (!userSnap.exists()) {
+                        await setDoc(userRef, {
+                            email: currentUser.email,
+                            name: currentUser.displayName,
+                            photoURL: currentUser.photoURL,
+                            createdAt: serverTimestamp(),
+                            dailyUsage: { count: 0, date: new Date().toISOString().split('T')[0] }
+                        });
+                    }
                 }
+            } catch (error) {
+                console.error("Auth initialization error:", error);
+            } finally {
+                setLoading(false);
             }
-
-            setLoading(false);
         });
 
         return unsubscribe;
@@ -55,7 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     return (
         <AuthContext.Provider value={{ user, loading, login, logout }}>
-            {!loading && children}
+            {children}
         </AuthContext.Provider>
     );
 }
