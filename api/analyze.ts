@@ -85,10 +85,11 @@ CRITICAL INSTRUCTIONS:
     ]
 }
 
-3. STYLE MODES:
-   - 'simple': Use layman's terms, catchy analogies, and focus on the "big picture". Avoid over-complex jargon.
-   - 'deep': Focus on theoretical foundations, mathematical proofs, and complex connections to other concepts. Use technical language.
-   - 'exam': Focus on definitions, edge cases, and "must-know" facts. MUST provide 10 HIGH-QUALITY MULTIPLE CHOICE QUESTIONS (Medium to Hard difficulty).
+3. STYLE MODES & QUIZ REQUIREMENTS:
+   - 'simple': Use layman's terms and analogies. QUIZ: Provide EXACTLY 2 MEDIUM-difficulty MCQs focusing on general understanding.
+   - 'deep': Focus on theory and technical depth. QUIZ: Provide EXACTLY 2 MEDIUM-difficulty MCQs focusing on complex logic.
+   - 'exam': Focus on definitions and edge cases. QUIZ: Provide EXACTLY 10 HIGH-QUALITY MCQs (Medium to Hard difficulty).
+   - IMPORTANT: Questions in 'simple' and 'deep' modes MUST be strictly different from those in 'exam' mode.
 
 4. MATH: Always wrap math in single $ for inline or double $$ for blocks. Example: $I(x,y)$.`;
 
@@ -100,9 +101,9 @@ CRITICAL INSTRUCTIONS:
             MODE: ${mode}
             
             TASK: 
-            - If mode is 'simple', use easy analogies.
-            - If mode is 'deep', provide deep theoretical synthesis.
-            - If mode is 'exam', focus on testable points and PROVIDE EXACTLY 10 MCQS (Medium/Hard).
+            - If 'simple': use analogies + 2 medium MCQs.
+            - If 'deep': provide theoretical synthesis + 2 medium MCQs.
+            - If 'exam': focus on testable points + 10 Medium/Hard MCQs.
             
             OUTPUT: Provide the JSON structure as requested.` : `
             CONTEXT: Slide ${slideNumbers[0]} from a lecture.
@@ -112,9 +113,9 @@ CRITICAL INSTRUCTIONS:
             MODE: ${mode}
             
             TASK:
-            - If mode is 'simple', use easy analogies and simple language.
-            - If mode is 'deep', perform a rigorous academic analysis with technical depth.
-            - If mode is 'exam', focus on strict definitions and PROVIDE EXACTLY 10 MCQS (Medium/Hard).
+            - If 'simple': use easy analogies + 2 medium MCQs.
+            - If 'deep': technical depth analysis + 2 medium MCQs.
+            - If 'exam': strict definitions + 10 Medium/Hard MCQs.
             
             OUTPUT: Provide the JSON structure as requested.
         `;
@@ -126,7 +127,7 @@ CRITICAL INSTRUCTIONS:
         const completion = await groq.chat.completions.create({
             messages,
             model: model,
-            temperature: mode === 'simple' ? 0.7 : 0.4, // Higher creativity for analogies in simple mode
+            temperature: mode === 'simple' ? 0.7 : 0.4,
             response_format: { type: "json_object" }
         });
 
