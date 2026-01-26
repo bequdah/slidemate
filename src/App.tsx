@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { FileUpload } from './components/FileUpload';
 import { SlideCard } from './components/SlideCard';
 import { ExplanationPane } from './components/ExplanationPane';
@@ -27,7 +27,7 @@ function MainApp() {
   const [isUploading, setIsUploading] = useState(false);
   const [selectedSlide, setSelectedSlide] = useState<Slide | null>(null);
   const [selectedSlideIds, setSelectedSlideIds] = useState<string[]>([]);
-  const [isBatchMode, setIsBatchMode] = useState(true);
+  // Removed isBatchMode as it was unused and defaulting to true is fine if logic doesn't need state
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -213,7 +213,7 @@ function MainApp() {
             className="flex items-center gap-4 px-10 py-5 bg-indigo-600 rounded-full shadow-[0_0_50px_rgba(99,102,241,0.4)] border border-white/20 hover:bg-indigo-500 hover:scale-105 transition-all group"
           >
             <div className="flex -space-x-3">
-              {slides.filter(s => selectedSlideIds.includes(s.id)).map((s, i) => (
+              {slides.filter(s => selectedSlideIds.includes(s.id)).map((s) => (
                 <div key={s.id} className="w-8 h-8 rounded-full bg-slate-800 border-2 border-indigo-600 overflow-hidden flex items-center justify-center text-[10px] font-black z-[10]">
                   {s.thumbnail ? <img src={s.thumbnail} className="w-full h-full object-cover" /> : s.number}
                 </div>
