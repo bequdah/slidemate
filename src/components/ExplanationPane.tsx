@@ -261,12 +261,23 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                 .prose h3 {
                     color: #818cf8 !important;
                     text-transform: uppercase !important;
-                    letter-spacing: 0.3em !important;
-                    font-size: 13px !important;
+                    letter-spacing: 0.1em !important;
+                    font-size: 1.25rem !important;
                     font-weight: 900 !important;
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
-                    margin-top: 2rem !important;
-                    margin-bottom: 1rem !important;
+                    margin-top: 2.5rem !important;
+                    margin-bottom: 1.25rem !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    gap: 0.75rem !important;
+                }
+                .prose h3::before {
+                    content: '';
+                    width: 4px;
+                    height: 1.2em;
+                    background: #6366f1;
+                    border-radius: 99px;
+                    display: inline-block;
                 }
                 .prose h3:first-of-type {
                     margin-top: 0 !important;

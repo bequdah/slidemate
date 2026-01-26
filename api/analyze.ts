@@ -74,10 +74,10 @@ Your goal is to provide high-level academic insights that help students master c
 CRITICAL INSTRUCTIONS:
 1. RETURN ONLY VALID JSON. No preamble, no markdown code blocks, no trailing text.
 2. Structure: {
-    "explanation": "Markdown string. Use bold for key terms. Use LaTeX for math like $E=mc^2$. Highlight core logic.",
+    "explanation": "Markdown string. CRITICAL: Split the explanation into 2-4 distinct topics. Each topic MUST start with '### Topic Name'. DO NOT return a single block of text. Use bold for key terms. Use LaTeX for math like $E=mc^2$.",
     "examInsight": "Markdown string. Predict what a professor would ask. Focus on tricky parts and common pitfalls.",
     "arabic": {
-        "explanation": "Professional level Arabic translation of the explanation. Use technical terms correctly.",
+        "explanation": "Professional Arabic version of the explanation. MUST follow the same '### اسم الموضوع' structure.",
         "examInsight": "Arabic version of the exam insight."
     },
     "quiz": [
@@ -85,7 +85,7 @@ CRITICAL INSTRUCTIONS:
     ]
 }
 3. LANGUAGE: Use professional, encouraging, and highly educational tone.
-4. MATH: Always wrap math in single $ for inline or double $$ for blocks.`;
+4. MATH: Always wrap math in single $ for inline or double $$ for blocks. Example: $I(x,y)$.`;
 
         const userPrompt = isMulti ? `
             CONTEXT: Multiple slides from a lecture.
