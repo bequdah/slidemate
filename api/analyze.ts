@@ -64,14 +64,13 @@ ARABIC:
 - Translate explanation and examInsight into Arabic (Modern Standard Arabic).
 - Keep the same JSON structure.
 VISION CRITICAL RULES (MANDATORY):
-- If the image content is unclear, abstract, low-resolution, or cannot be confidently interpreted:
-  - You MUST NOT invent explanations.
-  - You MUST return:
-    explanation: { "sections": [] }
-    examInsight: { "sections": [] }
-    quiz: []
+- If the image content is unclear but TEXT CONTENT is provided:
+  - You MAY explain concepts found in the text content.
+  - You MUST NOT invent concepts not found in either the image or the text.
+- If BOTH image and text are unclear/empty:
+  - You MUST return empty sections.
 - You are STRICTLY FORBIDDEN from creating generic explanations (e.g., Variable A / Variable B).
-- ONLY explain components that are visually identifiable in the image.
+- ONLY explain components that are visually identifiable OR explicitly mentioned in the text.
 - If the image is a technical diagram:
   - First list visible components and hierarchy.
   - Explain relationships ONLY if they are explicitly shown.
@@ -83,28 +82,23 @@ MODE RULES:
 
 1) simple:
 - Tone: student-friendly, clear, light analogies (but still correct).
-- Focus: WHAT + basic HOW (avoid deep theoretical WHY).
-- Use simple, everyday language that undergraduate students can easily understand.
+- Focus: WHAT + basic HOW. Explanations must be easy to digest but NOT superficial.
 - Structure: 3–4 sections max with clear headings.
-- Each section should have either: simple text explanation (1-2 sentences), bullet points, or definitions.
+- Content: Break down complex ideas into simple terms. Use bullet points for lists.
 - Include sections like: "What Is This?", "How It Works", "Key Terms", "Simple Example".
 - MANDATORY: The "explanation" object MUST contain "title", "overview", and "sections".
-- MANDATORY: "examInsight" object MUST be present (keep it simple/brief).
-- MANDATORY: EXACTLY 2 easy MCQs in "quiz".
+- MANDATORY: "examInsight" object MUST be present.
+- MANDATORY: EXACTLY 2 easy MCQs.
 
 2) deep:
-- Tone: University professor teaching an undergraduate (2nd–3rd year). Clear and structured, NOT research-paper style but with high academic depth.
-- CRITICAL: Use cause–effect reasoning for every concept (explain WHY the problem occurs, WHAT it causes, and HOW it is resolved).
-- Provide ONE clear mental model or conceptual example per slide (not daily-life analogies, but technical/academic models).
-- Do NOT list concepts without explanation; introduce every technical term AFTER explaining the underlying idea.
-- Prefer fewer sections (4–6) with DEEPER explanations rather than many shallow sections.
-- Write as a professor explaining to a student, NOT as a textbook summary or bullet-point list.
-- Include sections like: Concept Overview, Why [Problem] Occurs, How [Solution] Works, Key Definitions, Common Failure Scenarios.
-- Technical terminology must be precise and clearly defined.
-- All explanations MUST stay strictly grounded in the slide content and what can be logically inferred from it.
-- Avoid generic academic filler phrases; every paragraph must explain a concrete mechanism or consequence.
+- Tone: University professor teaching an undergraduate. High academic depth.
+- Goal: Comprehensive mastery. Do not leave out any details from the provided text/image.
+- Reasoning: connect concepts (WHY it happens -> WHAT it causes).
+- Structure: 4–6 sections. Each section must be detailed and cover a specific aspect thoroughly.
+- Do NOT summarize briefly; explain fully.
+- Include sections like: Concept Overview, Detailed Analysis, Implications, Key Definitions.
 - MANDATORY: EXACTLY 2 difficult MCQs.
-- MANDATORY: "examInsight" object MUST be present (focus on advanced connections/implications).
+- MANDATORY: "examInsight" object MUST be present.
 
 
 3) exam:
@@ -227,10 +221,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 CONTENT (TEXT MAY BE EMPTY):
 ${slideContexts || ''}
 
-VISION RULE (MANDATORY):
-- If CONTENT is empty or weak, rely ONLY on what is clearly visible in the image.
-- If you cannot identify concrete technical components from the image, RETURN EMPTY JSON SECTIONS.
-- DO NOT explain abstract concepts, variables, or general relationships.
+VISION/CONTEXT RULE:
+- If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation.
+- ONLY return empty sections if BOTH image and text are insufficient.
+- DO NOT explain abstract concepts, variables, or general relationships unless explicitly present in the text.
 - DO NOT use placeholders like "Variable A / Variable B".
 
 MODE: ${resolvedMode.toUpperCase()}
