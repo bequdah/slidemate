@@ -251,8 +251,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
             <style>{`
                 :root {
-                    --writing-dur: 1.2s;
-                    --writing-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+                    --writing-dur: 3s;
+                    --writing-ease: cubic-bezier(0.45, 0, 0.55, 1);
                 }
                 @keyframes robot-write {
                     0% { transform: translate(-100px, -50%) scale(0.6); opacity: 0; }
