@@ -67,31 +67,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
         const systemPrompt = `You are an elite University Professor.
-Return only a valid JSON object. No preamble or postscript.
+Return ONLY valid JSON. No text before or after.
 Structure:
 {
-  "explanation": "### Topic 1\n...\n### Topic 2\n...",
-  "examInsight": "Point 1\n- Point 2...",
-  "arabic": { 
-    "explanation": "Professional Arabic (### Heading structure)", 
-    "examInsight": "Arabic bullet points" 
-  },
-  "quiz": [ 
-    { "q": "Question text", "options": ["A","B","C","D"], "a": 0, "reasoning": "Reasoning text" } 
+  "explanation": "### Topic\\nDetailed markdown text.",
+  "examInsight": "- Point 1\\n- Point 2",
+  "arabic": { "explanation": "الشرح", "examInsight": "نصائح" },
+  "quiz": [
+    { "q": "Question Text", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Why A is correct" }
   ]
 }
 
-STRICT CONTENT RULES:
-1. 'simple' mode: Return DETAILED EXPLANATION + 3-4 INSIGHT POINTS + EXACTLY 2 MCQs. Focus on analogies.
-2. 'deep' mode: Return DETAILED EXPLANATION + 3-4 INSIGHT POINTS + EXACTLY 2 MCQs. Focus on theory.
-3. 'exam' mode: explanation: "" and examInsight: "". RETURN EXACTLY 10 DIFFICULT MCQ QUESTIONS.
-
-MATH RENDERING (CRITICAL):
-- Use LaTeX for ALL variables and mathematical expressions.
-- Use SINGLE $ for inline math ($x^2$).
-- Use DOUBLE $$ for block math ($$\\frac{a}{b}$$).
-- YOU MUST ESCAPE ALL BACKSLASHES for JSON compatibility (e.g., write "\\\\\\\\frac" in the raw string so it becomes "\\\\frac" in JSON).
-- Ensure math is generated correctly without missing symbols.`;
+Rules:
+1. 'simple': Focus on analogies. 
+2. 'deep': Focus on theory/proofs. 
+3. 'exam': 10 MCQs only (explanation & examInsight = ""). 
+4. LaTeX: Use $...$ and $$...$$. 
+5. IMPORTANT: Every \\ in LaTeX must be double-escaped in the JSON string (e.g., write "\\\\frac" to get \frac).`;
 
         const userPrompt = `CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}\n\nMODE: ${mode.toUpperCase()}`;
 
