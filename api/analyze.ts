@@ -217,22 +217,10 @@ REMINDER:
         // STRATEGY: Use ONLY the smartest model (70b).
         // We list it multiple times to act as "retries" in case of a random network glitch or bad output.
         // We DO NOT fallback to dumber models (8b/Mixtral) to preserve quality.
-        let targetModels: string[] = [
-            'llama-3.3-70b-versatile',
-            'llama-3.3-70b-versatile',
-            'llama-3.3-70b-versatile'
-        ];
-
         let messages: any[] = [{ role: 'system', content: systemPrompt }];
 
         if (isVisionRequest(thumbnail)) {
             console.log('Vision Request Detected');
-            // Same strategy for vision: force the capable model only.
-            targetModels = [
-                'llama-3.2-11b-vision-preview', // Keep one dedicated vision model just in case 70b struggles with image token
-                'llama-3.3-70b-versatile',
-                'llama-3.3-70b-versatile'
-            ];
             // VISION STRATEGY: 
             // When an image is present, we ask the model to analyze the IMAGE primarily.
             // We do NOT pass the potentially confusing 'slideContexts' text blob here to avoid "hallucinations" mixed from text.
@@ -268,68 +256,80 @@ REMINDER:
             messages.push({ role: 'user', content: userPrompt });
         }
 
-        let completion: any = null;
+
+        // CLIENTS SETUP: Initialize clients for both keys
+        // Note: GROQ_API_KEY_2 must be set in Vercel environment variables
+        const clients = [
+            new Groq({ apiKey: process.env.GROQ_API_KEY }),
+            new Groq({ apiKey: process.env.GROQ_API_KEY_2 || process.env.GROQ_API_KEY }) // Fallback to primary if secondary missing
+        ];
+
+        const MODEL = 'llama-3.3-70b-versatile';
+        const VISION_MODEL = 'llama-3.2-11b-vision-preview'; // Specific fallback for heavy vision if needed
+
+        const isRetryable = (err: any) => {
+            const msg = String(err?.message || '').toLowerCase();
+            return (
+                err?.status === 503 ||
+                err?.status === 429 ||
+                msg.includes('system is busy') ||
+                msg.includes('service unavailable') ||
+                msg.includes('rate limit') ||
+                msg.includes('rate_limit')
+            );
+        };
+
+        const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
         let lastError: any = null;
 
-        for (const targetModel of targetModels) {
+        // RETRY LOOP: 4 attempts with exponential backoff and key rotation
+        for (let attempt = 0; attempt < 4; attempt++) {
+            // Alternate keys per attempt: 0->primary, 1->secondary, 2->primary...
+            const client = clients[attempt % clients.length];
+            // Use vision model only if it's a vision request AND it's the first attempt (to try best vision model)
+            // Otherwise stick to 70b which is smarter but maybe slower
+            const currentModel = (isVisionRequest(thumbnail) && attempt === 0) ? VISION_MODEL : MODEL;
+
+            // For vision requests, we might want to stick to 70b unless it fails specifically on vision tokens
+            // Actually, let's stick to the USER STRATEGY: 70b is the smartest.
+            // Only use vision preview if 70b fails or for specific cases.
+            // Let's force 70b as the main driver as per previous success.
+            const targetModelToUse = MODEL;
+
             try {
-                console.log(`Attempting analysis with ${targetModel}...`);
-                const isVisionModel = targetModel.includes('vision');
-                const preparedMessages = coerceMessagesForModel(messages, isVisionModel);
+                console.log(`Attempt ${attempt + 1}/4 using Key ${attempt % clients.length === 0 ? 'Primary' : 'Secondary'}...`);
 
-                const apiKeys = [
-                    process.env.GROQ_API_KEY,
-                    process.env.GROQ_API_KEY_2
-                ].filter(Boolean);
+                const isVision = isVisionRequest(thumbnail);
+                const preparedMessages = coerceMessagesForModel(messages, isVision);
 
-                let keySuccess = false;
-
-                // Key Rotation Loop
-                for (const apiKey of apiKeys) {
-                    try {
-                        const currentGroq = new Groq({ apiKey });
-                        completion = await currentGroq.chat.completions.create({
-                            messages: preparedMessages,
-                            model: targetModel,
-                            temperature: 0.1,
-                            response_format: { type: 'json_object' }
-                        });
-                        keySuccess = true;
-                        break; // Success, exit key loop
-                    } catch (err: any) {
-                        if (err?.status === 429 || err?.message?.includes('Rate limit')) {
-                            console.warn(`Key rate limited. Switching to backup key...`);
-                            continue; // Try next key
-                        }
-                        throw err; // Other errors bubbling up to model retry loop
-                    }
-                }
-
-                if (!keySuccess) throw new Error('All API keys exhausted or failed');
+                const completion = await client.chat.completions.create({
+                    model: targetModelToUse,
+                    messages: preparedMessages,
+                    temperature: 0.1,
+                    response_format: { type: 'json_object' },
+                    max_tokens: 2500
+                });
 
                 const raw = completion.choices[0]?.message?.content || '';
 
-                console.log('RAW(first 300):', raw.slice(0, 300));
-
                 if (!raw.trim().startsWith('{')) {
-                    console.warn(`Model ${targetModel} did not return JSON. Trying next...`);
-                    continue;
+                    throw new Error('MODEL_RETURNED_NON_JSON');
                 }
 
                 let parsed: any;
                 try {
                     parsed = JSON.parse(raw);
-                } catch (e: any) {
-                    console.warn(`JSON.parse failed on ${targetModel}: ${e?.message}. Trying next...`);
-                    continue;
+                } catch {
+                    throw new Error('JSON_PARSE_FAILED');
                 }
 
                 if (!validateResultShape(parsed, resolvedMode)) {
-                    console.warn(`Model ${targetModel} returned invalid shape; trying next model...`);
-                    continue;
+                    throw new Error('INVALID_SHAPE');
                 }
 
-                console.log(`Success with ${targetModel}`);
+                // SUCCESS: Log and update DB
+                console.log(`Success on attempt ${attempt + 1}`);
 
                 await db.runTransaction(async t => {
                     const doc = await t.get(userRef);
@@ -348,16 +348,28 @@ REMINDER:
 
                 res.status(200).json(parsed);
                 return;
+
             } catch (err: any) {
+                console.warn(`Attempt ${attempt + 1} failed: ${err?.message}`);
                 lastError = err;
-                console.error(`Error with ${targetModel}:`, err?.message || err);
-                continue;
+
+                if (!isRetryable(err) && err?.message !== 'MODEL_RETURNED_NON_JSON' && err?.message !== 'INVALID_SHAPE') {
+                    // Critical non-retryable error (like auth failure not related to rate limit)
+                    break;
+                }
+
+                // Exponential backoff: 700ms, 1400ms, 2100ms...
+                if (attempt < 3) {
+                    await sleep(700 * (attempt + 1));
+                }
             }
         }
 
-        if (!completion) throw lastError || new Error('All models failed');
-        // If we exhausted retries and still failed, return 503 Service Unavailable so client knows it's temporary
-        res.status(503).json({ error: 'System is busy. Please try again in a moment.' });
+        // FAILURE after all retries
+        res.status(503).json({
+            error: 'System busy. Please retry in a moment.',
+            details: String(lastError?.message || lastError)
+        });
     } catch (error: any) {
         console.error('API Error:', error);
         if (error?.message === 'RATE_LIMIT_EXCEEDED') {
