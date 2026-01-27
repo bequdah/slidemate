@@ -5,6 +5,27 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
+/* =======================
+   Structured Types
+======================= */
+
+type StructuredDefinition = { term: string; def: string };
+
+type StructuredSection =
+    | { heading: string; bullets: string[] }
+    | { heading: string; text: string }
+    | { heading: string; definitions: StructuredDefinition[] };
+
+type StructuredExplanation = {
+    title?: string;
+    overview?: string;
+    sections?: StructuredSection[];
+};
+
+/* =======================
+   Props
+======================= */
+
 interface ExplanationPaneProps {
     slideIds: string[];
     slideNumbers: number[];
@@ -12,6 +33,10 @@ interface ExplanationPaneProps {
     thumbnail?: string;
     onClose: () => void;
 }
+
+/* =======================
+   Component
+======================= */
 
 export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onClose }: ExplanationPaneProps) => {
     const [data, setData] = useState<SlideExplanation | null>(null);
@@ -47,22 +72,111 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         setSelectedOptions(prev => ({ ...prev, [qIndex]: oIndex }));
     };
 
-    console.log("ExplanationPane State:", { mode, loading, hasData: !!data, slideNumbers });
+    /* =======================
+       Structured Parsing
+    ======================= */
+
+    const tryParseStructured = (content: any): StructuredExplanation | null => {
+        if (!content) return null;
+
+        if (typeof content === 'object' && !Array.isArray(content)) {
+            if (Array.isArray((content as any).sections) || (content as any).title || (content as any).overview) {
+                return content as StructuredExplanation;
+            }
+            return null;
+        }
+
+        if (typeof content === 'string') {
+            const t = content.trim();
+            if (!(t.startsWith('{') && t.endsWith('}'))) return null;
+            try {
+                const obj = JSON.parse(t);
+                if (Array.isArray(obj?.sections) || obj?.title || obj?.overview) {
+                    return obj as StructuredExplanation;
+                }
+            } catch {
+                return null;
+            }
+        }
+
+        return null;
+    };
+
+    /* =======================
+       Renderers
+    ======================= */
 
     const renderMarkdown = (content: any) => {
         if (!content) return "";
         if (typeof content === 'string') {
-            // If the AI accidentally returned a stringified JSON in a text field, 
-            // we should probably NOT render it as markdown if it starts with {
             if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
                 return "Analysis formatting error. Please try again.";
             }
             return content;
         }
         if (typeof content === 'object') {
-            return content.text || content.content || content.insight || "Formatting error";
+            return content.text || content.content || content.insight || "";
         }
         return String(content);
+    };
+
+    const StructuredRenderer = ({ data }: { data: StructuredExplanation }) => {
+        const sections = Array.isArray(data.sections) ? data.sections : [];
+
+        return (
+            <div className="space-y-8">
+                {(data.title || data.overview) && (
+                    <div className="space-y-3">
+                        {data.title && (
+                            <h3 className="text-indigo-400 uppercase tracking-[0.1em] font-black flex items-center gap-3">
+                                <span className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+                                {data.title}
+                            </h3>
+                        )}
+                        {data.overview && (
+                            <p className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
+                                {data.overview}
+                            </p>
+                        )}
+                    </div>
+                )}
+
+                {sections.map((s, i) => (
+                    <div key={i} className="space-y-3">
+                        {'heading' in s && s.heading && (
+                            <h3 className="text-indigo-400 uppercase tracking-[0.1em] font-black flex items-center gap-3">
+                                <span className="w-1.5 h-6 bg-indigo-500 rounded-full" />
+                                {s.heading}
+                            </h3>
+                        )}
+
+                        {'text' in s && s.text && (
+                            <p className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
+                                {s.text}
+                            </p>
+                        )}
+
+                        {'bullets' in s && Array.isArray(s.bullets) && (
+                            <ul className="list-disc pl-6 space-y-2 text-slate-300 text-base md:text-lg font-medium">
+                                {s.bullets.map((b, idx) => (
+                                    <li key={idx}>{b}</li>
+                                ))}
+                            </ul>
+                        )}
+
+                        {'definitions' in s && Array.isArray(s.definitions) && (
+                            <div className="space-y-2">
+                                {s.definitions.map((d, idx) => (
+                                    <p key={idx} className="text-slate-300 text-base md:text-lg font-medium">
+                                        <strong className="text-white">{d.term}:</strong> {d.def}
+                                    </p>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        );
     };
 
     const currentContent = lang === 'en' ? {
@@ -87,7 +201,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl relative flex-shrink-0 min-h-[140px] md:min-h-[180px]">
                         <div className="flex flex-col md:grid md:grid-cols-[200px_1fr_200px] gap-6 items-center w-full">
 
-                            {/* BRAND & INFO: Row 1 on Mobile, Left on Desktop */}
+                            {/* BRAND & INFO */}
                             <div className="flex justify-between items-center w-full md:w-auto md:flex-col md:items-start gap-4 relative z-[60]">
                                 <div className="flex items-center md:flex-col gap-3">
                                     <div className="relative w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10 flex-shrink-0">
@@ -107,7 +221,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                     </div>
                                 </div>
 
-                                {/* Mobile-only Close button to keep Row 1 clean */}
                                 <div className="flex md:hidden items-center gap-2">
                                     {data && (
                                         <div className="flex bg-white/5 p-1 rounded-lg border border-white/10 scale-90 origin-right">
@@ -119,7 +232,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                 </div>
                             </div>
 
-                            {/* ANIMATION AREA: Row 2 on Mobile, Center on Desktop */}
+                            {/* ANIMATION AREA */}
                             <div className="relative w-full h-20 md:h-full flex items-center justify-center pointer-events-none">
                                 {showIntro && (
                                     <div className="relative flex items-center scale-75 md:scale-100 mt-4 md:mt-0">
@@ -144,7 +257,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                 )}
                             </div>
 
-                            {/* ACTIONS & CLOSE: Desktop only (Hidden on mobile as it's in Row 1) */}
+                            {/* ACTIONS & CLOSE */}
                             <div className="hidden md:flex items-center justify-end gap-4 relative z-[60]">
                                 {data && (
                                     <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 scale-90 md:scale-100">
@@ -164,12 +277,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                 <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl">
                                     {['simple', 'deep', 'exam'].map((m) => {
-                                        const config = {
-                                            simple: { color: 'indigo', icon: '💡' },
-                                            deep: { color: 'purple', icon: '🧠' },
-                                            exam: { color: 'amber', icon: '📝' }
-                                        }[m as ExplanationMode];
-
                                         const bgClass = m === 'simple' ? 'bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20' :
                                             m === 'deep' ? 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20' :
                                                 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20';
@@ -178,6 +285,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                             m === 'deep' ? 'text-purple-400' :
                                                 'text-amber-400';
 
+                                        const icon = m === 'simple' ? '💡' : m === 'deep' ? '🧠' : '📝';
+
                                         return (
                                             <button
                                                 key={m}
@@ -185,7 +294,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                                 className={`group p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border ${bgClass} hover:scale-[1.02] transition-all duration-300 text-left relative overflow-hidden active:scale-95`}
                                             >
                                                 <div className="text-4xl mb-4 bg-white/5 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
-                                                    {config.icon}
+                                                    {icon}
                                                 </div>
                                                 <h3 className={`text-xl font-black ${textClass} mb-2 capitalize`}>{m}</h3>
                                                 <p className="text-sm text-slate-400 leading-relaxed">
@@ -218,9 +327,15 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                         </h4>
                                         <div className="p-5 md:p-8 bg-white/[0.03] rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 shadow-inner">
                                             <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-base md:prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-base md:prose-li:text-lg prose-li:font-medium prose-h3:!text-indigo-400 prose-h3:!uppercase prose-h3:!tracking-[0.1em] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 prose-hr:border-white/10 max-w-none">
-                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                    {renderMarkdown(currentContent.explanation)}
-                                                </ReactMarkdown>
+                                                {(() => {
+                                                    const structured = tryParseStructured(currentContent.explanation);
+                                                    if (structured) return <StructuredRenderer data={structured} />;
+                                                    return (
+                                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                                            {renderMarkdown(currentContent.explanation)}
+                                                        </ReactMarkdown>
+                                                    );
+                                                })()}
                                             </div>
                                         </div>
                                     </section>
@@ -231,9 +346,15 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                     <section className="bg-indigo-500/[0.04] border border-indigo-500/20 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden group">
                                         <h4 className="flex items-center gap-3 text-indigo-400 font-black mb-4 text-xs md:text-sm uppercase tracking-[0.3em] shadow-indigo-500/20 drop-shadow-md">🎯 {lang === 'en' ? 'Exam Insight' : 'نصيحة الامتحان'}</h4>
                                         <div className="text-base md:text-lg text-slate-200 leading-relaxed font-bold relative z-10 exam-insight-content pl-2">
-                                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                {renderMarkdown(currentContent.examInsight)}
-                                            </ReactMarkdown>
+                                            {(() => {
+                                                const structured = tryParseStructured(currentContent.examInsight);
+                                                if (structured) return <StructuredRenderer data={structured} />;
+                                                return (
+                                                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                                        {renderMarkdown(currentContent.examInsight)}
+                                                    </ReactMarkdown>
+                                                );
+                                            })()}
                                         </div>
                                     </section>
                                 ) : null}
