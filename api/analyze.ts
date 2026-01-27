@@ -29,19 +29,6 @@ STRICT OUTPUT KEYS:
 - Do NOT mention the slide/image/analysis process.
 - All content in "explanation", "examInsight", and "quiz" (including reasoning) MUST be in ENGLISH.
 
-VISION CRITICAL RULES (MANDATORY):
-- If the image content is unclear but TEXT CONTENT is provided:
-  - You MAY explain concepts found in the text content.
-  - You MUST NOT invent concepts not found in either the image or the text.
-- If BOTH image and text are unclear/empty:
-  - You MUST return empty sections.
-- You are STRICTLY FORBIDDEN from creating generic explanations (e.g., Variable A / Variable B).
-- ONLY explain components that are visually identifiable OR explicitly mentioned in the text.
-- If the image is a technical diagram:
-  - First list visible components and hierarchy.
-  - Explain relationships ONLY if they are explicitly shown.
-- If confidence is low, return empty sections instead of guessing.
-- If the image contains tables, numbers, or performance metrics, you MUST extract and explain them explicitly.
 - If labels are visible, you MUST use their exact wording.
 
 MODE RULES:
@@ -179,6 +166,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const resolvedMode: Mode = mode || 'simple';
 
+        // Block analysis if no text content is provided (Vision is disabled)
+        const combinedText = (textContentArray || []).join(' ').trim();
+        if (!combinedText) {
+            return res.status(200).json({
+                explanation: { title: "Image-only Slide", overview: "This slide contains only an image. Please use text-based slides for analysis.", sections: [] },
+                examInsight: { title: "Exam Insight", overview: "No text found to analyze.", sections: [] },
+                quiz: [],
+                note: "Image-only slides are currently not supported. Please upload slides with text content."
+            });
+        }
+
         const isMulti = Array.isArray(slideNumbers) && slideNumbers.length > 1;
         const slideContexts = isMulti
             ? buildSlideContexts(slideNumbers, textContentArray)
@@ -219,42 +217,7 @@ REMINDER:
         // We DO NOT fallback to dumber models (8b/Mixtral) to preserve quality.
         let messages: any[] = [{ role: 'system', content: systemPrompt }];
 
-        if (isVisionRequest(thumbnail)) {
-            console.log('Vision Request Detected');
-            // VISION STRATEGY: 
-            // When an image is present, we ask the model to analyze the IMAGE primarily.
-            // We do NOT pass the potentially confusing 'slideContexts' text blob here to avoid "hallucinations" mixed from text.
-            const visionUserPrompt = `
-MODE: ${resolvedMode.toUpperCase()}
-
-VISION TASK:
-- Analyze ONLY what is clearly visible in the image.
-- If text is readable in the image, you may use it.
-- If content is not readable, return empty JSON sections.
-- DO NOT generalize or invent explanations.
-- DO NOT use placeholders like "Variable A".
-
-REMINDER:
-- You MUST follow ${resolvedMode.toUpperCase()} rules.
-- Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
-`;
-
-            messages = [
-                { role: 'system', content: systemPrompt },
-                {
-                    role: 'user',
-                    content: [
-                        { type: 'text', text: visionUserPrompt },
-                        {
-                            type: 'image_url',
-                            image_url: { url: thumbnail }
-                        }
-                    ]
-                }
-            ];
-        } else {
-            messages.push({ role: 'user', content: userPrompt });
-        }
+        messages.push({ role: 'user', content: userPrompt });
 
 
         // CLIENTS SETUP: Initialize clients for both keys

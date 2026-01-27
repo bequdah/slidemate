@@ -17,41 +17,6 @@ export interface SlideExplanation {
 
 export type ExplanationMode = 'simple' | 'deep' | 'exam';
 
-/**
- * Optimizes a base64 image string by resizing it to a maximum dimension
- * and reducing its quality. This helps avoid Vercel payload limits and timeouts.
- */
-const optimizeImage = (base64: string, maxDim: number = 800): Promise<string> => {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-                if (width > maxDim) {
-                    height *= maxDim / width;
-                    width = maxDim;
-                }
-            } else {
-                if (height > maxDim) {
-                    width *= maxDim / height;
-                    height = maxDim;
-                }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx?.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/jpeg', 0.7)); // Compress to JPEG with 70% quality
-        };
-        img.onerror = () => resolve(base64); // Fallback to original if error
-        img.src = base64;
-    });
-};
-
 export const analyzeSlide = async (
     slideNumbers: number[],
     textContentArray?: string[],
@@ -65,12 +30,6 @@ export const analyzeSlide = async (
 
         const token = await user.getIdToken();
 
-        // Optimize thumbnail if present
-        let optimizedThumbnail = thumbnail;
-        if (thumbnail && thumbnail.startsWith('data:image')) {
-            optimizedThumbnail = await optimizeImage(thumbnail);
-        }
-
         const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: {
@@ -80,8 +39,7 @@ export const analyzeSlide = async (
             body: JSON.stringify({
                 slideNumbers,
                 textContentArray,
-                mode,
-                thumbnail: optimizedThumbnail
+                mode
             })
         });
 
