@@ -331,47 +331,39 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     margin-top: 0 !important;
                 }
 
-                /* Exam Insight Custom Styling - Support both p and li for points */
+                /* Exam Insight Custom Styling - Professional sequential coloring */
                 .exam-insight-content ul {
                     list-style-type: none !important;
                     padding-left: 0 !important;
                     margin: 0 !important;
                 }
-                /* Target every significant child (p, li, etc.) */
-                .exam-insight-content > *, 
-                .exam-insight-content li {
+                .exam-insight-content > *, .exam-insight-content li {
                     position: relative;
-                    padding-left: 1.5rem;
-                    margin-bottom: 0.75rem;
+                    padding-left: 1.75rem;
+                    margin-bottom: 1rem;
                     display: block;
+                    font-weight: 700;
+                    line-height: 1.6;
                 }
-                .exam-insight-content > *::before, 
-                .exam-insight-content li::before {
+                .exam-insight-content > *::before, .exam-insight-content li::before {
                     content: '✦';
                     position: absolute;
                     left: 0;
-                    top: 4px;
-                    font-size: 0.8em;
-                    opacity: 0.8;
+                    top: 0;
+                    font-size: 1.1em;
+                    filter: drop-shadow(0 0 5px currentColor);
                 }
                 
-                /* Reset colors for children to avoid collisions */
-                .exam-insight-content > *:nth-child(4n+1) { color: #fde68a !important; } /* Amber */
-                .exam-insight-content > *:nth-child(4n+1)::before { color: #f59e0b !important; }
-                
-                .exam-insight-content > *:nth-child(4n+2) { color: #a5b4fc !important; } /* Indigo */
-                .exam-insight-content > *:nth-child(4n+2)::before { color: #6366f1 !important; }
-                
-                .exam-insight-content > *:nth-child(4n+3) { color: #6ee7b7 !important; } /* Emerald */
-                .exam-insight-content > *:nth-child(4n+3)::before { color: #10b981 !important; }
-                
-                .exam-insight-content > *:nth-child(4n+4) { color: #fca5a5 !important; } /* Rose */
-                .exam-insight-content > *:nth-child(4n+4)::before { color: #ef4444 !important; }
+                /* Sequential Colors (Amber, Indigo, Emerald, Rose) */
+                .exam-insight-content > *:nth-of-type(4n+1), .exam-insight-content li:nth-child(4n+1) { color: #fde68a !important; }
+                .exam-insight-content > *:nth-of-type(4n+2), .exam-insight-content li:nth-child(4n+2) { color: #a5b4fc !important; }
+                .exam-insight-content > *:nth-of-type(4n+3), .exam-insight-content li:nth-child(4n+3) { color: #6ee7b7 !important; }
+                .exam-insight-content > *:nth-of-type(4n+4), .exam-insight-content li:nth-child(4n+4) { color: #fca5a5 !important; }
 
-                /* If points are inside a list, ensure the list itself doesn't mess up the count */
-                .exam-insight-content ul > li:nth-child(1) { color: inherit; }
-                .exam-insight-content li { color: inherit !important; }
-                .exam-insight-content li::before { color: inherit !important; }
+                /* Force color inheritance for bullet icons */
+                .exam-insight-content > *::before, .exam-insight-content li::before {
+                    color: inherit !important;
+                }
             `}</style>
         </div>
     );
