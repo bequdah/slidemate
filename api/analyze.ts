@@ -89,6 +89,7 @@ MODE RULES:
 - All explanations MUST stay strictly grounded in the slide content and what can be logically inferred from it.
 - Avoid generic academic filler phrases; every paragraph must explain a concrete mechanism or consequence.
 - MANDATORY: EXACTLY 2 difficult MCQs.
+- MANDATORY: "examInsight" object MUST be present (focus on advanced connections/implications).
 
 
 3) exam:
