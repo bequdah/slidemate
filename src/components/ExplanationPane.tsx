@@ -318,8 +318,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             </div>
                         ) : data ? (
                             <>
-                                {/* Detailed Explanation */}
-                                {currentContent.explanation ? (
+                                {/* Detailed Explanation - Hidden in Exam Mode */}
+                                {mode !== 'exam' && currentContent.explanation ? (
                                     <section className="animate-in fade-in slide-in-from-bottom-6 duration-700">
                                         <h4 className="flex items-center gap-3 text-white font-black mb-6 uppercase text-xs tracking-[0.2em] opacity-80">
                                             <span className="w-1.5 h-6 bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] rounded-full" />
@@ -341,8 +341,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                     </section>
                                 ) : null}
 
-                                {/* Exam Insight */}
-                                {currentContent.examInsight ? (
+                                {/* Exam Insight - Hidden in Exam Mode */}
+                                {mode !== 'exam' && currentContent.examInsight ? (
                                     <section className="bg-indigo-500/[0.04] border border-indigo-500/20 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden group">
                                         <h4 className="flex items-center gap-3 text-indigo-400 font-black mb-4 text-xs md:text-sm uppercase tracking-[0.3em] shadow-indigo-500/20 drop-shadow-md">🎯 {lang === 'en' ? 'Exam Insight' : 'نصيحة الامتحان'}</h4>
                                         <div className="text-base md:text-lg text-slate-200 leading-relaxed font-bold relative z-10 exam-insight-content pl-2">
