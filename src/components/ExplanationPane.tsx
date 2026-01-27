@@ -155,37 +155,39 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                         {!mode ? (
                             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
-                                {['simple', 'deep', 'exam'].map((m) => {
-                                    const config = {
-                                        simple: { color: 'indigo', icon: '💡' },
-                                        deep: { color: 'purple', icon: '🧠' },
-                                        exam: { color: 'amber', icon: '📝' }
-                                    }[m as ExplanationMode];
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl">
+                                    {['simple', 'deep', 'exam'].map((m) => {
+                                        const config = {
+                                            simple: { color: 'indigo', icon: '💡' },
+                                            deep: { color: 'purple', icon: '🧠' },
+                                            exam: { color: 'amber', icon: '📝' }
+                                        }[m as ExplanationMode];
 
-                                    const bgClass = m === 'simple' ? 'bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20' :
-                                        m === 'deep' ? 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20' :
-                                            'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20';
+                                        const bgClass = m === 'simple' ? 'bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20' :
+                                            m === 'deep' ? 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20' :
+                                                'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20';
 
-                                    const textClass = m === 'simple' ? 'text-indigo-400' :
-                                        m === 'deep' ? 'text-purple-400' :
-                                            'text-amber-400';
+                                        const textClass = m === 'simple' ? 'text-indigo-400' :
+                                            m === 'deep' ? 'text-purple-400' :
+                                                'text-amber-400';
 
-                                    return (
-                                        <button
-                                            key={m}
-                                            onClick={() => handleModeSelect(m as ExplanationMode)}
-                                            className={`group p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border ${bgClass} hover:scale-[1.02] transition-all duration-300 text-left relative overflow-hidden active:scale-95`}
-                                        >
-                                            <div className="text-4xl mb-4 bg-white/5 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
-                                                {config.icon}
-                                            </div>
-                                            <h3 className={`text-xl font-black ${textClass} mb-2 capitalize`}>{m}</h3>
-                                            <p className="text-sm text-slate-400 leading-relaxed">
-                                                {m === 'simple' ? 'Easy language, intuitive examples.' : m === 'deep' ? 'Detailed reasoning and connections.' : 'Strict definitions and exam focus.'}
-                                            </p>
-                                        </button>
-                                    );
-                                })}
+                                        return (
+                                            <button
+                                                key={m}
+                                                onClick={() => handleModeSelect(m as ExplanationMode)}
+                                                className={`group p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border ${bgClass} hover:scale-[1.02] transition-all duration-300 text-left relative overflow-hidden active:scale-95`}
+                                            >
+                                                <div className="text-4xl mb-4 bg-white/5 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
+                                                    {config.icon}
+                                                </div>
+                                                <h3 className={`text-xl font-black ${textClass} mb-2 capitalize`}>{m}</h3>
+                                                <p className="text-sm text-slate-400 leading-relaxed">
+                                                    {m === 'simple' ? 'Easy language, intuitive examples.' : m === 'deep' ? 'Detailed reasoning and connections.' : 'Strict definitions and exam focus.'}
+                                                </p>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
                         ) : loading ? (
                             <div className="flex flex-col items-center justify-center h-full space-y-6">
