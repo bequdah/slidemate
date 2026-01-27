@@ -77,7 +77,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
             <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${currentContent.dir === 'rtl' ? 'font-arabic' : ''}`} dir={currentContent.dir}>
                 <div className="flex flex-col h-full overflow-hidden">
                     {/* Header */}
-                    <div className="p-4 md:p-8 border-b border-white/5 grid grid-cols-[auto_1fr_auto] items-center gap-2 bg-slate-900/40 backdrop-blur-2xl relative min-h-[100px] md:min-h-[160px] flex-shrink-0">
+                    <div className="p-4 md:p-8 border-b border-white/5 grid grid-cols-[auto_1fr_auto] items-center gap-2 bg-slate-900/40 backdrop-blur-2xl relative min-h-[120px] md:min-h-[180px] flex-shrink-0">
                         {/* LEFT AREA: Static Info */}
                         <div className="relative z-[60] flex items-center md:flex-col gap-2 bg-slate-950/40 backdrop-blur-sm p-1.5 md:p-3 rounded-2xl border border-white/5 flex-shrink-0 max-w-[120px] md:max-w-none">
                             <div className="relative w-8 h-8 md:w-16 md:h-16 rounded-lg md:rounded-2xl overflow-hidden shadow-lg border border-white/10 group/logo">
@@ -99,7 +99,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                         </div>
 
                         {/* CENTER AREA: Strictly Confined Animation Box */}
-                        <div className="relative h-full w-full overflow-hidden flex items-center justify-center min-h-[80px]">
+                        <div className="relative h-full w-full flex items-center justify-center min-h-[110px] md:min-h-[140px]">
                             {showIntro && (
                                 <div className="absolute inset-0 flex items-center justify-center scale-[0.65] sm:scale-85 md:scale-100">
                                     <div className="relative flex items-center">
@@ -113,7 +113,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                                 <span className="text-indigo-500">MΛTE</span>
                                             </h2>
                                         </div>
-                                        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-24 h-24 z-20 animate-robot-write">
+                                        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[clamp(56px,12vw,96px)] h-[clamp(56px,12vw,96px)] z-20 animate-robot-write">
                                             <div className="relative">
                                                 <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
                                                 <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
