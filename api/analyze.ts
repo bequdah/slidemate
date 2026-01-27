@@ -64,7 +64,8 @@ QUALITY RULES:
   - Arabic translation goes ONLY in the "arabic" object.
 
 ARABIC:
-- Translate explanation and examInsight into Arabic (Modern Standard Arabic).
+- You MUST translate "explanation" and "examInsight" into Arabic (Modern Standard Arabic).
+- The "arabic" object MUST NOT be empty if the English content is not empty.
 - Keep the same JSON structure.
 VISION CRITICAL RULES (MANDATORY):
 - If the image content is unclear but TEXT CONTENT is provided:
