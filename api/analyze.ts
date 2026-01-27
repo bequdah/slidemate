@@ -85,15 +85,25 @@ Structure:
 }
 
 Mode Rules:
-1. 'simple': Use simple language, focus on analogies/examples, and return EXACTLY 2 easy MCQs.
-2. 'deep': Use technical terms, focus on deep theory/proofs, and return EXACTLY 2 difficult MCQs.
-3. 'exam': Set explanation and examInsight to "". Return EXACTLY 10 medium-to-hard MCQs in the "quiz" field.
+1. 'simple': Use simple language, focus on analogies/examples. MANDATORY: Return EXACTLY 2 easy MCQs in "quiz".
+2. 'deep': Use technical terms, focus on deep theory/proofs. MANDATORY: Return EXACTLY 2 difficult MCQs in "quiz".
+3. 'exam': Set explanation and examInsight to "". MANDATORY: Return EXACTLY 10 hard MCQs in "quiz".
 
 LaTeX Rules:
 - Use $...$ for inline and $$...$$ for block math.
-- JSON ESCAPING (CRITICAL): You MUST use double-backslashes (e.g., "\\\\frac") so LaTeX survives JSON parsing.`;
+- JSON ESCAPING (CRITICAL): You MUST use double-backslashes (e.g., "\\\\frac") so LaTeX survives JSON parsing.
 
-        const userPrompt = `CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}\n\nMODE: ${mode.toUpperCase()}`;
+FINAL VALIDATION:
+- Do NOT skip the quiz field. 
+- Do NOT put JSON inside the explanation.
+- If mode is simple or deep, quiz must have EXACTLY 2 items.`;
+
+        const userPrompt = `
+            CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}
+            
+            MODE: ${mode.toUpperCase()}
+            REMINDER: You MUST follow the ${mode.toUpperCase()} mode rules and return EXACTLY ${mode === 'exam' ? '10' : '2'} MCQs in the quiz array.
+        `;
 
         // 6. Model Selection & Routing
         let targetModels = [
