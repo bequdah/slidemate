@@ -116,11 +116,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             <div className="relative w-full h-20 md:h-full flex items-center justify-center pointer-events-none">
                                 {showIntro && (
                                     <div className="relative flex items-center scale-75 md:scale-100 mt-4 md:mt-0">
-                                        <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
+                                        <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white/30 uppercase select-none flex items-center gap-2">
                                             <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
-                                            <span className="text-indigo-500/20">MΛTE</span>
+                                            <span className="text-indigo-500/30">MΛTE</span>
                                         </h2>
-                                        <div className="absolute inset-0 flex items-center gap-2 overflow-visible animate-reveal-text">
+                                        <div className="absolute inset-0 flex items-center gap-2 overflow-hidden animate-reveal-text">
                                             <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
                                                 <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
                                                 <span className="text-indigo-500">MΛTE</span>
@@ -277,8 +277,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     0%, 15% { width: 0; }
                     85%, 100% { width: 100%; }
                 }
-                .animate-robot-write { animation: robot-write 4s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
-                .animate-reveal-text { animation: reveal-text 4s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
+                .animate-robot-write { animation: robot-write 3s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
+                .animate-reveal-text { animation: reveal-text 3s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
                 .font-arabic { font-family: 'IBM Plex Sans Arabic', sans-serif; }
                 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 20px; }
