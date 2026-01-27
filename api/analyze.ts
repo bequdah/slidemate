@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, auth } from './firebaseAdmin.js';
 import Groq from 'groq-sdk';
+import { analyzeWithLLaVA } from './visionService.js';
 
 // Initialize Groq (Server-side key)
 const groq = new Groq({
@@ -62,7 +63,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 4. Parse Body
         const { slideNumbers, textContentArray, mode, thumbnail } = req.body;
 
-        // 5. Call AI (Logic from aiService.ts)
+        // 5. Vision Routing Logic
+        if (thumbnail && thumbnail.startsWith('data:image')) {
+            const base64Data = thumbnail.split(',')[1];
+            const buffer = Buffer.from(base64Data, 'base64');
+
+            // Call LLaVA for visual analysis
+            const visionResult = await analyzeWithLLaVA(
+                buffer,
+                `Explain this slide. Context: ${textContentArray?.[0] || 'No text content.'}`,
+                mode
+            );
+
+            res.status(200).json(visionResult);
+            return;
+        }
+
+        // 6. Call AI (Text-only logic)
         const isMulti = slideNumbers.length > 1;
         const model = "llama-3.3-70b-versatile"; // Use a stable supported model
 
