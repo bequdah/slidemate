@@ -2,17 +2,134 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, auth } from './firebaseAdmin.js';
 import Groq from 'groq-sdk';
 
-// Initialize Groq (Server-side key)
 const groq = new Groq({
     apiKey: process.env.GROQ_API_KEY
 });
 
+type Mode = 'simple' | 'deep' | 'exam';
+
+function buildSlideContexts(slideNumbers: number[], textContentArray?: string[]) {
+    return slideNumbers
+        .map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || 'No text'}`)
+        .join('\n\n');
+}
+
+function buildSystemPrompt() {
+    return `
+You are an Elite University Professor AND a professional slide-content editor.
+Return ONLY a valid JSON object. No markdown. No extra text.
+
+GOAL:
+- Reconstruct slide content into structured, UI-ready JSON that mirrors the slide's logical structure.
+- Do NOT add new concepts beyond what is in the slide content (reasonable clarification is allowed, invention is not).
+
+STRICT OUTPUT KEYS:
+1) "explanation": structured object OR empty string (only in exam mode)
+2) "examInsight": structured object OR empty string (only in exam mode)
+3) "quiz": array of MCQ objects
+4) "arabic": translated versions of explanation and examInsight (same structure or empty string)
+
+STRUCTURED OBJECT FORMAT (MANDATORY when not empty):
+{
+  "title": "Main Title (optional)",
+  "overview": "One concise sentence (optional)",
+  "sections": [
+    { "heading": "Section Title", "text": "Max 2 sentences explanation" }
+    OR { "heading": "Section Title", "bullets": ["Point 1", "Point 2"] }
+    OR { "heading": "Key Definitions", "definitions": [{"term":"...","def":"..."}] }
+  ]
+}
+
+QUIZ FORMAT:
+"quiz": [
+  { "q": "Question text", "options": ["A","B","C","D"], "a": 0, "reasoning": "Short explanation" }
+]
+
+QUALITY RULES:
+- Preserve hierarchy: title -> bullets -> conclusion.
+- Each bullet in the slide should become its own bullet or short text line.
+- Definitions must appear under "Key Definitions" and must be precise.
+- Avoid repetition.
+- Academic tone, clear and structured.
+- Do NOT mention the slide/image/analysis process.
+
+ARABIC:
+- Translate explanation and examInsight into Arabic (Modern Standard Arabic).
+- Keep the same JSON structure.
+
+MODE RULES:
+
+1) simple:
+- Tone: student-friendly, clear, light analogies (but still correct).
+- Focus: WHAT + basic HOW.
+- 3–4 sections max.
+- Exactly 2 easy MCQs.
+
+2) deep:
+- Tone: University professor teaching an undergraduate (2nd–3rd year). Clear and structured, NOT research-paper style but with high academic depth.
+- Explain WHY and HOW with depth, providing theoretical foundations and underlying mechanisms.
+- Include more detailed sections (5-6 sections): Core Mechanism, Theoretical Context, Implementation Details, Edge Cases, etc.
+- Technical terminology must be precise and defined.
+- Exactly 2 difficult MCQs.
+
+3) exam:
+- explanation = "" and examInsight = ""
+- Exactly 10 hard MCQs.
+- Questions must be directly based on the slide content.
+
+LaTeX Rules:
+- Use $...$ for inline and $$...$$ for block math.
+- JSON ESCAPING: You MUST use double-backslashes (e.g., "\\\\frac").
+`;
+}
+
+function requiredQuizCount(mode: Mode) {
+    return mode === 'exam' ? 10 : 2;
+}
+
+function isVisionRequest(thumbnail?: string) {
+    return !!thumbnail && typeof thumbnail === 'string' && thumbnail.startsWith('data:image');
+}
+
+function coerceMessagesForModel(messages: any[], isVisionModel: boolean) {
+    return messages.map(m => {
+        if (!isVisionModel && Array.isArray(m.content)) {
+            const textPart = m.content.find((p: any) => p.type === 'text');
+            return { ...m, content: textPart ? textPart.text : '' };
+        }
+        return m;
+    });
+}
+
+function validateResultShape(result: any, mode: Mode) {
+    if (!result || typeof result !== 'object') return false;
+
+    if (!('quiz' in result) || !Array.isArray(result.quiz)) return false;
+    if (result.quiz.length !== requiredQuizCount(mode)) return false;
+
+    if (!('arabic' in result) || typeof result.arabic !== 'object') return false;
+
+    if (mode === 'exam') {
+        if (result.explanation !== '' || result.examInsight !== '') return false;
+        if (result.arabic?.explanation !== '' || result.arabic?.examInsight !== '') return false;
+    } else {
+        if (typeof result.explanation !== 'object' || result.explanation === null) return false;
+        if (typeof result.examInsight !== 'object' || result.examInsight === null) return false;
+        if (typeof result.arabic?.explanation !== 'object' || result.arabic?.explanation === null) return false;
+        if (typeof result.arabic?.examInsight !== 'object' || result.arabic?.examInsight === null) return false;
+    }
+
+    return true;
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-    // 1. CORS Headers
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-    res.setHeader('Access-Control-Allow-Headers', 'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization');
+    res.setHeader(
+        'Access-Control-Allow-Headers',
+        'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+    );
 
     if (req.method === 'OPTIONS') {
         res.status(200).end();
@@ -25,7 +142,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
-        // 2. Auth Verification
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             res.status(401).json({ error: 'Unauthorized: Missing Token' });
@@ -36,7 +152,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const decodedToken = await auth.verifyIdToken(idToken);
         const uid = decodedToken.uid;
 
-        // 3. Rate Limiting Check (100 requests per day)
         const today = new Date().toISOString().split('T')[0];
         const userRef = db.collection('users').doc(uid);
 
@@ -45,231 +160,120 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const usage = userData.dailyUsage || { date: today, count: 0 };
 
         if (usage.date === today && usage.count >= 100) {
-            res.status(429).json({ error: "Daily limit reached (100/100)" });
+            res.status(429).json({ error: 'Daily limit reached (100/100)' });
             return;
         }
 
-        // 4. Parse Body
-        const { slideNumbers, textContentArray, mode, thumbnail } = req.body;
+        const { slideNumbers, textContentArray, mode, thumbnail } = req.body as {
+            slideNumbers: number[];
+            textContentArray?: string[];
+            mode?: Mode;
+            thumbnail?: string;
+        };
 
-        // 5. Build Prompts
-        const isMulti = slideNumbers.length > 1;
-        const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
+        const resolvedMode: Mode = mode || 'simple';
 
-        const systemPrompt = `You are an Elite University Professor AND a professional slide-content editor.
-Return ONLY a valid JSON object.
+        const isMulti = Array.isArray(slideNumbers) && slideNumbers.length > 1;
+        const slideContexts = isMulti
+            ? buildSlideContexts(slideNumbers, textContentArray)
+            : (textContentArray?.[0] || '');
 
-STRICT SEPARATION RULES:
-1. "explanation": Reconstruct the slide content to mirror its logical and visual structure. Do NOT add new concepts.
-2. "examInsight": Exactly 3-4 bullet points for exam preparation.
-3. "quiz": The array of MCQ objects.
-4. "arabic": Translated versions of explanation and examInsight.
-
-STRICT FORMATTING & UI RULES (CRITICAL):
-- Output "explanation" and "examInsight" as STRUCTURED JSON OBJECTS, NOT as Markdown strings.
-- Each must have: "title" (optional), "overview" (optional), and "sections" (array).
-- Each section can be ONE of these types:
-  1. Text section: { "heading": "...", "text": "..." }
-  2. Bullet section: { "heading": "...", "bullets": ["...", "..."] }
-  3. Definition section: { "heading": "Key Definitions", "definitions": [{"term": "...", "def": "..."}] }
-- Tone: Academic, concise, and exam-oriented. No conversational language.
-- Do NOT mention the slide, image, or analysis process.
-
-MANDATORY EXPLANATION STRUCTURE:
-{
-  "title": "[Slide Main Title]",
-  "overview": "One concise sentence summarizing the overall purpose",
-  "sections": [
-    {
-      "heading": "[Core Theme/Logic/Causes]",
-      "text": "Logical breakdown explanation (max 2 sentences)"
-    },
-    {
-      "heading": "Key Definitions",
-      "definitions": [
-        {"term": "Term 1", "def": "Formal definition"},
-        {"term": "Term 2", "def": "Formal definition"}
-      ]
-    },
-    {
-      "heading": "[Purpose / Why It Is Needed]",
-      "text": "Explain the 'Why' in 1-2 sentences"
-    },
-    {
-      "heading": "Concrete Example",
-      "bullets": ["Example point 1", "Example point 2"]
-    }
-  ]
-}
-
-Structure Template:
-{
-  "explanation": {
-    "title": "Main Title",
-    "overview": "Brief summary",
-    "sections": [
-      {"heading": "Section 1", "text": "Content"},
-      {"heading": "Key Definitions", "definitions": [{"term": "X", "def": "Y"}]},
-      {"heading": "Examples", "bullets": ["Point 1", "Point 2"]}
-    ]
-  },
-  "examInsight": {
-    "sections": [
-      {"heading": "Exam Tips", "bullets": ["Tip 1", "Tip 2", "Tip 3"]}
-    ]
-  },
-  "arabic": { 
-    "explanation": { "title": "...", "sections": [...] }, 
-    "examInsight": { "sections": [...] } 
-  },
-  "quiz": [
-    { "q": "Question Text", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Reason" }
-  ]
-}
-
-Mode Rules:
-1. 'simple': 
-   - Use simple, student-friendly language with everyday analogies.
-   - Focus on WHAT and basic HOW.
-   - Keep sections minimal (3-4 sections max).
-   - Use concrete examples that relate to daily life.
-   - MANDATORY: EXACTLY 2 easy MCQs in "quiz".
-
-2. 'deep': 
-   - Use ADVANCED ACADEMIC LANGUAGE like a university professor teaching senior students.
-   - Explain WHY in depth with theoretical foundations, assumptions, and proofs.
-   - Include detailed cause-effect chains and underlying mechanisms.
-   - Add technical terminology with precise definitions.
-   - Provide mathematical formulations or formal models when applicable.
-   - Include more sections (5-7 sections): Core Theory, Mathematical Foundation, Assumptions & Constraints, Proof/Derivation, Implementation Details, Edge Cases, etc.
-   - Use advanced examples from research or real-world complex systems.
-   - MANDATORY: EXACTLY 2 difficult MCQs in "quiz".
-
-3. 'exam': 
-   - Set explanation and examInsight to "". 
-   - MANDATORY: EXACTLY 10 hard MCQs in "quiz".
-
-LaTeX Rules:
-- Use $...$ for inline and $$...$$ for block math.
-- JSON ESCAPING: You MUST use double-backslashes (e.g., "\\\\frac").
-
-FINAL VALIDATION:
-- Check that EVERY title/label has its own line starting with "## ".
-- Do NOT include 'Exam Summary' inside 'explanation'.`;
+        const systemPrompt = buildSystemPrompt();
 
         const userPrompt = `
-            CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}
-            
-            MODE: ${mode.toUpperCase()}
-            REMINDER: You MUST follow the ${mode.toUpperCase()} mode rules and return EXACTLY ${mode === 'exam' ? '10' : '2'} MCQs in the quiz array.
-        `;
+CONTENT:
+${slideContexts || 'No text provided'}
 
-        // 6. Model Selection & Routing
-        let targetModels = [
-            "llama-3.3-70b-versatile",
-            "mixtral-8x7b-32768",
-            "llama-3.1-8b-instant"
-        ];
+MODE: ${resolvedMode.toUpperCase()}
+REMINDER:
+- You MUST follow ${resolvedMode.toUpperCase()} rules.
+- Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs in the quiz array.
+- explanation/examInsight rules per mode must be respected.
+`;
 
-        let messages: any[] = [{ role: "system", content: systemPrompt }];
+        let targetModels: string[] = ['llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'llama-3.1-8b-instant'];
 
-        // Check for Vision Request
-        if (thumbnail && thumbnail.startsWith('data:image')) {
-            console.log("Vision Request Detected");
-            targetModels = ["llama-3.2-11b-vision-preview", "llama-3.1-8b-instant"];
+        let messages: any[] = [{ role: 'system', content: systemPrompt }];
 
-            // For vision, we need to restructure the prompt
+        if (isVisionRequest(thumbnail)) {
+            console.log('Vision Request Detected');
+            targetModels = ['llama-3.2-11b-vision-preview', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
             messages = [
-                { role: "system", content: systemPrompt },
+                { role: 'system', content: systemPrompt },
                 {
-                    role: "user",
+                    role: 'user',
                     content: [
-                        { type: "text", text: userPrompt },
+                        { type: 'text', text: userPrompt },
                         {
-                            type: "image_url",
-                            image_url: {
-                                url: thumbnail, // Base64 image
-                            },
-                        },
-                    ],
+                            type: 'image_url',
+                            image_url: { url: thumbnail }
+                        }
+                    ]
                 }
             ];
         } else {
-            messages.push({ role: "user", content: userPrompt });
+            messages.push({ role: 'user', content: userPrompt });
         }
 
-        let completion;
-        let lastError;
+        let completion: any = null;
+        let lastError: any = null;
 
         for (const targetModel of targetModels) {
             try {
                 console.log(`Attempting analysis with ${targetModel}...`);
-
-                // CRITICAL: If falling back to a text model from a vision prompt,
-                // we must convert the content back to a string.
                 const isVisionModel = targetModel.includes('vision');
-                const preparedMessages = messages.map(m => {
-                    if (!isVisionModel && Array.isArray(m.content)) {
-                        // Extract just the text part for non-vision models
-                        const textPart = m.content.find((p: any) => p.type === 'text');
-                        return { ...m, content: textPart ? textPart.text : "" };
-                    }
-                    return m;
-                });
+                const preparedMessages = coerceMessagesForModel(messages, isVisionModel);
 
                 completion = await groq.chat.completions.create({
                     messages: preparedMessages,
                     model: targetModel,
                     temperature: 0.1,
-                    response_format: { type: "json_object" }
+                    response_format: { type: 'json_object' }
                 });
+
+                const raw = completion.choices[0]?.message?.content || '{}';
+                const parsed = JSON.parse(raw);
+
+                if (!validateResultShape(parsed, resolvedMode)) {
+                    console.warn(`Model ${targetModel} returned invalid shape; trying next model...`);
+                    continue;
+                }
+
                 console.log(`Success with ${targetModel}`);
-                break;
+
+                await db.runTransaction(async t => {
+                    const doc = await t.get(userRef);
+                    const data = doc.data() || {};
+                    const currentUsage = data.dailyUsage || { date: today, count: 0 };
+
+                    if (currentUsage.date !== today) {
+                        currentUsage.date = today;
+                        currentUsage.count = 1;
+                    } else {
+                        currentUsage.count++;
+                    }
+
+                    t.set(userRef, { dailyUsage: currentUsage }, { merge: true });
+                });
+
+                res.status(200).json(parsed);
+                return;
             } catch (err: any) {
                 lastError = err;
-                console.error(`Error with ${targetModel}:`, err.message);
-
-                // If Rate Limit (429), try next model immediately
-                if (err.status === 429 || err.message?.includes("rate_limit")) {
-                    continue;
-                }
-
-                // For other errors, if we have another model, try it
-                if (targetModels.indexOf(targetModel) < targetModels.length - 1) {
-                    continue;
-                }
-
-                throw err;
+                console.error(`Error with ${targetModel}:`, err?.message || err);
+                continue;
             }
         }
 
-        if (!completion) throw lastError;
+        if (!completion) throw lastError || new Error('All models failed');
 
-        const result = JSON.parse(completion.choices[0]?.message?.content || "{}");
-
-        // 7. Increment usage on success
-        await db.runTransaction(async (t) => {
-            const doc = await t.get(userRef);
-            const data = doc.data() || {};
-            const currentUsage = data.dailyUsage || { date: today, count: 0 };
-
-            if (currentUsage.date !== today) {
-                currentUsage.date = today;
-                currentUsage.count = 1;
-            } else {
-                currentUsage.count++;
-            }
-            t.set(userRef, { dailyUsage: currentUsage }, { merge: true });
-        });
-
-        res.status(200).json(result);
-
+        res.status(500).json({ error: 'Unable to generate a valid response. Please try again.' });
     } catch (error: any) {
         console.error('API Error:', error);
-        if (error.message === "RATE_LIMIT_EXCEEDED") {
-            res.status(429).json({ error: "Daily limit reached (100/100)" });
+        if (error?.message === 'RATE_LIMIT_EXCEEDED') {
+            res.status(429).json({ error: 'Daily limit reached (100/100)' });
         } else {
-            res.status(500).json({ error: error.message });
+            res.status(500).json({ error: error?.message || 'Server error' });
         }
     }
 }
