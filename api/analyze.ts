@@ -67,10 +67,17 @@ MODE RULES:
 
 2) deep:
 - Tone: University professor teaching an undergraduate (2nd–3rd year). Clear and structured, NOT research-paper style but with high academic depth.
-- Explain WHY and HOW with depth, providing theoretical foundations and underlying mechanisms.
-- Include more detailed sections (5-6 sections): Core Mechanism, Theoretical Context, Implementation Details, Edge Cases, etc.
-- Technical terminology must be precise and defined.
-- Exactly 2 difficult MCQs.
+- CRITICAL: Use cause–effect reasoning for every concept (explain WHY the problem occurs, WHAT it causes, and HOW it is resolved).
+- Provide ONE clear mental model or conceptual example per slide (not daily-life analogies, but technical/academic models).
+- Do NOT list concepts without explanation; introduce every technical term AFTER explaining the underlying idea.
+- Prefer fewer sections (4–6) with DEEPER explanations rather than many shallow sections.
+- Write as a professor explaining to a student, NOT as a textbook summary or bullet-point list.
+- Include sections like: Concept Overview, Why [Problem] Occurs, How [Solution] Works, Key Definitions, Common Failure Scenarios.
+- Technical terminology must be precise and clearly defined.
+- All explanations MUST stay strictly grounded in the slide content and what can be logically inferred from it.
+- Avoid generic academic filler phrases; every paragraph must explain a concrete mechanism or consequence.
+- MANDATORY: EXACTLY 2 difficult MCQs.
+
 
 3) exam:
 - explanation = "" and examInsight = ""
