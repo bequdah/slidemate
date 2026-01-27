@@ -63,9 +63,7 @@ export const analyzeSlide = async (
     } catch (error: any) {
         console.error("Analysis Error:", error);
 
-        let errorMessage = "Connection failed";
-        if (error.message.includes("limit")) errorMessage = error.message;
-        else if (error.message.includes("log in")) errorMessage = error.message;
+        let errorMessage = error.message || "Connection failed";
 
         return {
             explanation: `Error: ${errorMessage}`,
