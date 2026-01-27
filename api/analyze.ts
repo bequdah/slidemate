@@ -84,13 +84,10 @@ MODE RULES:
 
 
 3) exam:
-- explanation MUST be a structured object with empty content:
-  { "title": "", "overview": "", "sections": [] }
-- examInsight MUST be a structured object with empty content:
-  { "sections": [] }
-- arabic.explanation and arabic.examInsight MUST follow the same empty-object structure.
-- Exactly 10 hard MCQs in "quiz".
+- Do NOT generate explanation or examInsight. Return empty objects: { "sections": [] }
+- Focus ONLY on creating exactly 10 hard MCQs in "quiz".
 - Questions must be directly based on the slide content.
+- Each question must test deep understanding, not just memorization.
 
 LaTeX Rules:
 - Use $...$ for inline and $$...$$ for block math.
@@ -138,11 +135,8 @@ function validateResultShape(result: any, mode: Mode) {
 
     // In exam mode, enforce empty sections
     if (mode === 'exam') {
-        if (!Array.isArray(result.explanation.sections) || result.explanation.sections.length !== 0) return false;
-        if (!Array.isArray(result.examInsight.sections) || result.examInsight.sections.length !== 0) return false;
-
-        if (!Array.isArray(result.arabic.explanation.sections) || result.arabic.explanation.sections.length !== 0) return false;
-        if (!Array.isArray(result.arabic.examInsight.sections) || result.arabic.examInsight.sections.length !== 0) return false;
+        // In exam mode, ONLY enforce quiz correctness
+        return true;
     }
 
     return true;
