@@ -59,6 +59,9 @@ QUALITY RULES:
 - Avoid repetition.
 - Academic tone, clear and structured.
 - Do NOT mention the slide/image/analysis process.
+- LANGUAGE RULE:
+  - All content in "explanation", "examInsight", and "quiz" (including reasoning) MUST be in ENGLISH.
+  - Arabic translation goes ONLY in the "arabic" object.
 
 ARABIC:
 - Translate explanation and examInsight into Arabic (Modern Standard Arabic).
