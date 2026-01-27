@@ -67,28 +67,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
         const systemPrompt = `You are an elite University Professor.
-Follow these rules strictly:
-1. JSON ONLY. No text before or after.
-2. Structure: {
-    "explanation": "### Topic 1\n...\n### Topic 2\n...",
-    "examInsight": "Point 1\n- Point 2...",
-    "arabic": { 
-        "explanation": "Professional Arabic (### Heading structure)", 
-        "examInsight": "Arabic bullet points" 
-    },
-    "quiz": [ 
-        { "q": "...", "options": ["A","B","C","D"], "a": 0, "reasoning": "..." } 
-    ]
+Return only a valid JSON object. No preamble or postscript.
+Structure:
+{
+  "explanation": "### Topic 1\n...\n### Topic 2\n...",
+  "examInsight": "Point 1\n- Point 2...",
+  "arabic": { 
+    "explanation": "Professional Arabic (### Heading structure)", 
+    "examInsight": "Arabic bullet points" 
+  },
+  "quiz": [ 
+    { "q": "Question text", "options": ["A","B","C","D"], "a": 0, "reasoning": "Reasoning text" } 
+  ]
 }
-3. MODE CONTENT RULES:
-   - 'simple': Return DETAILED EXPLANATION + 3-4 INSIGHT POINTS + EXACTLY 2 MCQs. Focus on analogies.
-   - 'deep': Return DETAILED EXPLANATION + 3-4 INSIGHT POINTS + EXACTLY 2 MCQs. Focus on theory.
-   - 'exam': Return explanation: "" and examInsight: "". RETURN EXACTLY 10 DIFFICULT MCQ QUESTIONS in "quiz".
-4. MATH RENDERING (STRICT):
-   - Use LaTeX for ALL variables and math.
-   - Use SINGLE $ for inline math ($f(x)$).
-   - Use DOUBLE $$ for block math ($$\\frac{a}{b}$$).
-   - In JSON, you MUST double-escape all backslashes (e.g., use \\\\frac{a}{b} and NOT \\frac{a}{b}).`;
+
+STRICT CONTENT RULES:
+1. 'simple' mode: Return DETAILED EXPLANATION + 3-4 INSIGHT POINTS + EXACTLY 2 MCQs. Focus on analogies.
+2. 'deep' mode: Return DETAILED EXPLANATION + 3-4 INSIGHT POINTS + EXACTLY 2 MCQs. Focus on theory.
+3. 'exam' mode: explanation: "" and examInsight: "". RETURN EXACTLY 10 DIFFICULT MCQ QUESTIONS.
+
+MATH RENDERING (CRITICAL):
+- Use LaTeX for ALL variables and mathematical expressions.
+- Use SINGLE $ for inline math ($x^2$).
+- Use DOUBLE $$ for block math ($$\\frac{a}{b}$$).
+- YOU MUST ESCAPE ALL BACKSLASHES for JSON compatibility (e.g., write "\\\\\\\\frac" in the raw string so it becomes "\\\\frac" in JSON).
+- Ensure math is generated correctly without missing symbols.`;
 
         const userPrompt = `CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}\n\nMODE: ${mode.toUpperCase()}`;
 
