@@ -222,7 +222,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                             <div key={qIndex} className="space-y-6">
                                                 <div className="flex gap-3 md:gap-4">
                                                     <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-400 flex-shrink-0">Q{qIndex + 1}</div>
-                                                    <p className="text-lg md:text-xl font-black text-slate-200 leading-tight">{item.q}</p>
+                                                    <div className="text-lg md:text-xl font-black text-slate-200 leading-tight">
+                                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                                            {renderMarkdown(item.q)}
+                                                        </ReactMarkdown>
+                                                    </div>
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 pl-0 md:pl-4">
                                                     {item.options.map((option, oIndex) => (
