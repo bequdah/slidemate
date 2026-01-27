@@ -76,7 +76,8 @@ MODE RULES:
 - Structure: 3–4 sections max with clear headings.
 - Each section should have either: simple text explanation (1-2 sentences), bullet points, or definitions.
 - Include sections like: "What Is This?", "How It Works", "Key Terms", "Simple Example".
-- MANDATORY: Return structured JSON with "title", "overview", and "sections" array.
+- MANDATORY: The "explanation" object MUST contain "title", "overview", and "sections".
+- MANDATORY: "examInsight" object MUST be present (keep it simple/brief).
 - MANDATORY: EXACTLY 2 easy MCQs in "quiz".
 
 2) deep:
@@ -190,8 +191,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const userData = userDoc.data() || {};
         const usage = userData.dailyUsage || { date: today, count: 0 };
 
-        if (usage.date === today && usage.count >= 100) {
-            res.status(429).json({ error: 'Daily limit reached (100/100)' });
+        if (usage.date === today && usage.count >= 200) {
+            res.status(429).json({ error: 'Daily limit reached (200/200)' });
             return;
         }
 
@@ -316,7 +317,7 @@ REMINDER:
     } catch (error: any) {
         console.error('API Error:', error);
         if (error?.message === 'RATE_LIMIT_EXCEEDED') {
-            res.status(429).json({ error: 'Daily limit reached (100/100)' });
+            res.status(429).json({ error: 'Daily limit reached (200/200)' });
         } else {
             res.status(500).json({ error: error?.message || 'Server error' });
         }

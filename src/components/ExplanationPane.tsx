@@ -67,6 +67,12 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         });
     };
 
+    const handleBack = () => {
+        setMode(null);
+        setData(null);
+        setLoading(false);
+    };
+
     const handleOptionSelect = (qIndex: number, oIndex: number) => {
         if (selectedOptions[qIndex] !== undefined) return;
         setSelectedOptions(prev => ({ ...prev, [qIndex]: oIndex }));
@@ -227,6 +233,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                             <button onClick={() => setLang('en')} className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>EN</button>
                                             <button onClick={() => setLang('ar')} className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
                                         </div>
+                                    )}
+                                    {mode && (
+                                        <button onClick={handleBack} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">←</button>
                                     )}
                                     <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">✕</button>
                                 </div>
