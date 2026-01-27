@@ -24,8 +24,8 @@ GOAL:
 - Do NOT add new concepts beyond what is in the slide content (reasonable clarification is allowed, invention is not).
 
 STRICT OUTPUT KEYS:
-1) "explanation": structured object OR empty string (only in exam mode)
-2) "examInsight": structured object OR empty string (only in exam mode)
+1) "explanation": structured object (ALWAYS)
+2) "examInsight": structured object (ALWAYS)
 3) "quiz": array of MCQ objects
 4) "arabic": translated versions of explanation and examInsight (same structure or empty string)
 
@@ -84,8 +84,12 @@ MODE RULES:
 
 
 3) exam:
-- explanation = "" and examInsight = ""
-- Exactly 10 hard MCQs.
+- explanation MUST be a structured object with empty content:
+  { "title": "", "overview": "", "sections": [] }
+- examInsight MUST be a structured object with empty content:
+  { "sections": [] }
+- arabic.explanation and arabic.examInsight MUST follow the same empty-object structure.
+- Exactly 10 hard MCQs in "quiz".
 - Questions must be directly based on the slide content.
 
 LaTeX Rules:
@@ -112,27 +116,38 @@ function coerceMessagesForModel(messages: any[], isVisionModel: boolean) {
     });
 }
 
+function isStructuredObject(x: any) {
+    return x && typeof x === 'object' && !Array.isArray(x);
+}
+
 function validateResultShape(result: any, mode: Mode) {
     if (!result || typeof result !== 'object') return false;
 
-    // Critical: quiz must exist and have correct count
-    if (!('quiz' in result) || !Array.isArray(result.quiz)) return false;
+    // quiz must exist and have correct count
+    if (!Array.isArray(result.quiz)) return false;
     if (result.quiz.length !== requiredQuizCount(mode)) return false;
 
-    // Must have arabic field
-    if (!('arabic' in result)) return false;
+    // arabic must exist
+    if (!isStructuredObject(result.arabic)) return false;
 
-    // For exam mode, explanation and examInsight must be empty
+    // explanation/examInsight must ALWAYS be objects now
+    if (!isStructuredObject(result.explanation)) return false;
+    if (!isStructuredObject(result.examInsight)) return false;
+    if (!isStructuredObject(result.arabic.explanation)) return false;
+    if (!isStructuredObject(result.arabic.examInsight)) return false;
+
+    // In exam mode, enforce empty sections
     if (mode === 'exam') {
-        if (result.explanation !== '' || result.examInsight !== '') return false;
-    } else {
-        // For simple/deep, explanation and examInsight must exist (any format OK)
-        if (!result.explanation) return false;
-        if (!result.examInsight) return false;
+        if (!Array.isArray(result.explanation.sections) || result.explanation.sections.length !== 0) return false;
+        if (!Array.isArray(result.examInsight.sections) || result.examInsight.sections.length !== 0) return false;
+
+        if (!Array.isArray(result.arabic.explanation.sections) || result.arabic.explanation.sections.length !== 0) return false;
+        if (!Array.isArray(result.arabic.examInsight.sections) || result.arabic.examInsight.sections.length !== 0) return false;
     }
 
     return true;
 }
+
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
