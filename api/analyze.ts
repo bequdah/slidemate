@@ -261,7 +261,8 @@ REMINDER:
             const targetModelToUse = MODEL;
 
             try {
-                console.log(`Attempt ${attempt + 1}/4 using Key ${attempt % clients.length === 0 ? 'Primary' : 'Secondary'}...`);
+                const key2Status = process.env.GROQ_API_KEY_2 ? "Detected" : "MISSING";
+                console.log(`Attempt ${attempt + 1}/4 | Key: ${attempt % clients.length === 0 ? 'Primary' : 'Secondary'} | Key2 Status: ${key2Status}`);
 
                 const isVision = isVisionRequest(thumbnail);
                 const preparedMessages = coerceMessagesForModel(messages, isVision);
