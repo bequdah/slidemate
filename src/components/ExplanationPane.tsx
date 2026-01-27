@@ -400,6 +400,24 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     background: transparent !important;
                     border: none !important;
                 }
+
+                /* Enhanced Math & Numbers Rendering */
+                .katex { 
+                    font-size: 1.15em !important; 
+                    color: #e2e8f0;
+                }
+                .katex-display {
+                    margin: 1.5rem 0 !important;
+                    padding: 1.25rem;
+                    background: rgba(255,255,255,0.02);
+                    border-radius: 1.5rem;
+                    overflow-x: auto;
+                    overflow-y: hidden;
+                    border: 1px solid rgba(255,255,255,0.05);
+                }
+                .prose p, .prose li {
+                    font-variant-numeric: tabular-nums;
+                }
             `}</style>
         </div>
     );

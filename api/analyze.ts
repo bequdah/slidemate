@@ -85,13 +85,13 @@ Structure:
 }
 
 Mode Rules:
-- 'simple': Use analogies and easy language.
-- 'deep': Use technical terms and deep theory.
-- 'exam': Set explanation and examInsight to "". Return EXACTLY 10 hard MCQs in the "quiz" field.
-
-LaTeX Rules:
-- Use $...$ for inline, $$...$$ for blocks.
-- In JSON, double-escape backslashes (e.g., "\\\\frac").`;
+1. 'simple': Focus on analogies. 
+2. 'deep': Focus on theory/proofs. 
+3. 'exam': 10 MCQs only (explanation & examInsight = ""). 
+4. LaTeX: Use $...$ for inline and $$...$$ for block math.
+5. JSON ESCAPING (CRITICAL): You MUST use double-backslashes for all LaTeX commands so they survive JSON parsing.
+   - Example: "\\\\frac{a}{b}" (Correct) vs "\frac{a}{b}" (Incorrect).
+   - Never omit the backslash. Always use \\\\ before commands like frac, sqrt, etc.`;
 
         const userPrompt = `CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}\n\nMODE: ${mode.toUpperCase()}`;
 
