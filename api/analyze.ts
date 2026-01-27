@@ -106,7 +106,8 @@ Follow these rules strictly:
         let targetModels = [
             "llama-3.3-70b-versatile",
             "mixtral-8x7b-32768",
-            "llama-3-8b-8192"
+            "llama3-8b-8192",
+            "llama-3.1-8b-instant"
         ];
 
         let messages: any[] = [{ role: "system", content: systemPrompt }];
@@ -114,7 +115,7 @@ Follow these rules strictly:
         // Check for Vision Request
         if (thumbnail && thumbnail.startsWith('data:image')) {
             console.log("Vision Request Detected");
-            targetModels = ["llama-3.2-11b-vision-preview", "llama-3-8b-8192"];
+            targetModels = ["llama-3.2-11b-vision-preview", "llama3-8b-8192"];
 
             // For vision, we need to restructure the prompt
             messages = [
