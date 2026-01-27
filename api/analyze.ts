@@ -250,9 +250,8 @@ REMINDER:
         for (let attempt = 0; attempt < 4; attempt++) {
             // Alternate keys per attempt: 0->primary, 1->secondary, 2->primary...
             const client = clients[attempt % clients.length];
-            // TACTIC: Alternate models between attempts to bypass model-specific rate limits
-            // Using Mixtral as a solid backup because it has a separate quota from Llama models
-            const targetModelToUse = (attempt % 2 === 0) ? 'llama-3.3-70b-versatile' : 'mixtral-8x7b-32768';
+            // TACTIC: Use ONLY the smartest model with Key Rotation
+            const targetModelToUse = 'llama-3.3-70b-versatile';
 
             try {
                 const key2Status = process.env.GROQ_API_KEY_2 ? "Detected" : "MISSING";
