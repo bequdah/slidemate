@@ -36,28 +36,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const decodedToken = await auth.verifyIdToken(idToken);
         const uid = decodedToken.uid;
 
-        // 3. Rate Limiting (100 requests per day)
+        // 3. Rate Limiting Check (100 requests per day)
         const today = new Date().toISOString().split('T')[0];
         const userRef = db.collection('users').doc(uid);
 
-        await db.runTransaction(async (t) => {
-            const doc = await t.get(userRef);
-            const data = doc.data() || {};
-            const usage = data.dailyUsage || { date: today, count: 0 };
+        const userDoc = await userRef.get();
+        const userData = userDoc.data() || {};
+        const usage = userData.dailyUsage || { date: today, count: 0 };
 
-            if (usage.date !== today) {
-                // Reset for new day
-                usage.date = today;
-                usage.count = 0;
-            }
-
-            if (usage.count >= 100) {
-                throw new Error("RATE_LIMIT_EXCEEDED");
-            }
-
-            usage.count++;
-            t.set(userRef, { dailyUsage: usage }, { merge: true });
-        });
+        if (usage.date === today && usage.count >= 100) {
+            res.status(429).json({ error: "Daily limit reached (100/100)" });
+            return;
+        }
 
         // 4. Parse Body
         const { slideNumbers, textContentArray, mode, thumbnail } = req.body;
@@ -187,6 +177,21 @@ FINAL VALIDATION:
         if (!completion) throw lastError;
 
         const result = JSON.parse(completion.choices[0]?.message?.content || "{}");
+
+        // 7. Increment usage on success
+        await db.runTransaction(async (t) => {
+            const doc = await t.get(userRef);
+            const data = doc.data() || {};
+            const currentUsage = data.dailyUsage || { date: today, count: 0 };
+
+            if (currentUsage.date !== today) {
+                currentUsage.date = today;
+                currentUsage.count = 1;
+            } else {
+                currentUsage.count++;
+            }
+            t.set(userRef, { dailyUsage: currentUsage }, { merge: true });
+        });
 
         res.status(200).json(result);
 
