@@ -250,19 +250,12 @@ REMINDER:
         for (let attempt = 0; attempt < 4; attempt++) {
             // Alternate keys per attempt: 0->primary, 1->secondary, 2->primary...
             const client = clients[attempt % clients.length];
-            // Use vision model only if it's a vision request AND it's the first attempt (to try best vision model)
-            // Otherwise stick to 70b which is smarter but maybe slower
-            const currentModel = (isVisionRequest(thumbnail) && attempt === 0) ? VISION_MODEL : MODEL;
-
-            // For vision requests, we might want to stick to 70b unless it fails specifically on vision tokens
-            // Actually, let's stick to the USER STRATEGY: 70b is the smartest.
-            // Only use vision preview if 70b fails or for specific cases.
-            // Let's force 70b as the main driver as per previous success.
-            const targetModelToUse = MODEL;
+            // TACTIC: Alternate models between attempts to bypass model-specific rate limits
+            const targetModelToUse = (attempt % 2 === 0) ? 'llama-3.3-70b-versatile' : 'llama-3.1-70b-versatile';
 
             try {
                 const key2Status = process.env.GROQ_API_KEY_2 ? "Detected" : "MISSING";
-                console.log(`Attempt ${attempt + 1}/4 | Key: ${attempt % clients.length === 0 ? 'Primary' : 'Secondary'} | Key2 Status: ${key2Status}`);
+                console.log(`Attempt ${attempt + 1}/4 | Model: ${targetModelToUse} | Key: ${attempt % clients.length === 0 ? 'Primary' : 'Secondary'} | Key2 Status: ${key2Status}`);
 
                 const isVision = isVisionRequest(thumbnail);
                 const preparedMessages = coerceMessagesForModel(messages, isVision);
