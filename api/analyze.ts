@@ -107,12 +107,37 @@ Follow these rules strictly:
         const messages: any[] = [{ role: "system", content: systemPrompt }];
         messages.push({ role: "user", content: userPrompt });
 
-        const completion = await groq.chat.completions.create({
-            messages,
-            model: model,
-            temperature: 0.1,
-            response_format: { type: "json_object" }
-        });
+        const models = [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-70b-versatile",
+            "mixtral-8x7b-32768",
+            "llama-3-8b-8192"
+        ];
+
+        let completion;
+        let lastError;
+
+        for (const targetModel of models) {
+            try {
+                completion = await groq.chat.completions.create({
+                    messages,
+                    model: targetModel,
+                    temperature: 0.1,
+                    response_format: { type: "json_object" }
+                });
+                break; // If successful, exit loop
+            } catch (err: any) {
+                lastError = err;
+                // If Rate Limit (429), try next model
+                if (err.status === 429 || err.message?.includes("rate_limit")) {
+                    console.log(`Model ${targetModel} rate limited. Trying next...`);
+                    continue;
+                }
+                throw err; // Other errors (auth, validation) should fail immediately
+            }
+        }
+
+        if (!completion) throw lastError;
 
         const result = JSON.parse(completion.choices[0]?.message?.content || "{}");
 

@@ -380,6 +380,13 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
                 /* Catch-all for any other points in sequence */
                 .exam-insight-content > *:nth-child(n+10) { color: #94a3b8 !important; }
+
+                /* Prevent Red KaTeX Errors from showing as red */
+                .katex-error {
+                    color: inherit !important;
+                    background: transparent !important;
+                    border: none !important;
+                }
             `}</style>
         </div>
     );
