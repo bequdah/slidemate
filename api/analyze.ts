@@ -1,7 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, auth } from './firebaseAdmin.js';
 import Groq from 'groq-sdk';
-import { analyzeWithLLaVA } from './visionService.js';
 
 // Initialize Groq (Server-side key)
 const groq = new Groq({

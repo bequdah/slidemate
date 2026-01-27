@@ -6,7 +6,6 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { LogoModal } from './components/LogoModal';
-import { VisionChat } from './components/VisionChat';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Use a more reliable worker source from unpkg
@@ -256,7 +255,6 @@ function MainApp() {
       )}
 
       <LogoModal isOpen={isLogoModalOpen} onClose={() => setIsLogoModalOpen(false)} />
-      <VisionChat />
     </div>
   );
 }
