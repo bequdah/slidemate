@@ -202,7 +202,6 @@ function MainApp() {
                   onUnderstand={() => setSelectedSlide(slide)}
                   selected={selectedSlideIds.includes(slide.id)}
                   onToggleSelect={() => toggleSlideSelection(slide.id)}
-                  onLogoClick={() => setIsLogoModalOpen(true)}
                 />
               </div>
             ))}

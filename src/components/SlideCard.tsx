@@ -5,10 +5,9 @@ interface SlideCardProps {
     onUnderstand: () => void;
     selected?: boolean;
     onToggleSelect?: () => void;
-    onLogoClick?: () => void;
 }
 
-export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, selected, onToggleSelect, onLogoClick }: SlideCardProps) => {
+export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, selected, onToggleSelect }: SlideCardProps) => {
     return (
         <div className="relative w-full max-w-5xl mx-auto mb-4 group">
             {/* Main Card Container */}
@@ -65,14 +64,6 @@ export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, s
                     >
                         <img src="/logo_white_bg.jpg" alt="AI" className="w-full h-full object-cover group-hover/ai:scale-110 transition-transform" />
                     </button>
-                    {onLogoClick && (
-                        <button
-                            onClick={onLogoClick}
-                            className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.25rem] bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all active:scale-90"
-                        >
-                            <img src="/logo_white_bg.jpg" alt="Branding" className="w-full h-full object-cover rounded-lg" />
-                        </button>
-                    )}
                 </div>
 
 
