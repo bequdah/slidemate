@@ -143,12 +143,20 @@ Follow these rules strictly:
             try {
                 console.log(`Attempting analysis with ${targetModel}...`);
 
-                // Add a timeout for the overall request if possible, 
-                // but Groq SDK doesn't have a simple 'timeout' param in completions.create
-                // Vercel will handle the 10s limit.
+                // CRITICAL: If falling back to a text model from a vision prompt,
+                // we must convert the content back to a string.
+                const isVisionModel = targetModel.includes('vision');
+                const preparedMessages = messages.map(m => {
+                    if (!isVisionModel && Array.isArray(m.content)) {
+                        // Extract just the text part for non-vision models
+                        const textPart = m.content.find((p: any) => p.type === 'text');
+                        return { ...m, content: textPart ? textPart.text : "" };
+                    }
+                    return m;
+                });
 
                 completion = await groq.chat.completions.create({
-                    messages,
+                    messages: preparedMessages,
                     model: targetModel,
                     temperature: 0.1,
                     response_format: { type: "json_object" }
