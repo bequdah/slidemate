@@ -128,9 +128,26 @@ Structure Template:
 }
 
 Mode Rules:
-1. 'simple': Use simple language. MANDATORY: EXACTLY 2 easy MCQs in "quiz".
-2. 'deep': Technical theory/proofs. MANDATORY: EXACTLY 2 difficult MCQs in "quiz".
-3. 'exam': Set explanation and examInsight to "". MANDATORY: EXACTLY 10 hard MCQs in "quiz".
+1. 'simple': 
+   - Use simple, student-friendly language with everyday analogies.
+   - Focus on WHAT and basic HOW.
+   - Keep sections minimal (3-4 sections max).
+   - Use concrete examples that relate to daily life.
+   - MANDATORY: EXACTLY 2 easy MCQs in "quiz".
+
+2. 'deep': 
+   - Use ADVANCED ACADEMIC LANGUAGE like a university professor teaching senior students.
+   - Explain WHY in depth with theoretical foundations, assumptions, and proofs.
+   - Include detailed cause-effect chains and underlying mechanisms.
+   - Add technical terminology with precise definitions.
+   - Provide mathematical formulations or formal models when applicable.
+   - Include more sections (5-7 sections): Core Theory, Mathematical Foundation, Assumptions & Constraints, Proof/Derivation, Implementation Details, Edge Cases, etc.
+   - Use advanced examples from research or real-world complex systems.
+   - MANDATORY: EXACTLY 2 difficult MCQs in "quiz".
+
+3. 'exam': 
+   - Set explanation and examInsight to "". 
+   - MANDATORY: EXACTLY 10 hard MCQs in "quiz".
 
 LaTeX Rules:
 - Use $...$ for inline and $$...$$ for block math.
