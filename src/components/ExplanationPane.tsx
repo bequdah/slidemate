@@ -74,23 +74,23 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose} />
 
             {/* Modal Content */}
-            <div className={`relative w-full max-w-4xl h-[85vh] bg-[#0c111d] rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${currentContent.dir === 'rtl' ? 'font-arabic' : ''}`} dir={currentContent.dir}>
+            <div className={`relative w-full max-w-4xl h-[85vh] md:h-[85vh] h-[95vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${currentContent.dir === 'rtl' ? 'font-arabic' : ''}`} dir={currentContent.dir}>
                 <div className="flex flex-col h-full overflow-hidden">
                     {/* Header */}
-                    <div className="p-8 border-b border-white/5 flex justify-between items-start bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden min-h-[160px] flex-shrink-0">
+                    <div className="p-4 md:p-8 border-b border-white/5 flex justify-between items-center md:items-start bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden min-h-[100px] md:min-h-[160px] flex-shrink-0">
                         {/* VERTICAL STATIC INFO */}
-                        <div className="flex flex-col gap-3 relative z-[60]">
-                            <div className="relative w-16 h-16 rounded-2xl overflow-hidden shadow-lg border border-white/10 group/logo">
+                        <div className="flex items-center md:flex-col gap-3 relative z-[60]">
+                            <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10 group/logo">
                                 <img src="/logo_white_bg.jpg" alt="SlideMate AI" className="w-full h-full object-cover" />
                                 {showIntro && (
                                     <div className="absolute inset-0 bg-indigo-600/40 animate-pulse" />
                                 )}
                             </div>
                             <div className="flex flex-col">
-                                <h3 className="text-xl font-black tracking-tight text-white leading-tight">
+                                <h3 className="text-lg md:text-xl font-black tracking-tight text-white leading-tight">
                                     {slideNumbers.length > 1 ? (lang === 'en' ? 'Batch Analysis' : 'تحليل مجمع') : (lang === 'en' ? 'SlideMate' : 'سلايد ميت')}
                                 </h3>
-                                <h4 className="text-indigo-400 font-bold text-sm tracking-widest uppercase mb-1">
+                                <h4 className="text-indigo-400 font-bold text-[10px] md:text-sm tracking-widest uppercase">
                                     {slideNumbers.length > 1
                                         ? `${lang === 'en' ? 'Slides' : 'سلايدات'} ${Math.min(...slideNumbers)}-${Math.max(...slideNumbers)}`
                                         : (lang === 'en' ? 'Insights' : 'رؤى')}
@@ -102,17 +102,17 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center pointer-events-none">
                             {showIntro && (
                                 <div className="relative flex items-center">
-                                    <h2 className="text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
+                                    <h2 className="text-2xl md:text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
                                         <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
                                         <span className="text-indigo-500/20">MΛTE</span>
                                     </h2>
                                     <div className="absolute inset-0 flex items-center gap-2 overflow-hidden animate-reveal-text">
-                                        <h2 className="text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
+                                        <h2 className="text-2xl md:text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
                                             <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
                                             <span className="text-indigo-500">MΛTE</span>
                                         </h2>
                                     </div>
-                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-24 h-24 z-20 animate-robot-write">
+                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-16 h-16 md:w-24 md:h-24 z-20 animate-robot-write">
                                         <div className="relative">
                                             <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
                                             <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
@@ -123,19 +123,19 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             )}
                         </div>
 
-                        <div className="flex items-center gap-4 relative z-[60]">
+                        <div className="flex items-center gap-2 md:gap-4 relative z-[60]">
                             {data && (
-                                <div className="flex bg-white/5 p-1 rounded-xl border border-white/10">
-                                    <button onClick={() => setLang('en')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>EN</button>
-                                    <button onClick={() => setLang('ar')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
+                                <div className="flex bg-white/5 p-1 rounded-lg md:rounded-xl border border-white/10 scale-90 md:scale-100">
+                                    <button onClick={() => setLang('en')} className={`px-2 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>EN</button>
+                                    <button onClick={() => setLang('ar')} className={`px-2 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
                                 </div>
                             )}
-                            <button onClick={onClose} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-90 text-2xl">✕</button>
+                            <button onClick={onClose} className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-90 text-xl md:text-2xl">✕</button>
                         </div>
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-10 space-y-10 custom-scrollbar relative">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative">
                         {!mode ? (
                             <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <h2 className="text-2xl font-black text-white uppercase tracking-widest text-center">Choose explanation style</h2>
@@ -173,8 +173,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                             <span className="w-1.5 h-6 bg-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)] rounded-full" />
                                             {lang === 'en' ? 'Explanation' : 'الشرح التفصيلي'}
                                         </h4>
-                                        <div className="p-8 bg-white/[0.03] rounded-[2.5rem] border border-white/5 shadow-inner">
-                                            <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-lg prose-li:font-medium prose-h3:!text-indigo-400 prose-h3:!uppercase prose-h3:!tracking-[0.1em] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 prose-hr:border-white/10 max-w-none">
+                                        <div className="p-5 md:p-8 bg-white/[0.03] rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 shadow-inner">
+                                            <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-base md:prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-base md:prose-li:text-lg prose-li:font-medium prose-h3:!text-indigo-400 prose-h3:!uppercase prose-h3:!tracking-[0.1em] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 prose-hr:border-white/10 max-w-none">
                                                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                                                     {renderMarkdown(currentContent.explanation)}
                                                 </ReactMarkdown>
@@ -185,9 +185,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
                                 {/* Exam Insight */}
                                 {currentContent.examInsight ? (
-                                    <section className="bg-indigo-500/[0.04] border border-indigo-500/20 p-8 rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden group">
-                                        <h4 className="flex items-center gap-3 text-indigo-400 font-black mb-4 text-sm uppercase tracking-[0.3em] shadow-indigo-500/20 drop-shadow-md">🎯 {lang === 'en' ? 'Exam Insight' : 'نصيحة الامتحان'}</h4>
-                                        <div className="text-lg text-slate-200 leading-relaxed font-bold relative z-10 exam-insight-content pl-2">
+                                    <section className="bg-indigo-500/[0.04] border border-indigo-500/20 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden group">
+                                        <h4 className="flex items-center gap-3 text-indigo-400 font-black mb-4 text-xs md:text-sm uppercase tracking-[0.3em] shadow-indigo-500/20 drop-shadow-md">🎯 {lang === 'en' ? 'Exam Insight' : 'نصيحة الامتحان'}</h4>
+                                        <div className="text-base md:text-lg text-slate-200 leading-relaxed font-bold relative z-10 exam-insight-content pl-2">
                                             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                                                 {renderMarkdown(currentContent.examInsight)}
                                             </ReactMarkdown>
@@ -204,13 +204,13 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                         </div>
                                         {data.quiz.map((item, qIndex) => (
                                             <div key={qIndex} className="space-y-6">
-                                                <div className="flex gap-4">
+                                                <div className="flex gap-3 md:gap-4">
                                                     <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-400 flex-shrink-0">Q{qIndex + 1}</div>
-                                                    <p className="text-xl font-black text-slate-200 leading-tight">{item.q}</p>
+                                                    <p className="text-lg md:text-xl font-black text-slate-200 leading-tight">{item.q}</p>
                                                 </div>
-                                                <div className="grid grid-cols-1 gap-3 pl-4">
+                                                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 pl-0 md:pl-4">
                                                     {item.options.map((option, oIndex) => (
-                                                        <button key={oIndex} onClick={() => handleOptionSelect(qIndex, oIndex)} disabled={selectedOptions[qIndex] !== undefined} className={`p-5 rounded-2xl border text-left text-base font-bold transition-all shadow-sm active:scale-98 ${selectedOptions[qIndex] !== undefined ? (item.a === oIndex ? 'bg-green-500/20 border-green-500/40 text-green-400' : selectedOptions[qIndex] === oIndex ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.01] border-white/5 opacity-30') : 'bg-white/[0.03] border-white/5 hover:bg-white/10 hover:border-white/20'}`}>
+                                                        <button key={oIndex} onClick={() => handleOptionSelect(qIndex, oIndex)} disabled={selectedOptions[qIndex] !== undefined} className={`p-4 md:p-5 rounded-xl md:rounded-2xl border text-left text-sm md:text-base font-bold transition-all shadow-sm active:scale-98 ${selectedOptions[qIndex] !== undefined ? (item.a === oIndex ? 'bg-green-500/20 border-green-500/40 text-green-400' : selectedOptions[qIndex] === oIndex ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.01] border-white/5 opacity-30') : 'bg-white/[0.03] border-white/5 hover:bg-white/10 hover:border-white/20'}`}>
                                                             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                                                                 {renderMarkdown(option)}
                                                             </ReactMarkdown>

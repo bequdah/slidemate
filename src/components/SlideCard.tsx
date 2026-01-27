@@ -67,17 +67,7 @@ export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, s
                     </button>
                 </div>
 
-                {/* Info Badge */}
-                <div className="absolute bottom-6 left-6 flex items-center gap-3">
-                    <div className="bg-slate-950/80 backdrop-blur-md px-4 py-2 rounded-xl border border-white/10">
-                        <span className="text-slate-400 font-mono text-[10px] block uppercase tracking-widest">Slide #{slideNumber}</span>
-                    </div>
-                    {isImportant && (
-                        <div className="bg-amber-600/20 text-amber-500 px-3 py-1 rounded-lg border border-amber-600/30 text-[10px] font-black uppercase tracking-widest">
-                            Important
-                        </div>
-                    )}
-                </div>
+
             </div>
 
         </div>
