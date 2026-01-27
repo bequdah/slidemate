@@ -333,23 +333,22 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     margin-top: 0 !important;
                 }
 
-                /* Exam Insight Custom Styling - Unified Sequential Coloring */
+                /* Exam Insight Custom Styling - Perfect Sequential Coloring */
                 .exam-insight-content ul {
                     list-style-type: none !important;
                     padding-left: 0 !important;
                     margin: 0 !important;
                 }
                 
-                /* Target ANY direct child or list item as a 'point' */
+                /* Base style for every point */
                 .exam-insight-content > *, 
                 .exam-insight-content li {
                     position: relative;
                     padding-left: 2rem;
-                    margin-bottom: 1rem;
+                    margin-bottom: 0.75rem;
                     display: block;
                     font-weight: 700;
-                    line-height: 1.6;
-                    color: #94a3b8; /* Default grey-ish */
+                    line-height: 1.5;
                 }
 
                 .exam-insight-content > *::before, 
@@ -357,30 +356,30 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     content: '✦';
                     position: absolute;
                     left: 0;
-                    top: 0;
+                    top: 2px;
                     font-size: 1.2em;
                 }
 
-                /* Sequential Colors based on the order of appearance in the container */
-                /* This handles cases where Point 1 is a <p> and others are <li> */
-                .exam-insight-content *:nth-child(4n+1) { color: #fde68a !important; }
-                .exam-insight-content *:nth-child(4n+1)::before { color: #f59e0b !important; }
-
-                .exam-insight-content *:nth-child(4n+2) { color: #a5b4fc !important; }
-                .exam-insight-content *:nth-child(4n+2)::before { color: #6366f1 !important; }
-
-                .exam-insight-content *:nth-child(4n+3) { color: #6ee7b7 !important; }
-                .exam-insight-content *:nth-child(4n+3)::before { color: #10b981 !important; }
-
-                .exam-insight-content *:nth-child(4n+4) { color: #fca5a5 !important; }
-                .exam-insight-content *:nth-child(4n+4)::before { color: #ef4444 !important; }
-
-                /* Prevent double bulleting if a list is a direct child */
-                .exam-insight-content ul::before { content: none !important; }
-                .exam-insight-content ul { padding-left: 0 !important; color: inherit !important; }
+                /* Fixed Sequence: P (Point 1) -> LI:1 (Point 2) -> LI:2 (Point 3) -> LI:3 (Point 4) */
                 
-                /* Ensure nested items inherit correctly if we have a complex structure */
-                .exam-insight-content li { margin-left: 0 !important; }
+                /* Point 1: Usually the direct paragraph */
+                .exam-insight-content > p:first-of-type { color: #fde68a !important; }
+                .exam-insight-content > p:first-of-type::before { color: #f59e0b !important; }
+
+                /* Point 2: First list item */
+                .exam-insight-content li:nth-child(1) { color: #a5b4fc !important; }
+                .exam-insight-content li:nth-child(1)::before { color: #6366f1 !important; }
+
+                /* Point 3: Second list item */
+                .exam-insight-content li:nth-child(2) { color: #6ee7b7 !important; }
+                .exam-insight-content li:nth-child(2)::before { color: #10b981 !important; }
+
+                /* Point 4: Third list item */
+                .exam-insight-content li:nth-child(3) { color: #fca5a5 !important; }
+                .exam-insight-content li:nth-child(3)::before { color: #ef4444 !important; }
+
+                /* Catch-all for any other points in sequence */
+                .exam-insight-content > *:nth-child(n+10) { color: #94a3b8 !important; }
             `}</style>
         </div>
     );
