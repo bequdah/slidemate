@@ -74,7 +74,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose} />
 
             {/* Modal Content */}
-            <div className={`relative w-full max-w-4xl h-[85vh] md:h-[85vh] h-[95vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${currentContent.dir === 'rtl' ? 'font-arabic' : ''}`} dir={currentContent.dir}>
+            <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${currentContent.dir === 'rtl' ? 'font-arabic' : ''}`} dir={currentContent.dir}>
                 <div className="flex flex-col h-full overflow-hidden">
                     {/* Header */}
                     <div className="p-4 md:p-8 border-b border-white/5 flex justify-between items-center md:items-start bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden min-h-[100px] md:min-h-[160px] flex-shrink-0">
@@ -98,21 +98,21 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             </div>
                         </div>
 
-                        {/* ANIMATED BRANDING AREA */}
-                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center pointer-events-none">
+                        {/* ANIMATED BRANDING AREA (Hidden on Mobile for cleaner look) */}
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center pointer-events-none hidden md:flex">
                             {showIntro && (
                                 <div className="relative flex items-center">
-                                    <h2 className="text-2xl md:text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
+                                    <h2 className="text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
                                         <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
                                         <span className="text-indigo-500/20">MΛTE</span>
                                     </h2>
                                     <div className="absolute inset-0 flex items-center gap-2 overflow-hidden animate-reveal-text">
-                                        <h2 className="text-2xl md:text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
+                                        <h2 className="text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
                                             <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
                                             <span className="text-indigo-500">MΛTE</span>
                                         </h2>
                                     </div>
-                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-16 h-16 md:w-24 md:h-24 z-20 animate-robot-write">
+                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-24 h-24 z-20 animate-robot-write">
                                         <div className="relative">
                                             <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
                                             <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
@@ -137,11 +137,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     {/* Content */}
                     <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative">
                         {!mode ? (
-                            <div className="flex flex-col items-center justify-center h-full space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                                <h2 className="text-2xl font-black text-white uppercase tracking-widest text-center">Choose explanation style</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full max-w-3xl">
+                            <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
+                                <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl">
                                     {['simple', 'deep', 'exam'].map((m) => (
-                                        <button key={m} onClick={() => handleModeSelect(m as ExplanationMode)} className={`group p-8 rounded-[2rem] bg-${m === 'simple' ? 'indigo' : m === 'deep' ? 'purple' : 'amber'}-500/10 border border-${m === 'simple' ? 'indigo' : m === 'deep' ? 'purple' : 'amber'}-500/20 hover:bg-${m === 'simple' ? 'indigo' : m === 'deep' ? 'purple' : 'amber'}-500/20 hover:scale-105 transition-all duration-300 text-left relative overflow-hidden`}>
+                                        <button key={m} onClick={() => handleModeSelect(m as ExplanationMode)} className={`group p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] bg-${m === 'simple' ? 'indigo' : m === 'deep' ? 'purple' : 'amber'}-500/10 border border-${m === 'simple' ? 'indigo' : m === 'deep' ? 'purple' : 'amber'}-500/20 hover:bg-${m === 'simple' ? 'indigo' : m === 'deep' ? 'purple' : 'amber'}-500/20 hover:scale-[1.02] transition-all duration-300 text-left relative overflow-hidden active:scale-95`}>
                                             <div className="text-4xl mb-4 bg-white/5 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
                                                 {m === 'simple' ? '💡' : m === 'deep' ? '🧠' : '📝'}
                                             </div>
