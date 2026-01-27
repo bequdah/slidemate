@@ -124,10 +124,17 @@ function validateResultShape(result: any, mode: Mode) {
         if (result.explanation !== '' || result.examInsight !== '') return false;
         if (result.arabic?.explanation !== '' || result.arabic?.examInsight !== '') return false;
     } else {
+        // Explanation must be an object
         if (typeof result.explanation !== 'object' || result.explanation === null) return false;
-        if (typeof result.examInsight !== 'object' || result.examInsight === null) return false;
+
+        // examInsight can be object OR string (for flexibility)
+        if (!result.examInsight || (typeof result.examInsight !== 'object' && typeof result.examInsight !== 'string')) return false;
+
+        // Arabic explanation must be an object
         if (typeof result.arabic?.explanation !== 'object' || result.arabic?.explanation === null) return false;
-        if (typeof result.arabic?.examInsight !== 'object' || result.arabic?.examInsight === null) return false;
+
+        // Arabic examInsight can be object OR string
+        if (!result.arabic?.examInsight || (typeof result.arabic.examInsight !== 'object' && typeof result.arabic.examInsight !== 'string')) return false;
     }
 
     return true;
