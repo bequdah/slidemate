@@ -50,10 +50,17 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
     console.log("ExplanationPane State:", { mode, loading, hasData: !!data, slideNumbers });
 
     const renderMarkdown = (content: any) => {
-        if (content === null || content === undefined) return "";
-        if (typeof content === 'string') return content;
+        if (!content) return "";
+        if (typeof content === 'string') {
+            // If the AI accidentally returned a stringified JSON in a text field, 
+            // we should probably NOT render it as markdown if it starts with {
+            if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
+                return "Analysis formatting error. Please try again.";
+            }
+            return content;
+        }
         if (typeof content === 'object') {
-            return content.text || content.content || content.insight || JSON.stringify(content, null, 2);
+            return content.text || content.content || content.insight || "Formatting error";
         }
         return String(content);
     };

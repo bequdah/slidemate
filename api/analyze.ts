@@ -67,23 +67,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
         const systemPrompt = `You are an elite University Professor.
-Return ONLY valid JSON. No text before or after.
+Return ONLY a valid JSON object.
+STRICT SEPARATION RULES:
+1. "explanation": Contains ONLY the markdown explanation. Do NOT include MCQs, quizzes, or insights here.
+2. "examInsight": Contains ONLY the 3-4 bullet points for exam tips.
+3. "quiz": Contains ONLY the array of MCQ objects.
+4. "arabic": Contains the translated versions of explanation and examInsight.
+
 Structure:
 {
-  "explanation": "### Topic\\nDetailed markdown text.",
+  "explanation": "### Topic\\nDetailed markdown here...",
   "examInsight": "- Point 1\\n- Point 2",
   "arabic": { "explanation": "الشرح", "examInsight": "نصائح" },
   "quiz": [
-    { "q": "Question Text", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Why A is correct" }
+    { "q": "Question Text", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Reason" }
   ]
 }
 
-Rules:
-1. 'simple': Focus on analogies. 
-2. 'deep': Focus on theory/proofs. 
-3. 'exam': 10 MCQs only (explanation & examInsight = ""). 
-4. LaTeX: Use $...$ and $$...$$. 
-5. IMPORTANT: Every \\ in LaTeX must be double-escaped in the JSON string (e.g., write "\\\\frac" to get \frac).`;
+Mode Rules:
+- 'simple': Use analogies and easy language.
+- 'deep': Use technical terms and deep theory.
+- 'exam': Set explanation and examInsight to "". Return EXACTLY 10 hard MCQs in the "quiz" field.
+
+LaTeX Rules:
+- Use $...$ for inline, $$...$$ for blocks.
+- In JSON, double-escape backslashes (e.g., "\\\\frac").`;
 
         const userPrompt = `CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}\n\nMODE: ${mode.toUpperCase()}`;
 
