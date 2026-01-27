@@ -65,8 +65,9 @@ STRICT SEPARATION RULES:
 3. "quiz": The array of MCQ objects.
 4. "arabic": Translated versions of explanation and examInsight.
 
-EXPLANATION FORMATTING RULES:
-- If the slide has a title, it MUST appear as a section header (##).
+STRICT FORMATTING & UI RULES (CRITICAL):
+- EVERY section title MUST be a header starting with "## ".
+- NEVER use plain text for a section label (e.g., use "## Key Definitions" instead of "Key Definitions").
 - Reconstruct the hierarchy implied by titles and bullet points.
 - Each bullet point MUST become a separate, clearly explained sub-point.
 - Definitions MUST be written in **bold** and placed under a "## Key Definitions" section.
@@ -74,46 +75,45 @@ EXPLANATION FORMATTING RULES:
 - Use short paragraphs (max 2 sentences each).
 - Tone: Academic, concise, and exam-oriented. No conversational language.
 - Do NOT mention the slide, image, or analysis process.
-- Do NOT repeat information unnecessarily.
 
-EXPLANATION STRUCTURE (ADAPT AS NEEDED):
-## [Slide Title / Main Theme]
-(One concise sentence summarizing the slide’s purpose)
+MANDATORY EXPLANATION STRUCTURE:
+## [Slide Main Title]
+(One concise sentence summarizing the overall purpose)
 
-## [Core Logic / Causes / Components]
-(Logical breakdown using sub-headers or bullet points)
+## [Core Theme/Logic/Causes]
+(Logical breakdown of contents using sub-headers starting with ##)
 
 ## Key Definitions
 - **Term**: Formal definition.
 
 ## [Purpose / Why It Is Needed]
-(Clearly connect concepts or explain the necessity/utility)
+(Explain the "Why" using a ## header)
 
 ## Concrete Example (If applicable)
-(One precise example aligned with the slide content)
+(Must start with ## header)
 
 Structure Template:
 {
-  "explanation": "## Title\\n...\\n## Key Definitions\\n- **Term**: Def\\n...\\n## Example\\n...",
+  "explanation": "## Main Title\\n...\\n## Key Definitions\\n- **Term**: Def\\n...\\n## Concrete Example\\n...",
   "examInsight": "- Point 1\\n- Point 2",
-  "arabic": { "explanation": "الشرح", "examInsight": "نصائح" },
+  "arabic": { "explanation": "الشرح العلمي", "examInsight": "نصائح الامتحان" },
   "quiz": [
     { "q": "Question Text", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Reason" }
   ]
 }
 
 Mode Rules:
-1. 'simple': Use simple language, focus on analogies. MANDATORY: Return EXACTLY 2 easy MCQs in "quiz".
-2. 'deep': Use technical terms, focus on deep theory/proofs. MANDATORY: Return EXACTLY 2 difficult MCQs in "quiz".
-3. 'exam': Set explanation and examInsight to "". MANDATORY: Return EXACTLY 10 hard MCQs in "quiz".
+1. 'simple': Use simple language. MANDATORY: EXACTLY 2 easy MCQs in "quiz".
+2. 'deep': Technical theory/proofs. MANDATORY: EXACTLY 2 difficult MCQs in "quiz".
+3. 'exam': Set explanation and examInsight to "". MANDATORY: EXACTLY 10 hard MCQs in "quiz".
 
 LaTeX Rules:
 - Use $...$ for inline and $$...$$ for block math.
-- JSON ESCAPING (CRITICAL): You MUST use double-backslashes (e.g., "\\\\frac") so LaTeX survives JSON parsing.
+- JSON ESCAPING: You MUST use double-backslashes (e.g., "\\\\frac").
 
 FINAL VALIDATION:
-- Ensure headers (##) are used instead of plain text titles.
-- Do NOT include 'Exam Summary' inside 'explanation' as it overlaps with 'examInsight'.`;
+- Check that EVERY title/label has its own line starting with "## ".
+- Do NOT include 'Exam Summary' inside 'explanation'.`;
 
         const userPrompt = `
             CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}
