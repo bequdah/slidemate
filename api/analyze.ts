@@ -83,8 +83,8 @@ Follow these rules strictly:
     ]
 }
 3. MODE CONTENT RULES:
-   - 'simple': Return quiz: [] and examInsight: "". Focus on analogies.
-   - 'deep': Return quiz: [] and examInsight: "". Focus on deep theory.
+   - 'simple': Return DETAILED EXPLANATION + 3-4 INSIGHT POINTS + EXACTLY 2 MCQs. Focus on analogies.
+   - 'deep': Return DETAILED EXPLANATION + 3-4 INSIGHT POINTS + EXACTLY 2 MCQs. Focus on theory.
    - 'exam': Return explanation: "" and examInsight: "". RETURN EXACTLY 10 DIFFICULT MCQ QUESTIONS in "quiz".
 4. MATH RENDERING (STRICT):
    - Use LaTeX for ALL variables and math.
@@ -98,8 +98,8 @@ Follow these rules strictly:
             
             STRICT INSTRUCTIONS FOR ${mode.toUpperCase()}:
             ${mode === 'exam'
-                ? "-> YOU MUST PROVIDE EXACTLY 10 HARD MCQs. DO NOT provide an explanation. Set explanation to '' and examInsight to ''."
-                : "-> PROVIDE A DETAILED EXPLANATION. Set quiz to [] and examInsight to ''."
+                ? "-> YOU MUST PROVIDE EXACTLY 10 HARD MCQs. Set explanation to '' and examInsight to ''."
+                : "-> PROVIDE A DETAILED EXPLANATION, EXAM INSIGHTS, AND EXACTLY 2 MEDIUM MCQs."
             }
             - All math MUST be perfectly formatted with \\\\ commands.
         `;
