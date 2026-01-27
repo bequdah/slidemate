@@ -98,21 +98,21 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             </div>
                         </div>
 
-                        {/* ANIMATED BRANDING AREA (Hidden on Mobile for cleaner look) */}
-                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center pointer-events-none hidden md:flex">
+                        {/* ANIMATED BRANDING AREA (Optimized for all screens) */}
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center pointer-events-none">
                             {showIntro && (
                                 <div className="relative flex items-center">
-                                    <h2 className="text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
+                                    <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
                                         <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
                                         <span className="text-indigo-500/20">MΛTE</span>
                                     </h2>
                                     <div className="absolute inset-0 flex items-center gap-2 overflow-hidden animate-reveal-text">
-                                        <h2 className="text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
+                                        <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
                                             <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
                                             <span className="text-indigo-500">MΛTE</span>
                                         </h2>
                                     </div>
-                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-24 h-24 z-20 animate-robot-write">
+                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-16 h-16 md:w-24 md:h-24 z-20 animate-robot-write">
                                         <div className="relative">
                                             <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
                                             <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
@@ -244,10 +244,18 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
             <style>{`
                 @keyframes robot-write {
-                    0% { transform: translate(-300px, -50%) scale(0.5) rotate(-10deg); opacity: 0; }
-                    15% { transform: translate(-200px, -50%) scale(1.2) rotate(5deg); opacity: 1; }
-                    85% { transform: translate(250px, -50%) scale(1.2) rotate(-5deg); opacity: 1; }
-                    100% { transform: translate(350px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
+                    0% { transform: translate(-150px, -50%) scale(0.5) rotate(-10deg); opacity: 0; }
+                    15% { transform: translate(-100px, -50%) scale(1) rotate(5deg); opacity: 1; }
+                    85% { transform: translate(100px, -50%) scale(1) rotate(-5deg); opacity: 1; }
+                    100% { transform: translate(150px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
+                }
+                @media (min-width: 768px) {
+                    @keyframes robot-write {
+                        0% { transform: translate(-300px, -50%) scale(0.5) rotate(-10deg); opacity: 0; }
+                        15% { transform: translate(-200px, -50%) scale(1.2) rotate(5deg); opacity: 1; }
+                        85% { transform: translate(250px, -50%) scale(1.2) rotate(-5deg); opacity: 1; }
+                        100% { transform: translate(350px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
+                    }
                 }
                 @keyframes reveal-text {
                     0%, 15% { width: 0; }
