@@ -277,12 +277,35 @@ REMINDER:
                 const isVisionModel = targetModel.includes('vision');
                 const preparedMessages = coerceMessagesForModel(messages, isVisionModel);
 
-                completion = await groq.chat.completions.create({
-                    messages: preparedMessages,
-                    model: targetModel,
-                    temperature: 0.1,
-                    response_format: { type: 'json_object' }
-                });
+                const apiKeys = [
+                    process.env.GROQ_API_KEY,
+                    process.env.GROQ_API_KEY_2
+                ].filter(Boolean);
+
+                let keySuccess = false;
+
+                // Key Rotation Loop
+                for (const apiKey of apiKeys) {
+                    try {
+                        const currentGroq = new Groq({ apiKey });
+                        completion = await currentGroq.chat.completions.create({
+                            messages: preparedMessages,
+                            model: targetModel,
+                            temperature: 0.1,
+                            response_format: { type: 'json_object' }
+                        });
+                        keySuccess = true;
+                        break; // Success, exit key loop
+                    } catch (err: any) {
+                        if (err?.status === 429 || err?.message?.includes('Rate limit')) {
+                            console.warn(`Key rate limited. Switching to backup key...`);
+                            continue; // Try next key
+                        }
+                        throw err; // Other errors bubbling up to model retry loop
+                    }
+                }
+
+                if (!keySuccess) throw new Error('All API keys exhausted or failed');
 
                 const raw = completion.choices[0]?.message?.content || '';
 
