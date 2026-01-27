@@ -331,7 +331,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     margin-top: 0 !important;
                 }
 
-                /* Exam Insight Custom Styling - Professional sequential coloring */
+                /* Exam Insight Custom Styling - Fixed sequential coloring */
                 .exam-insight-content ul {
                     list-style-type: none !important;
                     padding-left: 0 !important;
@@ -340,30 +340,35 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                 .exam-insight-content > *, .exam-insight-content li {
                     position: relative;
                     padding-left: 1.75rem;
-                    margin-bottom: 1rem;
+                    margin-bottom: 0.75rem;
                     display: block;
                     font-weight: 700;
-                    line-height: 1.6;
+                    line-height: 1.5;
                 }
                 .exam-insight-content > *::before, .exam-insight-content li::before {
                     content: '✦';
                     position: absolute;
                     left: 0;
-                    top: 0;
+                    top: 2px;
                     font-size: 1.1em;
-                    filter: drop-shadow(0 0 5px currentColor);
                 }
                 
-                /* Sequential Colors (Amber, Indigo, Emerald, Rose) */
-                .exam-insight-content > *:nth-of-type(4n+1), .exam-insight-content li:nth-child(4n+1) { color: #fde68a !important; }
-                .exam-insight-content > *:nth-of-type(4n+2), .exam-insight-content li:nth-child(4n+2) { color: #a5b4fc !important; }
-                .exam-insight-content > *:nth-of-type(4n+3), .exam-insight-content li:nth-child(4n+3) { color: #6ee7b7 !important; }
-                .exam-insight-content > *:nth-of-type(4n+4), .exam-insight-content li:nth-child(4n+4) { color: #fca5a5 !important; }
+                /* Point 1 (Usually a P tag) */
+                .exam-insight-content > p { color: #fde68a !important; } /* Amber */
+                .exam-insight-content > p::before { color: #f59e0b !important; }
 
-                /* Force color inheritance for bullet icons */
-                .exam-insight-content > *::before, .exam-insight-content li::before {
-                    color: inherit !important;
-                }
+                /* Points 2, 3, 4 (Usually inside LI) */
+                .exam-insight-content li:nth-child(1) { color: #a5b4fc !important; } /* Indigo */
+                .exam-insight-content li:nth-child(1)::before { color: #6366f1 !important; }
+                
+                .exam-insight-content li:nth-child(2) { color: #6ee7b7 !important; } /* Emerald */
+                .exam-insight-content li:nth-child(2)::before { color: #10b981 !important; }
+                
+                .exam-insight-content li:nth-child(3) { color: #fca5a5 !important; } /* Rose */
+                .exam-insight-content li:nth-child(3)::before { color: #ef4444 !important; }
+
+                /* Fallback for general sequential content if structure changes */
+                .exam-insight-content > *:nth-of-type(4n+4) { color: #fca5a5 !important; }
             `}</style>
         </div>
     );
