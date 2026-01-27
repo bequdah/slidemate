@@ -45,7 +45,7 @@ export const analyzeSlide = async (
 
         if (!response.ok) {
             if (response.status === 429) {
-                throw new Error("Daily limit reached (50 free requests/day). Come back tomorrow!");
+                throw new Error("Daily limit reached (100 free requests/day). Come back tomorrow!");
             }
 
             let errorMessage = "Failed to analyze";
