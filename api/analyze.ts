@@ -88,19 +88,9 @@ Follow these rules strictly:
    - Use LaTeX for ALL variables and math.
    - Use SINGLE $ for inline math ($f(x)$).
    - Use DOUBLE $$ for block math ($$\\frac{a}{b}$$).
-   - Use DOUBLE BACKSLASHES for all LaTeX commands in JSON (\\\\frac).`;
+   - In JSON, you MUST double-escape all backslashes (e.g., use \\\\frac{a}{b} and NOT \\frac{a}{b}).`;
 
-        const userPrompt = `
-            CONTENT: ${isMulti ? slideContexts : (textContentArray?.[0] || "")}
-            MODE: ${mode.toUpperCase()}
-            
-            STRICT INSTRUCTIONS FOR ${mode.toUpperCase()}:
-            ${mode === 'exam'
-                ? "-> YOU MUST PROVIDE EXACTLY 10 HARD MCQs. Set explanation to '' and examInsight to ''."
-                : "-> PROVIDE A DETAILED EXPLANATION, EXAM INSIGHTS, AND EXACTLY 2 MEDIUM MCQs."
-            }
-            - All math MUST be perfectly formatted with \\\\ commands.
-        `;
+        const userPrompt = `CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}\n\nMODE: ${mode.toUpperCase()}`;
 
         // 6. Model Selection & Routing
         let targetModels = [
