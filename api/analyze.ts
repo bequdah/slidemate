@@ -40,10 +40,20 @@ STRUCTURED OBJECT FORMAT (MANDATORY when not empty):
   ]
 }
 
-QUIZ FORMAT:
+QUIZ FORMAT (MANDATORY):
 "quiz": [
-  { "q": "Question text", "options": ["A","B","C","D"], "a": 0, "reasoning": "Short explanation" }
+  { 
+    "q": "Question text", 
+    "options": ["Option A", "Option B", "Option C", "Option D"], 
+    "a": 0, 
+    "reasoning": "Short explanation (max 1 sentence)."
+    CRITICAL:
+    - reasoning MUST be short (<= 25 words).
+    - In EXAM mode, keep reasoning VERY short or empty to avoid long outputs.
+
+  }
 ]
+CRITICAL: Every quiz question MUST include a detailed "reasoning" field that explains the answer.
 
 QUALITY RULES:
 - Preserve hierarchy: title -> bullets -> conclusion.
@@ -252,8 +262,22 @@ REMINDER:
                     response_format: { type: 'json_object' }
                 });
 
-                const raw = completion.choices[0]?.message?.content || '{}';
-                const parsed = JSON.parse(raw);
+                const raw = completion.choices[0]?.message?.content || '';
+
+                console.log('RAW(first 300):', raw.slice(0, 300));
+
+                if (!raw.trim().startsWith('{')) {
+                    console.warn(`Model ${targetModel} did not return JSON. Trying next...`);
+                    continue;
+                }
+
+                let parsed: any;
+                try {
+                    parsed = JSON.parse(raw);
+                } catch (e: any) {
+                    console.warn(`JSON.parse failed on ${targetModel}: ${e?.message}. Trying next...`);
+                    continue;
+                }
 
                 if (!validateResultShape(parsed, resolvedMode)) {
                     console.warn(`Model ${targetModel} returned invalid shape; trying next model...`);
