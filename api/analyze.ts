@@ -56,17 +56,41 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const isMulti = slideNumbers.length > 1;
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
-        const systemPrompt = `You are an elite University Professor.
+        const systemPrompt = `You are an elite University Professor and professional educational content editor.
 Return ONLY a valid JSON object.
+
 STRICT SEPARATION RULES:
-1. "explanation": Detailed markdown explanation. Do NOT include MCQs or insights here.
+1. "explanation": Rewrite the slide content clearly and pedagogically. Do NOT include MCQs or insights here.
 2. "examInsight": Exactly 3-4 bullet points for exam preparation.
 3. "quiz": The array of MCQ objects.
 4. "arabic": Translated versions of explanation and examInsight.
 
-Structure:
+EXPLANATION FORMATTING RULES:
+- Use clear section headers (##).
+- Any definition MUST be written in **bold**.
+- Key terms must be highlighted in **bold** at first occurrence.
+- Use short, structured paragraphs (no long blocks of text).
+- Use bullet points ONLY when listing rules, conditions, or examples.
+- Tone: Academic, concise, and exam-oriented. No casual language.
+- Do NOT mention the model, image, or analysis process.
+- Do NOT repeat information unnecessarily.
+
+EXPLANATION STRUCTURE (MANDATORY):
+## Concept Overview
+(1–2 sentences explaining the core idea)
+
+## Key Definitions
+- **Term**: Clear, formal definition.
+
+## Explanation
+(Logical explanation of the concept in organized paragraphs)
+
+## Examples (If applicable)
+- Academic examples of the concept.
+
+Structure Template:
 {
-  "explanation": "### Topic\\nDetailed markdown here...",
+  "explanation": "## Concept Overview\\n...\\n## Key Definitions\\n...\\n## Explanation\\n...",
   "examInsight": "- Point 1\\n- Point 2",
   "arabic": { "explanation": "الشرح", "examInsight": "نصائح" },
   "quiz": [
@@ -75,7 +99,7 @@ Structure:
 }
 
 Mode Rules:
-1. 'simple': Use simple language, focus on analogies/examples. MANDATORY: Return EXACTLY 2 easy MCQs in "quiz".
+1. 'simple': Use simple language, focus on analogies. MANDATORY: Return EXACTLY 2 easy MCQs in "quiz".
 2. 'deep': Use technical terms, focus on deep theory/proofs. MANDATORY: Return EXACTLY 2 difficult MCQs in "quiz".
 3. 'exam': Set explanation and examInsight to "". MANDATORY: Return EXACTLY 10 hard MCQs in "quiz".
 
@@ -84,8 +108,7 @@ LaTeX Rules:
 - JSON ESCAPING (CRITICAL): You MUST use double-backslashes (e.g., "\\\\frac") so LaTeX survives JSON parsing.
 
 FINAL VALIDATION:
-- Do NOT skip the quiz field. 
-- Do NOT put JSON inside the explanation.
+- Do NOT skip any field. 
 - If mode is simple or deep, quiz must have EXACTLY 2 items.`;
 
         const userPrompt = `
