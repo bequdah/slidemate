@@ -47,10 +47,7 @@ QUIZ FORMAT (MANDATORY):
     "options": ["Option A", "Option B", "Option C", "Option D"], 
     "a": 0, 
     "reasoning": "Short explanation (max 1 sentence)."
-    CRITICAL:
-    - reasoning MUST be short (<= 25 words).
-    - In EXAM mode, keep reasoning VERY short or empty to avoid long outputs.
-
+    
   }
 ]
 CRITICAL: Every quiz question MUST include a detailed "reasoning" field that explains the answer.
