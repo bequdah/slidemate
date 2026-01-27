@@ -77,61 +77,76 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
             <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${currentContent.dir === 'rtl' ? 'font-arabic' : ''}`} dir={currentContent.dir}>
                 <div className="flex flex-col h-full overflow-hidden">
                     {/* Header */}
-                    <div className="p-4 md:p-8 border-b border-white/5 flex justify-between items-center md:items-start bg-slate-900/40 backdrop-blur-2xl relative min-h-[100px] md:min-h-[160px] flex-shrink-0">
-                        {/* LEFT STATIC INFO (Simplified back) */}
-                        <div className="flex items-center md:flex-col gap-3 relative z-[60]">
-                            <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10 group/logo">
-                                <img src="/logo_white_bg.jpg" alt="SlideMate AI" className="w-full h-full object-cover" />
-                                {showIntro && (
-                                    <div className="absolute inset-0 bg-indigo-600/40 animate-pulse" />
-                                )}
-                            </div>
-                            <div className="flex flex-col">
-                                <h3 className="text-lg md:text-xl font-black tracking-tight text-white leading-tight">
-                                    {slideNumbers.length > 1 ? (lang === 'en' ? 'Batch Analysis' : 'تحليل مجمع') : (lang === 'en' ? 'SlideMate' : 'سلايد ميت')}
-                                </h3>
-                                <h4 className="text-indigo-400 font-bold text-[10px] md:text-sm tracking-widest uppercase">
-                                    {slideNumbers.length > 1
-                                        ? `${lang === 'en' ? 'Slides' : 'سلايدات'} ${Math.min(...slideNumbers)}-${Math.max(...slideNumbers)}`
-                                        : (lang === 'en' ? 'Insights' : 'رؤى')}
-                                </h4>
-                            </div>
-                        </div>
+                    <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl relative flex-shrink-0 min-h-[140px] md:min-h-[180px]">
+                        <div className="flex flex-col md:grid md:grid-cols-[200px_1fr_200px] gap-6 items-center w-full">
 
-                        {/* ORIGINAL ANIMATED BRANDING AREA (Back to Absolute Center) */}
-                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                            {showIntro && (
-                                <div className="relative flex items-center">
-                                    <h2 className="text-2xl md:text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
-                                        <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
-                                        <span className="text-indigo-500/20">MΛTE</span>
-                                    </h2>
-                                    <div className="absolute inset-0 flex items-center gap-2 overflow-hidden animate-reveal-text">
-                                        <h2 className="text-2xl md:text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
-                                            <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
-                                            <span className="text-indigo-500">MΛTE</span>
-                                        </h2>
+                            {/* BRAND & INFO: Row 1 on Mobile, Left on Desktop */}
+                            <div className="flex justify-between items-center w-full md:w-auto md:flex-col md:items-start gap-4 relative z-[60]">
+                                <div className="flex items-center md:flex-col gap-3">
+                                    <div className="relative w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10 flex-shrink-0">
+                                        <img src="/logo_white_bg.jpg" alt="SlideMate AI" className="w-full h-full object-cover" />
+                                        {showIntro && (
+                                            <div className="absolute inset-0 bg-indigo-600/40 animate-pulse" />
+                                        )}
                                     </div>
-                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-16 h-16 md:w-24 md:h-24 z-20 animate-robot-write">
-                                        <div className="relative">
-                                            <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
-                                            <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
-                                            <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-indigo-400 rounded-full animate-ping" />
+                                    <div className="flex flex-col">
+                                        <h3 className="text-sm md:text-xl font-black tracking-tight text-white leading-tight uppercase italic flex items-center gap-1">
+                                            <span>SLIDE</span>
+                                            <span className="text-indigo-400">MΛTE</span>
+                                        </h3>
+                                        <h4 className="text-indigo-400/80 font-bold text-[9px] md:text-xs tracking-widest uppercase">
+                                            {slideNumbers.length > 1 ? (lang === 'en' ? 'Batch Analysis' : 'تحليل مجمع') : (lang === 'en' ? 'Insights' : 'رؤى')}
+                                        </h4>
+                                    </div>
+                                </div>
+
+                                {/* Mobile-only Close button to keep Row 1 clean */}
+                                <div className="flex md:hidden items-center gap-2">
+                                    {data && (
+                                        <div className="flex bg-white/5 p-1 rounded-lg border border-white/10 scale-90 origin-right">
+                                            <button onClick={() => setLang('en')} className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>EN</button>
+                                            <button onClick={() => setLang('ar')} className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
+                                        </div>
+                                    )}
+                                    <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">✕</button>
+                                </div>
+                            </div>
+
+                            {/* ANIMATION AREA: Row 2 on Mobile, Center on Desktop */}
+                            <div className="relative w-full h-20 md:h-full flex items-center justify-center pointer-events-none">
+                                {showIntro && (
+                                    <div className="relative flex items-center scale-75 md:scale-100 mt-4 md:mt-0">
+                                        <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
+                                            <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
+                                            <span className="text-indigo-500/20">MΛTE</span>
+                                        </h2>
+                                        <div className="absolute inset-0 flex items-center gap-2 overflow-visible animate-reveal-text">
+                                            <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
+                                                <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
+                                                <span className="text-indigo-500">MΛTE</span>
+                                            </h2>
+                                        </div>
+                                        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-16 h-16 md:w-24 md:h-24 z-20 animate-robot-write">
+                                            <div className="relative overflow-visible">
+                                                <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
+                                                <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
+                                                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-indigo-400 rounded-full animate-ping" />
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            )}
-                        </div>
+                                )}
+                            </div>
 
-                        {/* RIGHT ACTIONS (Restored) */}
-                        <div className="flex items-center gap-2 md:gap-4 relative z-[60]">
-                            {data && (
-                                <div className="flex bg-white/5 p-1 rounded-lg md:rounded-xl border border-white/10 scale-90 md:scale-100">
-                                    <button onClick={() => setLang('en')} className={`px-2 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>EN</button>
-                                    <button onClick={() => setLang('ar')} className={`px-2 md:px-4 py-1.5 md:py-2 rounded-md md:rounded-lg text-[10px] md:text-xs font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
-                                </div>
-                            )}
-                            <button onClick={onClose} className="w-10 h-10 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-90 text-xl md:text-2xl border border-white/5">✕</button>
+                            {/* ACTIONS & CLOSE: Desktop only (Hidden on mobile as it's in Row 1) */}
+                            <div className="hidden md:flex items-center justify-end gap-4 relative z-[60]">
+                                {data && (
+                                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 scale-90 md:scale-100">
+                                        <button onClick={() => setLang('en')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>EN</button>
+                                        <button onClick={() => setLang('ar')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
+                                    </div>
+                                )}
+                                <button onClick={onClose} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl">✕</button>
+                            </div>
                         </div>
                     </div>
 
@@ -245,10 +260,18 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
             <style>{`
                 @keyframes robot-write {
-                    0% { transform: translate(-300px, -50%) scale(0.5) rotate(-10deg); opacity: 0; }
-                    15% { transform: translate(-200px, -50%) scale(1.2) rotate(5deg); opacity: 1; }
-                    85% { transform: translate(250px, -50%) scale(1.2) rotate(-5deg); opacity: 1; }
-                    100% { transform: translate(350px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
+                    0% { transform: translate(-100px, -50%) scale(0.6) rotate(-10deg); opacity: 0; }
+                    15% { transform: translate(-60px, -50%) scale(1.2) rotate(5deg); opacity: 1; }
+                    85% { transform: translate(60px, -50%) scale(1.2) rotate(-5deg); opacity: 1; }
+                    100% { transform: translate(100px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
+                }
+                @media (min-width: 768px) {
+                    @keyframes robot-write {
+                        0% { transform: translate(-300px, -50%) scale(0.5) rotate(-10deg); opacity: 0; }
+                        15% { transform: translate(-200px, -50%) scale(1.3) rotate(5deg); opacity: 1; }
+                        85% { transform: translate(250px, -50%) scale(1.3) rotate(-5deg); opacity: 1; }
+                        100% { transform: translate(350px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
+                    }
                 }
                 @keyframes reveal-text {
                     0%, 15% { width: 0; }
