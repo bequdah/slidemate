@@ -78,19 +78,19 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                 <div className="flex flex-col h-full overflow-hidden">
                     {/* Header */}
                     <div className="p-4 md:p-8 border-b border-white/5 flex justify-between items-center md:items-start bg-slate-900/40 backdrop-blur-2xl relative overflow-hidden min-h-[100px] md:min-h-[160px] flex-shrink-0">
-                        {/* VERTICAL STATIC INFO */}
-                        <div className="flex items-center md:flex-col gap-3 relative z-[60]">
-                            <div className="relative w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10 group/logo">
+                        {/* LEFT STATIC INFO AREA */}
+                        <div className="flex items-center md:flex-col gap-3 relative z-[60] bg-slate-900/60 backdrop-blur-md p-2 rounded-2xl border border-white/5 pr-4">
+                            <div className="relative w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10 group/logo">
                                 <img src="/logo_white_bg.jpg" alt="SlideMate AI" className="w-full h-full object-cover" />
                                 {showIntro && (
                                     <div className="absolute inset-0 bg-indigo-600/40 animate-pulse" />
                                 )}
                             </div>
                             <div className="flex flex-col">
-                                <h3 className="text-lg md:text-xl font-black tracking-tight text-white leading-tight">
+                                <h3 className="text-[12px] md:text-xl font-black tracking-tight text-white leading-tight">
                                     {slideNumbers.length > 1 ? (lang === 'en' ? 'Batch Analysis' : 'تحليل مجمع') : (lang === 'en' ? 'SlideMate' : 'سلايد ميت')}
                                 </h3>
-                                <h4 className="text-indigo-400 font-bold text-[10px] md:text-sm tracking-widest uppercase">
+                                <h4 className="text-indigo-400 font-bold text-[8px] md:text-sm tracking-widest uppercase">
                                     {slideNumbers.length > 1
                                         ? `${lang === 'en' ? 'Slides' : 'سلايدات'} ${Math.min(...slideNumbers)}-${Math.max(...slideNumbers)}`
                                         : (lang === 'en' ? 'Insights' : 'رؤى')}
@@ -98,8 +98,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             </div>
                         </div>
 
-                        {/* ANIMATED BRANDING AREA (Optimized for all screens) */}
-                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none w-full max-w-[200px] md:max-w-none">
+                        {/* ANIMATED BRANDING AREA (Confined to center) */}
+                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center pointer-events-none w-full max-w-[120px] sm:max-w-none">
                             {showIntro && (
                                 <div className="relative flex items-center scale-[0.6] sm:scale-75 md:scale-100">
                                     <h2 className="text-4xl md:text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
@@ -244,10 +244,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
             <style>{`
                 @keyframes robot-write {
-                    0% { transform: translate(-150px, -50%) scale(0.6) rotate(-10deg); opacity: 0; }
-                    15% { transform: translate(-80px, -50%) scale(0.9) rotate(5deg); opacity: 1; }
-                    85% { transform: translate(80px, -50%) scale(0.9) rotate(-5deg); opacity: 1; }
-                    100% { transform: translate(150px, -50%) scale(0.7) rotate(10deg); opacity: 0; }
+                    0% { transform: translate(-80px, -50%) scale(0.6) rotate(-10deg); opacity: 0; }
+                    15% { transform: translate(-40px, -50%) scale(0.9) rotate(5deg); opacity: 1; }
+                    85% { transform: translate(40px, -50%) scale(0.9) rotate(-5deg); opacity: 1; }
+                    100% { transform: translate(80px, -50%) scale(0.7) rotate(10deg); opacity: 0; }
                 }
                 @media (min-width: 768px) {
                     @keyframes robot-write {
