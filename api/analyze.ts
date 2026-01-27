@@ -63,6 +63,21 @@ QUALITY RULES:
 ARABIC:
 - Translate explanation and examInsight into Arabic (Modern Standard Arabic).
 - Keep the same JSON structure.
+VISION CRITICAL RULES (MANDATORY):
+- If the image content is unclear, abstract, low-resolution, or cannot be confidently interpreted:
+  - You MUST NOT invent explanations.
+  - You MUST return:
+    explanation: { "sections": [] }
+    examInsight: { "sections": [] }
+    quiz: []
+- You are STRICTLY FORBIDDEN from creating generic explanations (e.g., Variable A / Variable B).
+- ONLY explain components that are visually identifiable in the image.
+- If the image is a technical diagram:
+  - First list visible components and hierarchy.
+  - Explain relationships ONLY if they are explicitly shown.
+- If confidence is low, return empty sections instead of guessing.
+- If the image contains tables, numbers, or performance metrics, you MUST extract and explain them explicitly.
+- If labels are visible, you MUST use their exact wording.
 
 MODE RULES:
 
@@ -208,16 +223,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const systemPrompt = buildSystemPrompt();
 
-        const userPrompt = `
-CONTENT:
-${slideContexts || 'No text provided'}
+        let userPrompt = `
+CONTENT (TEXT MAY BE EMPTY):
+${slideContexts || ''}
+
+VISION RULE (MANDATORY):
+- If CONTENT is empty or weak, rely ONLY on what is clearly visible in the image.
+- If you cannot identify concrete technical components from the image, RETURN EMPTY JSON SECTIONS.
+- DO NOT explain abstract concepts, variables, or general relationships.
+- DO NOT use placeholders like "Variable A / Variable B".
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
 - You MUST follow ${resolvedMode.toUpperCase()} rules.
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs in the quiz array.
+`;
+
+        if (resolvedMode !== 'exam') {
+            userPrompt += `
 - explanation/examInsight rules per mode must be respected.
 `;
+        } else {
+            userPrompt += `
+- DO NOT generate explanation or examInsight.
+- Output ONLY the quiz array.
+`;
+        }
+
 
         let targetModels: string[] = ['llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'llama-3.1-8b-instant'];
 
