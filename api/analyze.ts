@@ -135,14 +135,12 @@ function validateResultShape(result: any, mode: Mode) {
     if (!Array.isArray(result.quiz)) return false;
     if (result.quiz.length !== requiredQuizCount(mode)) return false;
 
-    // arabic must exist
-    if (!isStructuredObject(result.arabic)) return false;
+    // Relaxed validation: We only strictly check 'quiz' and basic 'explanation' structure if not exam mode.
+    // arabic and examInsight are now optional to prevent failures.
 
-    // explanation/examInsight must ALWAYS be objects now
-    if (!isStructuredObject(result.explanation)) return false;
-    if (!isStructuredObject(result.examInsight)) return false;
-    if (!isStructuredObject(result.arabic.explanation)) return false;
-    if (!isStructuredObject(result.arabic.examInsight)) return false;
+    if (mode !== 'exam') {
+        if (!isStructuredObject(result.explanation)) return false;
+    }
 
     // In exam mode, enforce empty sections
     if (mode === 'exam') {

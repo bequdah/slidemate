@@ -274,6 +274,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                         <button onClick={() => setLang('ar')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
                                     </div>
                                 )}
+                                {mode && (
+                                    <button onClick={handleBack} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl">←</button>
+                                )}
                                 <button onClick={onClose} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl">✕</button>
                             </div>
                         </div>
