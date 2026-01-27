@@ -113,12 +113,16 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                                 <span className="text-indigo-500">MΛTE</span>
                                             </h2>
                                         </div>
-                                        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[clamp(56px,12vw,96px)] h-[clamp(56px,12vw,96px)] z-20 animate-robot-write">
-                                            <div className="relative">
-                                                <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
-                                                <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
-                                                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-indigo-400 rounded-full animate-ping" />
+                                        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-[clamp(64px,15vw,110px)] h-[clamp(64px,15vw,110px)] z-20 animate-robot-write">
+                                            <div className="relative w-full h-full overflow-hidden rounded-2xl logoIconWrap">
+                                                <div className="absolute inset-0 bg-indigo-500/20 blur-2xl rounded-full" />
+                                                <img
+                                                    src="/ai_robot_final.png"
+                                                    className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                                                    style={{ willChange: 'transform' }}
+                                                />
                                             </div>
+                                            <div className="absolute -bottom-1 -right-1 w-5 h-5 md:w-7 md:h-7 bg-indigo-400 rounded-full animate-ping z-30" />
                                         </div>
                                     </div>
                                 </div>
@@ -246,26 +250,34 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
             </div>
 
             <style>{`
+                :root {
+                    --writing-dur: 1.2s;
+                    --writing-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+                }
                 @keyframes robot-write {
-                    0% { transform: translate(-120px, -50%) scale(0.7) rotate(-10deg); opacity: 0; }
-                    15% { transform: translate(-60px, -50%) scale(1) rotate(5deg); opacity: 1; }
-                    85% { transform: translate(60px, -50%) scale(1) rotate(-5deg); opacity: 1; }
-                    100% { transform: translate(120px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
+                    0% { transform: translate(-100px, -50%) scale(0.6); opacity: 0; }
+                    10% { transform: translate(-80px, -50%) scale(1.3); opacity: 1; }
+                    90% { transform: translate(80px, -50%) scale(1.3); opacity: 1; }
+                    100% { transform: translate(100px, -50%) scale(0.8); opacity: 0; }
                 }
                 @media (min-width: 768px) {
                     @keyframes robot-write {
-                        0% { transform: translate(-300px, -50%) scale(0.5) rotate(-10deg); opacity: 0; }
-                        15% { transform: translate(-200px, -50%) scale(1.2) rotate(5deg); opacity: 1; }
-                        85% { transform: translate(250px, -50%) scale(1.2) rotate(-5deg); opacity: 1; }
-                        100% { transform: translate(350px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
+                        0% { transform: translate(-250px, -50%) scale(0.5); opacity: 0; }
+                        10% { transform: translate(-180px, -50%) scale(1.5); opacity: 1; }
+                        90% { transform: translate(220px, -50%) scale(1.5); opacity: 1; }
+                        100% { transform: translate(300px, -50%) scale(0.8); opacity: 0; }
                     }
                 }
                 @keyframes reveal-text {
-                    0%, 15% { width: 0; }
-                    85%, 100% { width: 100%; }
+                    0%, 10% { width: 0; }
+                    90%, 100% { width: 100%; }
                 }
-                .animate-robot-write { animation: robot-write 4s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
-                .animate-reveal-text { animation: reveal-text 4s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
+                .animate-robot-write { 
+                    animation: robot-write var(--writing-dur) var(--writing-ease) forwards; 
+                }
+                .animate-reveal-text { 
+                    animation: reveal-text var(--writing-dur) var(--writing-ease) forwards; 
+                }
                 .font-arabic { font-family: 'IBM Plex Sans Arabic', sans-serif; }
                 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 20px; }
