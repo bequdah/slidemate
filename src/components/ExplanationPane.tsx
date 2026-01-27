@@ -228,12 +228,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                 </div>
 
                                 <div className="flex md:hidden items-center gap-2">
-                                    {data && (
-                                        <div className="flex bg-white/5 p-1 rounded-lg border border-white/10 scale-90 origin-right">
-                                            <button onClick={() => setLang('en')} className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>EN</button>
-                                            <button onClick={() => setLang('ar')} className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
-                                        </div>
-                                    )}
+
                                     {mode && (
                                         <button onClick={handleBack} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">←</button>
                                     )}
@@ -269,9 +264,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             {/* ACTIONS & CLOSE */}
                             <div className="hidden md:flex items-center justify-end gap-4 relative z-[60]">
                                 {data && (
-                                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 scale-90 md:scale-100">
-                                        <button onClick={() => setLang('en')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>EN</button>
-                                        <button onClick={() => setLang('ar')} className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300'}`}>AR</button>
+                                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 scale-90 md:scale-100 opacity-50 cursor-not-allowed" title="Translation disabled">
+                                        <span className="px-4 py-2 rounded-lg text-xs font-black text-white bg-indigo-600 shadow-lg">EN</span>
                                     </div>
                                 )}
                                 {mode && (

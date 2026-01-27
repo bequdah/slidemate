@@ -26,47 +26,9 @@ GOAL:
 STRICT OUTPUT KEYS:
 1) "explanation": structured object (ALWAYS)
 2) "examInsight": structured object (ALWAYS)
-3) "quiz": array of MCQ objects
-4) "arabic": translated versions of explanation and examInsight (same structure or empty string)
-
-STRUCTURED OBJECT FORMAT (MANDATORY when not empty):
-{
-  "title": "Main Title (optional)",
-  "overview": "One concise sentence (optional)",
-  "sections": [
-    { "heading": "Section Title", "text": "Max 2 sentences explanation" }
-    OR { "heading": "Section Title", "bullets": ["Point 1", "Point 2"] }
-    OR { "heading": "Key Definitions", "definitions": [{"term":"...","def":"..."}] }
-  ]
-}
-
-QUIZ FORMAT (MANDATORY):
-"quiz": [
-  { 
-    "q": "Question text", 
-    "options": ["Option A", "Option B", "Option C", "Option D"], 
-    "a": 0, 
-    "reasoning": "Short explanation (max 1 sentence)."
-    
-  }
-]
-CRITICAL: Every quiz question MUST include a detailed "reasoning" field that explains the answer.
-
-QUALITY RULES:
-- Preserve hierarchy: title -> bullets -> conclusion.
-- Each bullet in the slide should become its own bullet or short text line.
-- Definitions must appear under "Key Definitions" and must be precise.
-- Avoid repetition.
-- Academic tone, clear and structured.
 - Do NOT mention the slide/image/analysis process.
-- LANGUAGE RULE:
-  - All content in "explanation", "examInsight", and "quiz" (including reasoning) MUST be in ENGLISH.
-  - Arabic translation goes ONLY in the "arabic" object.
+- All content in "explanation", "examInsight", and "quiz" (including reasoning) MUST be in ENGLISH.
 
-ARABIC:
-- You MUST translate "explanation" and "examInsight" into Arabic (Modern Standard Arabic).
-- The "arabic" object MUST NOT be empty if the English content is not empty.
-- Keep the same JSON structure.
 VISION CRITICAL RULES (MANDATORY):
 - If the image content is unclear but TEXT CONTENT is provided:
   - You MAY explain concepts found in the text content.
@@ -147,7 +109,6 @@ function validateResultShape(result: any, mode: Mode) {
     if (result.quiz.length !== requiredQuizCount(mode)) return false;
 
     // Relaxed validation: We only strictly check 'quiz' and basic 'explanation' structure if not exam mode.
-    // arabic and examInsight are now optional to prevent failures.
 
     if (mode !== 'exam') {
         if (!isStructuredObject(result.explanation)) return false;
