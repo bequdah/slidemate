@@ -298,11 +298,17 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     }
                 }
                 @keyframes reveal-text {
-                    0%, 15% { width: 0; }
-                    85%, 100% { width: 100%; }
+                    0%, 15% { width: 0; opacity: 0; }
+                    20% { opacity: 1; }
+                    85%, 100% { width: 100%; opacity: 1; }
                 }
                 .animate-robot-write { animation: robot-write 3s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
-                .animate-reveal-text { animation: reveal-text 3s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
+                .animate-reveal-text { 
+                    animation: reveal-text 3s cubic-bezier(0.45, 0, 0.55, 1) forwards; 
+                    mask-image: linear-gradient(to right, black 85%, transparent 100%);
+                    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
+                    overflow: hidden;
+                }
                 .font-arabic { font-family: 'IBM Plex Sans Arabic', sans-serif; }
                 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 20px; }

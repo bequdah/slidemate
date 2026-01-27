@@ -62,10 +62,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // 4. Parse Body
         const { slideNumbers, textContentArray, mode, thumbnail } = req.body;
 
-        // 5. Call AI (Text-only logic)
+        // 5. Build Prompts
         const isMulti = slideNumbers.length > 1;
-        const model = "llama-3.3-70b-versatile"; // Use a stable supported model
-
         const slideContexts = slideNumbers.map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || "No text"}`).join('\n\n');
 
         const systemPrompt = `You are an elite University Professor.
@@ -104,36 +102,74 @@ Follow these rules strictly:
             - All math MUST be perfectly formatted with \\\\ commands.
         `;
 
-        const messages: any[] = [{ role: "system", content: systemPrompt }];
-        messages.push({ role: "user", content: userPrompt });
-
-        const models = [
+        // 6. Model Selection & Routing
+        let targetModels = [
             "llama-3.3-70b-versatile",
-            "llama-3.1-70b-versatile",
             "mixtral-8x7b-32768",
             "llama-3-8b-8192"
         ];
 
+        let messages: any[] = [{ role: "system", content: systemPrompt }];
+
+        // Check for Vision Request
+        if (thumbnail && thumbnail.startsWith('data:image')) {
+            console.log("Vision Request Detected");
+            targetModels = ["llama-3.2-11b-vision-preview", "llama-3-8b-8192"];
+
+            // For vision, we need to restructure the prompt
+            messages = [
+                { role: "system", content: systemPrompt },
+                {
+                    role: "user",
+                    content: [
+                        { type: "text", text: userPrompt },
+                        {
+                            type: "image_url",
+                            image_url: {
+                                url: thumbnail, // Base64 image
+                            },
+                        },
+                    ],
+                }
+            ];
+        } else {
+            messages.push({ role: "user", content: userPrompt });
+        }
+
         let completion;
         let lastError;
 
-        for (const targetModel of models) {
+        for (const targetModel of targetModels) {
             try {
+                console.log(`Attempting analysis with ${targetModel}...`);
+
+                // Add a timeout for the overall request if possible, 
+                // but Groq SDK doesn't have a simple 'timeout' param in completions.create
+                // Vercel will handle the 10s limit.
+
                 completion = await groq.chat.completions.create({
                     messages,
                     model: targetModel,
                     temperature: 0.1,
                     response_format: { type: "json_object" }
                 });
-                break; // If successful, exit loop
+                console.log(`Success with ${targetModel}`);
+                break;
             } catch (err: any) {
                 lastError = err;
-                // If Rate Limit (429), try next model
+                console.error(`Error with ${targetModel}:`, err.message);
+
+                // If Rate Limit (429), try next model immediately
                 if (err.status === 429 || err.message?.includes("rate_limit")) {
-                    console.log(`Model ${targetModel} rate limited. Trying next...`);
                     continue;
                 }
-                throw err; // Other errors (auth, validation) should fail immediately
+
+                // For other errors, if we have another model, try it
+                if (targetModels.indexOf(targetModel) < targetModels.length - 1) {
+                    continue;
+                }
+
+                throw err;
             }
         }
 

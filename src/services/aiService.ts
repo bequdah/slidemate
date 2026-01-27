@@ -47,8 +47,16 @@ export const analyzeSlide = async (
             if (response.status === 429) {
                 throw new Error("Daily limit reached (50 free requests/day). Come back tomorrow!");
             }
-            const error = await response.json();
-            throw new Error(error.error || "Failed to analyze");
+
+            let errorMessage = "Failed to analyze";
+            try {
+                const errorData = await response.json();
+                errorMessage = errorData.error || errorMessage;
+            } catch (e) {
+                // Not JSON (maybe 504 HTML)
+                errorMessage = `Server Error (${response.status})`;
+            }
+            throw new Error(errorMessage);
         }
 
         return await response.json();
