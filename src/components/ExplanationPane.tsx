@@ -333,44 +333,54 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     margin-top: 0 !important;
                 }
 
-                /* Exam Insight Custom Styling - Fixed sequential coloring */
+                /* Exam Insight Custom Styling - Unified Sequential Coloring */
                 .exam-insight-content ul {
                     list-style-type: none !important;
                     padding-left: 0 !important;
                     margin: 0 !important;
                 }
-                .exam-insight-content > *, .exam-insight-content li {
+                
+                /* Target ANY direct child or list item as a 'point' */
+                .exam-insight-content > *, 
+                .exam-insight-content li {
                     position: relative;
-                    padding-left: 1.75rem;
-                    margin-bottom: 0.75rem;
+                    padding-left: 2rem;
+                    margin-bottom: 1rem;
                     display: block;
                     font-weight: 700;
-                    line-height: 1.5;
+                    line-height: 1.6;
+                    color: #94a3b8; /* Default grey-ish */
                 }
-                .exam-insight-content > *::before, .exam-insight-content li::before {
+
+                .exam-insight-content > *::before, 
+                .exam-insight-content li::before {
                     content: '✦';
                     position: absolute;
                     left: 0;
-                    top: 2px;
-                    font-size: 1.1em;
+                    top: 0;
+                    font-size: 1.2em;
                 }
-                
-                /* Point 1 (Usually a P tag) */
-                .exam-insight-content > p { color: #fde68a !important; } /* Amber */
-                .exam-insight-content > p::before { color: #f59e0b !important; }
 
-                /* Points 2, 3, 4 (Usually inside LI) */
-                .exam-insight-content li:nth-child(1) { color: #a5b4fc !important; } /* Indigo */
-                .exam-insight-content li:nth-child(1)::before { color: #6366f1 !important; }
-                
-                .exam-insight-content li:nth-child(2) { color: #6ee7b7 !important; } /* Emerald */
-                .exam-insight-content li:nth-child(2)::before { color: #10b981 !important; }
-                
-                .exam-insight-content li:nth-child(3) { color: #fca5a5 !important; } /* Rose */
-                .exam-insight-content li:nth-child(3)::before { color: #ef4444 !important; }
+                /* Sequential Colors based on the order of appearance in the container */
+                /* This handles cases where Point 1 is a <p> and others are <li> */
+                .exam-insight-content *:nth-child(4n+1) { color: #fde68a !important; }
+                .exam-insight-content *:nth-child(4n+1)::before { color: #f59e0b !important; }
 
-                /* Fallback for general sequential content if structure changes */
-                .exam-insight-content > *:nth-of-type(4n+4) { color: #fca5a5 !important; }
+                .exam-insight-content *:nth-child(4n+2) { color: #a5b4fc !important; }
+                .exam-insight-content *:nth-child(4n+2)::before { color: #6366f1 !important; }
+
+                .exam-insight-content *:nth-child(4n+3) { color: #6ee7b7 !important; }
+                .exam-insight-content *:nth-child(4n+3)::before { color: #10b981 !important; }
+
+                .exam-insight-content *:nth-child(4n+4) { color: #fca5a5 !important; }
+                .exam-insight-content *:nth-child(4n+4)::before { color: #ef4444 !important; }
+
+                /* Prevent double bulleting if a list is a direct child */
+                .exam-insight-content ul::before { content: none !important; }
+                .exam-insight-content ul { padding-left: 0 !important; color: inherit !important; }
+                
+                /* Ensure nested items inherit correctly if we have a complex structure */
+                .exam-insight-content li { margin-left: 0 !important; }
             `}</style>
         </div>
     );
