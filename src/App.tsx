@@ -145,7 +145,7 @@ function MainApp() {
               className="w-10 h-10 rounded-xl shadow-lg border border-indigo-500/30 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 cursor-pointer"
             />
           </div>
-          <h1 className="text-xl sm:text-2xl font-black tracking-tighter uppercase italic text-white flex items-center gap-1">
+          <h1 className="text-lg sm:text-2xl font-black tracking-tighter uppercase italic text-white flex items-center gap-1">
             <span>SLIDE</span>
             <span className="text-indigo-400">MΛTE</span>
           </h1>
@@ -154,16 +154,16 @@ function MainApp() {
         <div className="flex items-center gap-4">
           {user && (
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-slate-400 hidden sm:block">
+              <span className="text-xs font-medium text-slate-400 hidden md:block">
                 {user.displayName}
               </span>
               <button
                 onClick={async () => await logout()}
-                className="text-xs bg-white/5 hover:bg-white/10 px-3 py-2 rounded-lg transition-colors border border-white/5 text-white"
+                className="text-[10px] sm:text-xs bg-white/5 hover:bg-white/10 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors border border-white/5 text-white whitespace-nowrap"
               >
                 Sign Out
               </button>
-              {user.photoURL && <img src={user.photoURL} className="w-8 h-8 rounded-full border border-indigo-500/50" />}
+              {user.photoURL && <img src={user.photoURL} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-indigo-500/50" />}
             </div>
           )}
         </div>

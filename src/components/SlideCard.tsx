@@ -56,7 +56,7 @@ export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, s
                 <div className="absolute top-4 right-4 md:top-6 md:right-6 flex gap-3 z-30" onClick={(e) => e.stopPropagation()}>
                     <button
                         onClick={onUnderstand}
-                        className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.25rem] flex items-center justify-center overflow-hidden transition-all duration-300 group/ai border border-white/10 ${isImportant
+                        className={`w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-[1.25rem] flex items-center justify-center overflow-hidden transition-all duration-300 group/ai border border-white/10 ${isImportant
                             ? 'bg-amber-600/90 hover:bg-amber-500 shadow-lg shadow-amber-900/50'
                             : 'bg-indigo-600/90 hover:bg-indigo-500 shadow-lg shadow-indigo-900/50'
                             }`}
