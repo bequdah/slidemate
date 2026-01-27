@@ -108,7 +108,11 @@ function validateResultShape(result: any, mode: Mode) {
     if (!Array.isArray(result.quiz)) return false;
     if (result.quiz.length !== requiredQuizCount(mode)) return false;
 
-    // Relaxed validation: We only strictly check 'quiz' and basic 'explanation' structure if not exam mode.
+    // Validate MCQ options strictness
+    for (const q of result.quiz) {
+        if (!Array.isArray(q.options) || q.options.length !== 4) return false;
+        if (typeof q.a !== 'number' || q.a < 0 || q.a > 3) return false;
+    }
 
     if (mode !== 'exam') {
         if (!isStructuredObject(result.explanation)) return false;
@@ -210,19 +214,49 @@ REMINDER:
         }
 
 
-        let targetModels: string[] = ['llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'llama-3.1-8b-instant'];
+        // STRATEGY: Use ONLY the smartest model (70b).
+        // We list it multiple times to act as "retries" in case of a random network glitch or bad output.
+        // We DO NOT fallback to dumber models (8b/Mixtral) to preserve quality.
+        let targetModels: string[] = [
+            'llama-3.3-70b-versatile',
+            'llama-3.3-70b-versatile',
+            'llama-3.3-70b-versatile'
+        ];
 
         let messages: any[] = [{ role: 'system', content: systemPrompt }];
 
         if (isVisionRequest(thumbnail)) {
             console.log('Vision Request Detected');
-            targetModels = ['llama-3.2-11b-vision-preview', 'llama-3.3-70b-versatile', 'llama-3.1-8b-instant'];
+            // Same strategy for vision: force the capable model only.
+            targetModels = [
+                'llama-3.2-11b-vision-preview', // Keep one dedicated vision model just in case 70b struggles with image token
+                'llama-3.3-70b-versatile',
+                'llama-3.3-70b-versatile'
+            ];
+            // VISION STRATEGY: 
+            // When an image is present, we ask the model to analyze the IMAGE primarily.
+            // We do NOT pass the potentially confusing 'slideContexts' text blob here to avoid "hallucinations" mixed from text.
+            const visionUserPrompt = `
+MODE: ${resolvedMode.toUpperCase()}
+
+VISION TASK:
+- Analyze ONLY what is clearly visible in the image.
+- If text is readable in the image, you may use it.
+- If content is not readable, return empty JSON sections.
+- DO NOT generalize or invent explanations.
+- DO NOT use placeholders like "Variable A".
+
+REMINDER:
+- You MUST follow ${resolvedMode.toUpperCase()} rules.
+- Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
+`;
+
             messages = [
                 { role: 'system', content: systemPrompt },
                 {
                     role: 'user',
                     content: [
-                        { type: 'text', text: userPrompt },
+                        { type: 'text', text: visionUserPrompt },
                         {
                             type: 'image_url',
                             image_url: { url: thumbnail }
@@ -299,8 +333,8 @@ REMINDER:
         }
 
         if (!completion) throw lastError || new Error('All models failed');
-
-        res.status(500).json({ error: 'Unable to generate a valid response. Please try again.' });
+        // If we exhausted retries and still failed, return 503 Service Unavailable so client knows it's temporary
+        res.status(503).json({ error: 'System is busy. Please try again in a moment.' });
     } catch (error: any) {
         console.error('API Error:', error);
         if (error?.message === 'RATE_LIMIT_EXCEEDED') {
