@@ -99,9 +99,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                         </div>
 
                         {/* CENTER AREA: Strictly Confined Animation Box */}
-                        <div className="relative h-full w-full overflow-hidden flex items-center justify-center">
+                        <div className="relative h-full w-full overflow-hidden flex items-center justify-center min-h-[80px]">
                             {showIntro && (
-                                <div className="absolute inset-0 flex items-center justify-center scale-[0.5] sm:scale-75 md:scale-100">
+                                <div className="absolute inset-0 flex items-center justify-center scale-[0.65] sm:scale-85 md:scale-100">
                                     <div className="relative flex items-center">
                                         <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white/10 uppercase select-none flex items-center gap-2">
                                             <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
@@ -247,10 +247,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
             <style>{`
                 @keyframes robot-write {
-                    0% { transform: translate(-100px, -50%) scale(0.6) rotate(-10deg); opacity: 0; }
-                    15% { transform: translate(-60px, -50%) scale(0.9) rotate(5deg); opacity: 1; }
-                    85% { transform: translate(60px, -50%) scale(0.9) rotate(-5deg); opacity: 1; }
-                    100% { transform: translate(100px, -50%) scale(0.7) rotate(10deg); opacity: 0; }
+                    0% { transform: translate(-120px, -50%) scale(0.7) rotate(-10deg); opacity: 0; }
+                    15% { transform: translate(-60px, -50%) scale(1) rotate(5deg); opacity: 1; }
+                    85% { transform: translate(60px, -50%) scale(1) rotate(-5deg); opacity: 1; }
+                    100% { transform: translate(120px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
                 }
                 @media (min-width: 768px) {
                     @keyframes robot-write {
