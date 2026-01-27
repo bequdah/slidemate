@@ -69,10 +69,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const systemPrompt = `You are an elite University Professor.
 Return ONLY a valid JSON object.
 STRICT SEPARATION RULES:
-1. "explanation": Contains ONLY the markdown explanation. Do NOT include MCQs, quizzes, or insights here.
-2. "examInsight": Contains ONLY the 3-4 bullet points for exam tips.
-3. "quiz": Contains ONLY the array of MCQ objects.
-4. "arabic": Contains the translated versions of explanation and examInsight.
+1. "explanation": Detailed markdown explanation. Do NOT include MCQs or insights here.
+2. "examInsight": Exactly 3-4 bullet points for exam preparation.
+3. "quiz": The array of MCQ objects.
+4. "arabic": Translated versions of explanation and examInsight.
 
 Structure:
 {
@@ -85,13 +85,13 @@ Structure:
 }
 
 Mode Rules:
-1. 'simple': Focus on analogies. 
-2. 'deep': Focus on theory/proofs. 
-3. 'exam': 10 MCQs only (explanation & examInsight = ""). 
-4. LaTeX: Use $...$ for inline and $$...$$ for block math.
-5. JSON ESCAPING (CRITICAL): You MUST use double-backslashes for all LaTeX commands so they survive JSON parsing.
-   - Example: "\\\\frac{a}{b}" (Correct) vs "\frac{a}{b}" (Incorrect).
-   - Never omit the backslash. Always use \\\\ before commands like frac, sqrt, etc.`;
+1. 'simple': Use simple language, focus on analogies/examples, and return EXACTLY 2 easy MCQs.
+2. 'deep': Use technical terms, focus on deep theory/proofs, and return EXACTLY 2 difficult MCQs.
+3. 'exam': Set explanation and examInsight to "". Return EXACTLY 10 medium-to-hard MCQs in the "quiz" field.
+
+LaTeX Rules:
+- Use $...$ for inline and $$...$$ for block math.
+- JSON ESCAPING (CRITICAL): You MUST use double-backslashes (e.g., "\\\\frac") so LaTeX survives JSON parsing.`;
 
         const userPrompt = `CONTENT:\n${isMulti ? slideContexts : (textContentArray?.[0] || "")}\n\nMODE: ${mode.toUpperCase()}`;
 
