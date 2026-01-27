@@ -66,37 +66,62 @@ STRICT SEPARATION RULES:
 4. "arabic": Translated versions of explanation and examInsight.
 
 STRICT FORMATTING & UI RULES (CRITICAL):
-- EVERY section title MUST be a header starting with "## ".
-- NEVER use plain text for a section label (e.g., use "## Key Definitions" instead of "Key Definitions").
-- Reconstruct the hierarchy implied by titles and bullet points.
-- Each bullet point MUST become a separate, clearly explained sub-point.
-- Definitions MUST be written in **bold** and placed under a "## Key Definitions" section.
-- Cause–effect relationships MUST be explicit.
-- Use short paragraphs (max 2 sentences each).
+- Output "explanation" and "examInsight" as STRUCTURED JSON OBJECTS, NOT as Markdown strings.
+- Each must have: "title" (optional), "overview" (optional), and "sections" (array).
+- Each section can be ONE of these types:
+  1. Text section: { "heading": "...", "text": "..." }
+  2. Bullet section: { "heading": "...", "bullets": ["...", "..."] }
+  3. Definition section: { "heading": "Key Definitions", "definitions": [{"term": "...", "def": "..."}] }
 - Tone: Academic, concise, and exam-oriented. No conversational language.
 - Do NOT mention the slide, image, or analysis process.
 
 MANDATORY EXPLANATION STRUCTURE:
-## [Slide Main Title]
-(One concise sentence summarizing the overall purpose)
-
-## [Core Theme/Logic/Causes]
-(Logical breakdown of contents using sub-headers starting with ##)
-
-## Key Definitions
-- **Term**: Formal definition.
-
-## [Purpose / Why It Is Needed]
-(Explain the "Why" using a ## header)
-
-## Concrete Example (If applicable)
-(Must start with ## header)
+{
+  "title": "[Slide Main Title]",
+  "overview": "One concise sentence summarizing the overall purpose",
+  "sections": [
+    {
+      "heading": "[Core Theme/Logic/Causes]",
+      "text": "Logical breakdown explanation (max 2 sentences)"
+    },
+    {
+      "heading": "Key Definitions",
+      "definitions": [
+        {"term": "Term 1", "def": "Formal definition"},
+        {"term": "Term 2", "def": "Formal definition"}
+      ]
+    },
+    {
+      "heading": "[Purpose / Why It Is Needed]",
+      "text": "Explain the 'Why' in 1-2 sentences"
+    },
+    {
+      "heading": "Concrete Example",
+      "bullets": ["Example point 1", "Example point 2"]
+    }
+  ]
+}
 
 Structure Template:
 {
-  "explanation": "## Main Title\\n...\\n## Key Definitions\\n- **Term**: Def\\n...\\n## Concrete Example\\n...",
-  "examInsight": "- Point 1\\n- Point 2",
-  "arabic": { "explanation": "الشرح العلمي", "examInsight": "نصائح الامتحان" },
+  "explanation": {
+    "title": "Main Title",
+    "overview": "Brief summary",
+    "sections": [
+      {"heading": "Section 1", "text": "Content"},
+      {"heading": "Key Definitions", "definitions": [{"term": "X", "def": "Y"}]},
+      {"heading": "Examples", "bullets": ["Point 1", "Point 2"]}
+    ]
+  },
+  "examInsight": {
+    "sections": [
+      {"heading": "Exam Tips", "bullets": ["Tip 1", "Tip 2", "Tip 3"]}
+    ]
+  },
+  "arabic": { 
+    "explanation": { "title": "...", "sections": [...] }, 
+    "examInsight": { "sections": [...] } 
+  },
   "quiz": [
     { "q": "Question Text", "options": ["A", "B", "C", "D"], "a": 0, "reasoning": "Reason" }
   ]
