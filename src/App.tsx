@@ -5,6 +5,7 @@ import { ExplanationPane } from './components/ExplanationPane';
 import { LoadingScreen } from './components/LoadingScreen';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
+import { LogoModal } from './components/LogoModal';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Use a more reliable worker source from unpkg
@@ -30,6 +31,7 @@ function MainApp() {
   // Removed isBatchMode as it was unused and defaulting to true is fine if logic doesn't need state
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
 
   const handleUpload = async (file: File) => {
     setIsUploading(true);
@@ -139,7 +141,8 @@ function MainApp() {
             <img
               src="/logo_white_bg.jpg"
               alt="SlideMate Logo"
-              className="w-10 h-10 rounded-xl shadow-lg border border-indigo-500/30 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3"
+              onClick={() => setIsLogoModalOpen(true)}
+              className="w-10 h-10 rounded-xl shadow-lg border border-indigo-500/30 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 cursor-pointer"
             />
           </div>
           <h1 className="text-xl sm:text-2xl font-black tracking-tighter uppercase italic text-white flex items-center gap-1">
@@ -199,6 +202,7 @@ function MainApp() {
                   onUnderstand={() => setSelectedSlide(slide)}
                   selected={selectedSlideIds.includes(slide.id)}
                   onToggleSelect={() => toggleSlideSelection(slide.id)}
+                  onLogoClick={() => setIsLogoModalOpen(true)}
                 />
               </div>
             ))}
@@ -250,6 +254,8 @@ function MainApp() {
           />
         </>
       )}
+
+      <LogoModal isOpen={isLogoModalOpen} onClose={() => setIsLogoModalOpen(false)} />
     </div>
   );
 }

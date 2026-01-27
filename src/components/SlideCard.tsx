@@ -5,9 +5,10 @@ interface SlideCardProps {
     onUnderstand: () => void;
     selected?: boolean;
     onToggleSelect?: () => void;
+    onLogoClick?: () => void;
 }
 
-export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, selected, onToggleSelect }: SlideCardProps) => {
+export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, selected, onToggleSelect, onLogoClick }: SlideCardProps) => {
     return (
         <div className="relative w-full max-w-5xl mx-auto mb-4 group">
             {/* Main Card Container */}
@@ -53,11 +54,10 @@ export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, s
                     </div>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="absolute top-6 right-6 flex gap-3 z-10" onClick={(e) => e.stopPropagation()}>
+                <div className="absolute top-4 right-4 md:top-6 md:right-6 flex gap-3 z-30" onClick={(e) => e.stopPropagation()}>
                     <button
                         onClick={onUnderstand}
-                        className={`w-16 h-16 rounded-[1.25rem] flex items-center justify-center overflow-hidden transition-all duration-300 group/ai border border-white/5 ${isImportant
+                        className={`w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.25rem] flex items-center justify-center overflow-hidden transition-all duration-300 group/ai border border-white/10 ${isImportant
                             ? 'bg-amber-600/90 hover:bg-amber-500 shadow-lg shadow-amber-900/50'
                             : 'bg-indigo-600/90 hover:bg-indigo-500 shadow-lg shadow-indigo-900/50'
                             }`}
@@ -65,6 +65,14 @@ export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, s
                     >
                         <img src="/logo_white_bg.jpg" alt="AI" className="w-full h-full object-cover group-hover/ai:scale-110 transition-transform" />
                     </button>
+                    {onLogoClick && (
+                        <button
+                            onClick={onLogoClick}
+                            className="w-12 h-12 md:w-16 md:h-16 rounded-xl md:rounded-[1.25rem] bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:bg-white/20 transition-all active:scale-90"
+                        >
+                            <img src="/logo_white_bg.jpg" alt="Branding" className="w-full h-full object-cover rounded-lg" />
+                        </button>
+                    )}
                 </div>
 
 
