@@ -60,6 +60,11 @@ MODE RULES:
 - Questions must be directly based on the slide content.
 - Each question must test deep understanding, not just memorization.
 
+JSON SCHEMA:
+1) "explanation": { "title": string, "overview": string, "sections": [{ "heading": string, "bullets": string[] } OR { "heading": string, "text": string }] }
+2) "examInsight": { "title": string, "overview": string, "sections": [{ "heading": string, "text": string }] }
+3) "quiz": Array of objects: { "q": string, "options": [string (exactly 4)], "a": number (0-3), "reasoning": string }
+
 LaTeX Rules:
 - Use $...$ for inline and $$...$$ for block math.
 - JSON ESCAPING: You MUST use double-backslashes (e.g., "\\\\frac").
@@ -212,6 +217,7 @@ VISION/CONTEXT RULE:
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
 - You MUST follow ${resolvedMode.toUpperCase()} rules.
+- You MUST follow the JSON SCHEMA exactly.
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs in the quiz array.
 `;
 
