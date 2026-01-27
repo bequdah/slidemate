@@ -223,8 +223,7 @@ REMINDER:
         // CLIENTS SETUP: Initialize clients for both keys
         // Note: GROQ_API_KEY_2 must be set in Vercel environment variables
         const clients = [
-            new Groq({ apiKey: process.env.GROQ_API_KEY }),
-            new Groq({ apiKey: process.env.GROQ_API_KEY_2 || process.env.GROQ_API_KEY }) // Fallback to primary if secondary missing
+            new Groq({ apiKey: process.env.GROQ_API_KEY_2 || process.env.GROQ_API_KEY })
         ];
 
         const MODEL = 'llama-3.3-70b-versatile';
