@@ -89,26 +89,41 @@ function isStructuredObject(x: any) {
 }
 
 function validateResultShape(result: any, mode: Mode) {
-    if (!result || typeof result !== 'object') return false;
+    if (!result || typeof result !== 'object') {
+        console.warn("Validation Failed: Result is not an object");
+        return false;
+    }
 
     // quiz must exist and have correct count
-    if (!Array.isArray(result.quiz)) return false;
-    if (result.quiz.length !== requiredQuizCount(mode)) return false;
+    if (!Array.isArray(result.quiz)) {
+        console.warn("Validation Failed: 'quiz' is not an array");
+        return false;
+    }
+
+    const requiredCount = requiredQuizCount(mode);
+    if (result.quiz.length !== requiredCount) {
+        console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected ${requiredCount}`);
+        return false;
+    }
 
     // Validate MCQ options strictness
-    for (const q of result.quiz) {
-        if (!Array.isArray(q.options) || q.options.length !== 4) return false;
-        if (typeof q.a !== 'number' || q.a < 0 || q.a > 3) return false;
+    for (let i = 0; i < result.quiz.length; i++) {
+        const q = result.quiz[i];
+        if (!Array.isArray(q.options) || q.options.length !== 4) {
+            console.warn(`Validation Failed: Question ${i} does not have exactly 4 options`);
+            return false;
+        }
+        if (typeof q.a !== 'number' || q.a < 0 || q.a > 3) {
+            console.warn(`Validation Failed: Question ${i} has invalid correct answer index (a): ${q.a}`);
+            return false;
+        }
     }
 
     if (mode !== 'exam') {
-        if (!isStructuredObject(result.explanation)) return false;
-    }
-
-    // In exam mode, enforce empty sections
-    if (mode === 'exam') {
-        // In exam mode, ONLY enforce quiz correctness
-        return true;
+        if (!isStructuredObject(result.explanation)) {
+            console.warn("Validation Failed: 'explanation' is missing or not an object");
+            return false;
+        }
     }
 
     return true;
