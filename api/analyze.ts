@@ -10,7 +10,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 const model_gemini = genAI.getGenerativeModel({
-    model: 'gemini-2.0-flash',
+    model: 'gemini-1.5-flash',
     generationConfig: {
         responseMimeType: 'application/json'
     }
@@ -282,7 +282,7 @@ REMINDER:
                     throw new Error('MISSING_GEMINI_API_KEY');
                 }
 
-                console.log(`Attempt ${attempt + 1}/2 | Model: gemini-2.0-flash`);
+                console.log(`Attempt ${attempt + 1}/2 | Model: gemini-1.5-flash`);
 
                 const fullPrompt = `${systemPrompt}\n\nUSER REQUEST:\n${userPrompt}`;
                 const result = await model_gemini.generateContent(fullPrompt);
@@ -296,7 +296,7 @@ REMINDER:
                         const parsed = JSON.parse(cleaned);
                         if (validateResultShape(parsed, resolvedMode)) {
                             await updateUsage(uid, today, userRef);
-                            res.status(200).json({ ...parsed, model: "gemini-2.0-flash" });
+                            res.status(200).json({ ...parsed, model: "gemini-1.5-flash" });
                             return;
                         }
                     }
@@ -319,7 +319,7 @@ REMINDER:
 
                 await updateUsage(uid, today, userRef);
 
-                res.status(200).json({ ...parsed, model: "gemini-2.0-flash" });
+                res.status(200).json({ ...parsed, model: "gemini-1.5-flash" });
                 return;
 
             } catch (err: any) {
