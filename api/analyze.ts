@@ -24,8 +24,7 @@ function buildSlideContexts(slideNumbers: number[], textContentArray?: string[])
         .join('\n\n');
 }
 
-function buildSystemPrompt(language: 'en' | 'ar' = 'en') {
-    const langName = language === 'ar' ? 'Arabic' : 'English';
+function buildSystemPrompt() {
     return `
 You are an Elite University Professor AND a professional slide-content editor.
 Return ONLY a valid JSON object. No markdown. No extra text.
@@ -38,7 +37,7 @@ STRICT OUTPUT KEYS:
 1) "explanation": structured object (ALWAYS)
 2) "examInsight": structured object (ALWAYS)
 - Do NOT mention the slide/image/analysis process.
-- All content in "explanation", "examInsight", and "quiz" (including reasoning) MUST be in ${langName.toUpperCase()}.
+- All content in "explanation", "examInsight", and "quiz" (including reasoning) MUST be in ENGLISH.
 
 - If labels are visible, you MUST use their exact wording.
 
@@ -188,15 +187,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return;
         }
 
-        const { slideNumbers, textContentArray, mode, thumbnail, language } = req.body as {
+        const { slideNumbers, textContentArray, mode, thumbnail } = req.body as {
             slideNumbers: number[];
             textContentArray?: string[];
             mode?: Mode;
             thumbnail?: string;
-            language?: 'en' | 'ar';
         };
-
-        const resolvedLang = language || 'en';
 
         const resolvedMode: Mode = mode || 'simple';
 
@@ -216,7 +212,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             ? buildSlideContexts(slideNumbers, textContentArray)
             : (textContentArray?.[0] || '');
 
-        const systemPrompt = buildSystemPrompt(resolvedLang);
+        const systemPrompt = buildSystemPrompt();
 
         let userPrompt = `
 CONTENT (TEXT MAY BE EMPTY):

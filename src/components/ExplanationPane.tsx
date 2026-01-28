@@ -57,8 +57,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         setData(null);
         setSelectedOptions({});
 
-        // Use the current language state
-        analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail, lang).then(res => {
+        analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail).then(res => {
             setData(res);
             setLoading(false);
         }).catch(err => {
@@ -67,29 +66,70 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         });
     };
 
-    const handleLanguageToggle = () => {
+    const [translatedData, setTranslatedData] = useState<any>(null);
+    const [translating, setTranslating] = useState(false);
+
+    const translateText = async (text: string): Promise<string> => {
+        if (!text || typeof text !== 'string') return text;
+        try {
+            // Using a free, unauthenticated Google Translate endpoint (unofficial)
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(text)}`);
+            const json = await res.json();
+            return json[0].map((s: any) => s[0]).join('');
+        } catch (error) {
+            console.error("Translation Error:", error);
+            return text;
+        }
+    };
+
+    const handleLanguageToggle = async () => {
         const nextLang = lang === 'en' ? 'ar' : 'en';
         setLang(nextLang);
 
-        // If we are already in a mode and have data, re-fetch for the new language
-        if (mode) {
-            setLoading(true);
-            setData(null);
-            setSelectedOptions({});
+        if (nextLang === 'ar' && data && !translatedData) {
+            setTranslating(true);
+            try {
+                // deep clone and translate title/overview/sections
+                const translated = JSON.parse(JSON.stringify(data));
 
-            analyzeSlide(slideNumbers, textContentArray, mode, thumbnail, nextLang).then(res => {
-                setData(res);
-                setLoading(false);
-            }).catch(err => {
-                console.error("Analysis Error:", err);
-                setLoading(false);
-            });
+                if (translated.explanation) {
+                    if (translated.explanation.title) translated.explanation.title = await translateText(translated.explanation.title);
+                    if (translated.explanation.overview) translated.explanation.overview = await translateText(translated.explanation.overview);
+                    if (translated.explanation.sections) {
+                        for (const s of translated.explanation.sections) {
+                            if (s.heading) s.heading = await translateText(s.heading);
+                            if (s.text) s.text = await translateText(s.text);
+                            if (s.bullets) {
+                                s.bullets = await Promise.all(s.bullets.map((b: string) => translateText(b)));
+                            }
+                        }
+                    }
+                }
+
+                if (translated.examInsight) {
+                    if (translated.examInsight.title) translated.examInsight.title = await translateText(translated.examInsight.title);
+                    if (translated.examInsight.overview) translated.examInsight.overview = await translateText(translated.examInsight.overview);
+                    if (translated.examInsight.sections) {
+                        for (const s of translated.examInsight.sections) {
+                            if (s.heading) s.heading = await translateText(s.heading);
+                            if (s.text) s.text = await translateText(s.text);
+                        }
+                    }
+                }
+
+                setTranslatedData(translated);
+            } catch (err) {
+                console.error("Translation logic error:", err);
+            } finally {
+                setTranslating(false);
+            }
         }
     };
 
     const handleBack = () => {
         setMode(null);
         setData(null);
+        setTranslatedData(null);
         setLoading(false);
     };
 
@@ -205,10 +245,14 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         );
     };
 
-    const currentContent = {
+    const currentContent = lang === 'en' ? {
         explanation: data?.explanation,
         examInsight: data?.examInsight,
-        dir: lang === 'ar' ? 'rtl' as const : 'ltr' as const
+        dir: 'ltr' as const
+    } : {
+        explanation: translatedData?.explanation || data?.explanation,
+        examInsight: translatedData?.examInsight || data?.examInsight,
+        dir: 'rtl' as const
     };
 
     return (
@@ -281,10 +325,13 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             <div className="hidden md:flex items-center justify-end gap-4 relative z-[60]">
                                 <button
                                     onClick={handleLanguageToggle}
-                                    className="flex bg-white/5 p-1 rounded-xl border border-white/10 hover:bg-white/10 transition-all active:scale-95"
+                                    disabled={translating}
+                                    className={`flex bg-white/5 p-1 rounded-xl border border-white/10 hover:bg-white/10 transition-all active:scale-95 ${translating ? 'opacity-50 cursor-wait' : ''}`}
                                 >
-                                    <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
-                                    <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>AR</span>
+                                    <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
+                                    <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>
+                                        {translating ? '...' : 'AR'}
+                                    </span>
                                 </button>
                                 {mode && (
                                     <button onClick={handleBack} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl">←</button>
