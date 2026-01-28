@@ -290,7 +290,18 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                 </div>
 
                                 <div className="flex md:hidden items-center gap-2">
-
+                                    {mode && (
+                                        <button
+                                            onClick={handleLanguageToggle}
+                                            disabled={translating}
+                                            className={`flex bg-white/5 p-1 rounded-lg border border-white/10 ${translating ? 'opacity-50 cursor-wait' : ''}`}
+                                        >
+                                            <span className={`px-2 py-1 rounded md:px-4 md:py-2 rounded-lg text-[10px] font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
+                                            <span className={`px-2 py-1 rounded md:px-4 md:py-2 rounded-lg text-[10px] font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>
+                                                {translating ? '...' : 'AR'}
+                                            </span>
+                                        </button>
+                                    )}
                                     {mode && (
                                         <button onClick={handleBack} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">←</button>
                                     )}
@@ -325,16 +336,18 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
                             {/* ACTIONS & CLOSE */}
                             <div className="hidden md:flex items-center justify-end gap-4 relative z-[60]">
-                                <button
-                                    onClick={handleLanguageToggle}
-                                    disabled={translating}
-                                    className={`flex bg-white/5 p-1 rounded-xl border border-white/10 hover:bg-white/10 transition-all active:scale-95 ${translating ? 'opacity-50 cursor-wait' : ''}`}
-                                >
-                                    <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
-                                    <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>
-                                        {translating ? '...' : 'AR'}
-                                    </span>
-                                </button>
+                                {mode && (
+                                    <button
+                                        onClick={handleLanguageToggle}
+                                        disabled={translating}
+                                        className={`flex bg-white/5 p-1 rounded-xl border border-white/10 hover:bg-white/10 transition-all active:scale-95 ${translating ? 'opacity-50 cursor-wait' : ''}`}
+                                    >
+                                        <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
+                                        <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>
+                                            {translating ? '...' : 'AR'}
+                                        </span>
+                                    </button>
+                                )}
                                 {mode && (
                                     <button onClick={handleBack} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl">←</button>
                                 )}
