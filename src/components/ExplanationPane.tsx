@@ -89,33 +89,35 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         if (nextLang === 'ar' && data && !translatedData) {
             setTranslating(true);
             try {
-                // deep clone and translate title/overview/sections
                 const translated = JSON.parse(JSON.stringify(data));
+                const taskQueue: Promise<void>[] = [];
 
                 if (translated.explanation) {
-                    if (translated.explanation.title) translated.explanation.title = await translateText(translated.explanation.title);
-                    if (translated.explanation.overview) translated.explanation.overview = await translateText(translated.explanation.overview);
+                    if (translated.explanation.title) taskQueue.push(translateText(translated.explanation.title).then(t => { translated.explanation.title = t; }));
+                    if (translated.explanation.overview) taskQueue.push(translateText(translated.explanation.overview).then(t => { translated.explanation.overview = t; }));
                     if (translated.explanation.sections) {
-                        for (const s of translated.explanation.sections) {
-                            if (s.heading) s.heading = await translateText(s.heading);
-                            if (s.text) s.text = await translateText(s.text);
+                        translated.explanation.sections.forEach((s: any) => {
+                            if (s.heading) taskQueue.push(translateText(s.heading).then(t => { s.heading = t; }));
+                            if (s.text) taskQueue.push(translateText(s.text).then(t => { s.text = t; }));
                             if (s.bullets) {
-                                s.bullets = await Promise.all(s.bullets.map((b: string) => translateText(b)));
+                                taskQueue.push(Promise.all(s.bullets.map((b: string) => translateText(b))).then(t => { s.bullets = t; }));
                             }
-                        }
+                        });
                     }
                 }
 
                 if (translated.examInsight) {
-                    if (translated.examInsight.title) translated.examInsight.title = await translateText(translated.examInsight.title);
-                    if (translated.examInsight.overview) translated.examInsight.overview = await translateText(translated.examInsight.overview);
+                    if (translated.examInsight.title) taskQueue.push(translateText(translated.examInsight.title).then(t => { translated.examInsight.title = t; }));
+                    if (translated.examInsight.overview) taskQueue.push(translateText(translated.examInsight.overview).then(t => { translated.examInsight.overview = t; }));
                     if (translated.examInsight.sections) {
-                        for (const s of translated.examInsight.sections) {
-                            if (s.heading) s.heading = await translateText(s.heading);
-                            if (s.text) s.text = await translateText(s.text);
-                        }
+                        translated.examInsight.sections.forEach((s: any) => {
+                            if (s.heading) taskQueue.push(translateText(s.heading).then(t => { s.heading = t; }));
+                            if (s.text) taskQueue.push(translateText(s.text).then(t => { s.text = t; }));
+                        });
                     }
                 }
+
+                await Promise.all(taskQueue);
 
                 setTranslatedData(translated);
             } catch (err) {
