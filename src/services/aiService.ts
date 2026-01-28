@@ -22,6 +22,7 @@ export const analyzeSlide = async (
     textContentArray?: string[],
     mode: ExplanationMode = 'simple',
     thumbnail?: string,
+    language: 'en' | 'ar' = 'en',
     attempts: number = 2 // Client-side retries
 ): Promise<SlideExplanation> => {
     try {
@@ -39,7 +40,8 @@ export const analyzeSlide = async (
             body: JSON.stringify({
                 slideNumbers,
                 textContentArray,
-                mode
+                mode,
+                language
             })
         });
 
@@ -48,7 +50,7 @@ export const analyzeSlide = async (
             if (response.status === 503 && attempts > 1) {
                 console.warn(`Server busy (503). Retrying client-side... (${attempts - 1} left)`);
                 await new Promise(r => setTimeout(r, 2000));
-                return analyzeSlide(slideNumbers, textContentArray, mode, thumbnail, attempts - 1);
+                return analyzeSlide(slideNumbers, textContentArray, mode, thumbnail, language, attempts - 1);
             }
 
             if (response.status === 429) {

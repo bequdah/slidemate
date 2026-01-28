@@ -56,15 +56,35 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         setLoading(true);
         setData(null);
         setSelectedOptions({});
-        setLang('en');
 
-        analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail).then(res => {
+        // Use the current language state
+        analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail, lang).then(res => {
             setData(res);
             setLoading(false);
         }).catch(err => {
             console.error("Analysis Error:", err);
             setLoading(false);
         });
+    };
+
+    const handleLanguageToggle = () => {
+        const nextLang = lang === 'en' ? 'ar' : 'en';
+        setLang(nextLang);
+
+        // If we are already in a mode and have data, re-fetch for the new language
+        if (mode) {
+            setLoading(true);
+            setData(null);
+            setSelectedOptions({});
+
+            analyzeSlide(slideNumbers, textContentArray, mode, thumbnail, nextLang).then(res => {
+                setData(res);
+                setLoading(false);
+            }).catch(err => {
+                console.error("Analysis Error:", err);
+                setLoading(false);
+            });
+        }
     };
 
     const handleBack = () => {
@@ -185,14 +205,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         );
     };
 
-    const currentContent = lang === 'en' ? {
+    const currentContent = {
         explanation: data?.explanation,
         examInsight: data?.examInsight,
-        dir: 'ltr' as const
-    } : {
-        explanation: data?.arabic?.explanation || data?.explanation,
-        examInsight: data?.arabic?.examInsight || data?.examInsight,
-        dir: 'rtl' as const
+        dir: lang === 'ar' ? 'rtl' as const : 'ltr' as const
     };
 
     return (
@@ -263,11 +279,13 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
                             {/* ACTIONS & CLOSE */}
                             <div className="hidden md:flex items-center justify-end gap-4 relative z-[60]">
-                                {data && (
-                                    <div className="flex bg-white/5 p-1 rounded-xl border border-white/10 scale-90 md:scale-100 opacity-50 cursor-not-allowed" title="Translation disabled">
-                                        <span className="px-4 py-2 rounded-lg text-xs font-black text-white bg-indigo-600 shadow-lg">EN</span>
-                                    </div>
-                                )}
+                                <button
+                                    onClick={handleLanguageToggle}
+                                    className="flex bg-white/5 p-1 rounded-xl border border-white/10 hover:bg-white/10 transition-all active:scale-95"
+                                >
+                                    <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
+                                    <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>AR</span>
+                                </button>
                                 {mode && (
                                     <button onClick={handleBack} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl">←</button>
                                 )}
