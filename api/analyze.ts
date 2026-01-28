@@ -1,20 +1,20 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, auth } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
-// import Groq from 'groq-sdk';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
+// import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// const groq = new Groq({
-//     apiKey: process.env.GROQ_API_KEY
-// });
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const model_gemini = genAI.getGenerativeModel({
-    model: 'gemini-1.5-flash-latest',
-    generationConfig: {
-        responseMimeType: 'application/json'
-    }
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY
 });
+
+// const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// const model_gemini = genAI.getGenerativeModel({
+//     model: 'gemini-1.5-flash-latest',
+//     generationConfig: {
+//         responseMimeType: 'application/json'
+//     }
+// });
 
 type Mode = 'simple' | 'deep' | 'exam';
 
@@ -89,15 +89,15 @@ function isVisionRequest(thumbnail?: string) {
     return !!thumbnail && typeof thumbnail === 'string' && thumbnail.startsWith('data:image');
 }
 
-// function coerceMessagesForModel(messages: any[], isVisionModel: boolean) {
-//     return messages.map(m => {
-//         if (!isVisionModel && Array.isArray(m.content)) {
-//             const textPart = m.content.find((p: any) => p.type === 'text');
-//             return { ...m, content: textPart ? textPart.text : '' };
-//         }
-//         return m;
-//     });
-// }
+function coerceMessagesForModel(messages: any[], isVisionModel: boolean) {
+    return messages.map(m => {
+        if (!isVisionModel && Array.isArray(m.content)) {
+            const textPart = m.content.find((p: any) => p.type === 'text');
+            return { ...m, content: textPart ? textPart.text : '' };
+        }
+        return m;
+    });
+}
 
 function isStructuredObject(x: any) {
     return x && typeof x === 'object' && !Array.isArray(x);
@@ -246,17 +246,17 @@ REMINDER:
         // STRATEGY: Use ONLY the smartest model (70b).
         // We list it multiple times to act as "retries" in case of a random network glitch or bad output.
         // We DO NOT fallback to dumber models (8b/Mixtral) to preserve quality.
-        // let messages: any[] = [{ role: 'system', content: systemPrompt }];
-        // messages.push({ role: 'user', content: userPrompt });
+        let messages: any[] = [{ role: 'system', content: systemPrompt }];
+        messages.push({ role: 'user', content: userPrompt });
 
 
         // CLIENTS SETUP: Initialize clients for both keys
         // Note: GROQ_API_KEY_2 must be set in Vercel environment variables
-        // const clients = [
-        //     new Groq({ apiKey: process.env.GROQ_API_KEY_2 || process.env.GROQ_API_KEY })
-        // ];
+        const clients = [
+            new Groq({ apiKey: process.env.GROQ_API_KEY_2 || process.env.GROQ_API_KEY })
+        ];
 
-        // const MODEL = 'llama-3.3-70b-versatile';
+        const MODEL = 'llama-3.3-70b-versatile';
         // const VISION_MODEL = 'llama-3.2-11b-vision-preview'; // Specific fallback for heavy vision if needed
 
         const isRetryable = (err: any) => {
@@ -275,31 +275,31 @@ REMINDER:
 
         let lastError: any = null;
 
-        // RETRY LOOP: 2 attempts with a longer delay to be less "aggressive"
-        for (let attempt = 0; attempt < 2; attempt++) {
+        // RETRY LOOP: 4 attempts with exponential backoff and key rotation
+        for (let attempt = 0; attempt < 4; attempt++) {
+            // Alternate keys per attempt: 0->primary, 1->secondary, 2->primary...
+            const client = clients[attempt % clients.length];
+            // TACTIC: Use ONLY the smartest model with Key Rotation
+            const targetModelToUse = MODEL;
+
             try {
-                if (!process.env.GEMINI_API_KEY) {
-                    throw new Error('MISSING_GEMINI_API_KEY');
-                }
+                const key2Status = process.env.GROQ_API_KEY_2 ? "Detected" : "MISSING";
+                console.log(`Attempt ${attempt + 1}/4 | Model: ${targetModelToUse} | Key: ${attempt % clients.length === 0 ? 'Primary' : 'Secondary'} | Key2 Status: ${key2Status}`);
 
-                console.log(`Attempt ${attempt + 1}/2 | Model: gemini-1.5-flash-latest`);
+                const isVision = isVisionRequest(thumbnail);
+                const preparedMessages = coerceMessagesForModel(messages, isVision);
 
-                const fullPrompt = `${systemPrompt}\n\nUSER REQUEST:\n${userPrompt}`;
-                const result = await model_gemini.generateContent(fullPrompt);
-                const response = await result.response;
-                const raw = response.text();
+                const completion = await client.chat.completions.create({
+                    model: targetModelToUse,
+                    messages: preparedMessages,
+                    temperature: 0.1,
+                    response_format: { type: 'json_object' },
+                    max_tokens: 2500
+                });
+
+                const raw = completion.choices[0]?.message?.content || '';
 
                 if (!raw.trim().startsWith('{')) {
-                    // Gemini might wrap JSON in markdown blocks
-                    const cleaned = raw.replace(/```json\s?|\s?```/g, '').trim();
-                    if (cleaned.startsWith('{')) {
-                        const parsed = JSON.parse(cleaned);
-                        if (validateResultShape(parsed, resolvedMode)) {
-                            await updateUsage(uid, today, userRef);
-                            res.status(200).json({ ...parsed, model: "gemini-1.5-flash-latest" });
-                            return;
-                        }
-                    }
                     throw new Error('MODEL_RETURNED_NON_JSON');
                 }
 
@@ -317,25 +317,23 @@ REMINDER:
                 // SUCCESS: Log and update DB
                 console.log(`Success on attempt ${attempt + 1}`);
 
-                await updateUsage(uid, today, userRef);
+                await updateUsage(uid, today, (userRef as any));
 
-                res.status(200).json({ ...parsed, model: "gemini-1.5-flash-latest" });
+                res.status(200).json(parsed);
                 return;
 
             } catch (err: any) {
                 console.warn(`Attempt ${attempt + 1} failed: ${err?.message}`);
                 lastError = err;
 
-                if (err?.message === 'MISSING_GEMINI_API_KEY') {
-                    break;
-                }
-
                 if (!isRetryable(err) && err?.message !== 'MODEL_RETURNED_NON_JSON' && err?.message !== 'INVALID_SHAPE') {
+                    // Critical non-retryable error (like auth failure not related to rate limit)
                     break;
                 }
 
-                if (attempt < 1) {
-                    await sleep(10000); // Wait 10 seconds before retrying
+                // Exponential backoff: 700ms, 1400ms, 2100ms...
+                if (attempt < 3) {
+                    await sleep(700 * (attempt + 1));
                 }
             }
         }
