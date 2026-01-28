@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, auth } from './firebaseAdmin.js';
+import admin from 'firebase-admin';
 // import Groq from 'groq-sdk';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -274,14 +275,14 @@ REMINDER:
 
         let lastError: any = null;
 
-        // RETRY LOOP: 4 attempts with exponential backoff
-        for (let attempt = 0; attempt < 4; attempt++) {
+        // RETRY LOOP: 2 attempts with a longer delay to be less "aggressive"
+        for (let attempt = 0; attempt < 2; attempt++) {
             try {
                 if (!process.env.GEMINI_API_KEY) {
                     throw new Error('MISSING_GEMINI_API_KEY');
                 }
 
-                console.log(`Attempt ${attempt + 1}/4 | Model: gemini-2.0-flash`);
+                console.log(`Attempt ${attempt + 1}/2 | Model: gemini-2.0-flash`);
 
                 const fullPrompt = `${systemPrompt}\n\nUSER REQUEST:\n${userPrompt}`;
                 const result = await model_gemini.generateContent(fullPrompt);
@@ -295,7 +296,7 @@ REMINDER:
                         const parsed = JSON.parse(cleaned);
                         if (validateResultShape(parsed, resolvedMode)) {
                             await updateUsage(uid, today, userRef);
-                            res.status(200).json(parsed);
+                            res.status(200).json({ ...parsed, model: "gemini-2.0-flash" });
                             return;
                         }
                     }
@@ -318,7 +319,7 @@ REMINDER:
 
                 await updateUsage(uid, today, userRef);
 
-                res.status(200).json(parsed);
+                res.status(200).json({ ...parsed, model: "gemini-2.0-flash" });
                 return;
 
             } catch (err: any) {
@@ -333,8 +334,8 @@ REMINDER:
                     break;
                 }
 
-                if (attempt < 3) {
-                    await sleep(700 * (attempt + 1));
+                if (attempt < 1) {
+                    await sleep(10000); // Wait 10 seconds before retrying
                 }
             }
         }
@@ -354,11 +355,11 @@ REMINDER:
     }
 }
 
-async function updateUsage(uid: string, today: string, userRef: any) {
+async function updateUsage(uid: string, today: string, userRef: admin.firestore.DocumentReference) {
     await db.runTransaction(async t => {
-        const doc = await t.get(userRef);
-        const data = doc.data() || {};
-        const currentUsage = data.dailyUsage || { date: today, count: 0 };
+        const docSnapshot = await t.get(userRef);
+        const data = docSnapshot.data() || {};
+        const currentUsage = (data as any).dailyUsage || { date: today, count: 0 };
 
         if (currentUsage.date !== today) {
             currentUsage.date = today;
