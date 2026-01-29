@@ -256,7 +256,8 @@ REMINDER:
             new Groq({ apiKey: process.env.GROQ_API_KEY_2 || process.env.GROQ_API_KEY })
         ];
 
-        const MODEL = 'llama-3.3-70b-versatile';
+        const LLAMA_MODEL = 'llama-3.3-70b-versatile';
+        const QWEN_MODEL = 'qwen/qwen3-32b';
         // const VISION_MODEL = 'llama-3.2-11b-vision-preview'; // Specific fallback for heavy vision if needed
 
         const isRetryable = (err: any) => {
@@ -279,8 +280,8 @@ REMINDER:
         for (let attempt = 0; attempt < 4; attempt++) {
             // Alternate keys per attempt: 0->primary, 1->secondary, 2->primary...
             const client = clients[attempt % clients.length];
-            // TACTIC: Use ONLY the smartest model with Key Rotation
-            const targetModelToUse = MODEL;
+            // TEMPORARY: Use ONLY Qwen for testing per user request
+            const targetModelToUse = QWEN_MODEL;
 
             try {
                 const key2Status = process.env.GROQ_API_KEY_2 ? "Detected" : "MISSING";
