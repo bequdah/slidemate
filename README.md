@@ -1,4 +1,4 @@
-# How to Run SlideTutor AI
+# How to Run SlideMate
 
 1. **Open Terminal**
    Open the project folder in VS Code and run a new terminal (`Ctrl + `).

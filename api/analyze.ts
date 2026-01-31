@@ -76,8 +76,10 @@ JSON SCHEMA:
 3) "quiz": Array of objects: { "q": string, "options": [string (exactly 4)], "a": number (0-3), "reasoning": string }
 
 LaTeX Rules:
-- Use $...$ for inline and $$...$$ for block math.
-- JSON ESCAPING: You MUST use double-backslashes (e.g., "\\\\frac").
+- Use $...$ for inline and $$...$$ for block math (ALWAYS use block math for primary formulas/equations).
+- JSON ESCAPING: Use double-backslashes (e.g., "\\\\frac").
+- FONT STYLE: Do not use \text{} inside LaTeX unless absolutely necessary; keep symbols clean.
+- Ensure all math is mathematically rigorous and professional.
 `;
 }
 

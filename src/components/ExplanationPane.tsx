@@ -202,9 +202,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             </h3>
                         )}
                         {data.overview && (
-                            <p className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
-                                {data.overview}
-                            </p>
+                            <div className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
+                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                    {data.overview}
+                                </ReactMarkdown>
+                            </div>
                         )}
                     </div>
                 )}
@@ -219,25 +221,34 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                         )}
 
                         {'text' in s && s.text && (
-                            <p className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
-                                {s.text}
-                            </p>
+                            <div className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
+                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                    {s.text}
+                                </ReactMarkdown>
+                            </div>
                         )}
 
                         {'bullets' in s && Array.isArray(s.bullets) && (
                             <ul className="list-disc pl-6 space-y-2 text-slate-300 text-base md:text-lg font-medium">
                                 {s.bullets.map((b, idx) => (
-                                    <li key={idx}>{b}</li>
+                                    <li key={idx}>
+                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                            {b}
+                                        </ReactMarkdown>
+                                    </li>
                                 ))}
                             </ul>
                         )}
 
                         {'definitions' in s && Array.isArray(s.definitions) && (
-                            <div className="space-y-2">
+                            <div className="space-y-4">
                                 {s.definitions.map((d, idx) => (
-                                    <p key={idx} className="text-slate-300 text-base md:text-lg font-medium">
-                                        <strong className="text-white">{d.term}:</strong> {d.def}
-                                    </p>
+                                    <div key={idx} className="text-slate-300 text-base md:text-lg font-medium">
+                                        <strong className="text-white block mb-1">{d.term}:</strong>
+                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                            {d.def}
+                                        </ReactMarkdown>
+                                    </div>
                                 ))}
                             </div>
                         )}
