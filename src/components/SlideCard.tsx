@@ -25,9 +25,19 @@ export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, s
                         className={`w-full h-full object-contain transition-transform duration-700 ${selected ? 'scale-95' : ''}`}
                     />
                 ) : (
-                    <div className="flex flex-col items-center justify-center h-full space-y-4 opacity-40">
-                        <div className="text-slate-600 font-black text-6xl tracking-tighter uppercase italic">Slide {slideNumber}</div>
-                        <div className="w-64 h-1 bg-slate-800 rounded-full" />
+                    <div className="flex flex-col items-center justify-center h-full space-y-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+                        <div className="relative">
+                            <div className="absolute inset-0 bg-orange-500/20 blur-3xl rounded-full" />
+                            <div className="relative w-24 h-24 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center shadow-2xl">
+                                <svg className="w-14 h-14 text-white" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M21 3H3v18h18V3zm-2 16H5V5h14v14zM8 8h8v2H8V8zm0 4h8v2H8v-2zm0 4h5v2H8v-2z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div className="text-center space-y-2">
+                            <div className="text-slate-400 font-black text-3xl tracking-tight">Slide {slideNumber}</div>
+                            <div className="text-slate-600 text-sm font-bold uppercase tracking-widest">PowerPoint</div>
+                        </div>
                     </div>
                 )}
 

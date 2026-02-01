@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { LogoModal } from './components/LogoModal';
 import * as pdfjsLib from 'pdfjs-dist';
+import { extractPPTXContent } from './utils/pptxUtils';
 
 // Use a more reliable worker source from unpkg
 pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version}/build/pdf.worker.min.mjs`;
@@ -98,14 +99,41 @@ function MainApp() {
           // For now, minimal updates to prevent UI lag
           if (i % 5 === 0) setSlides([...extractedSlides]);
         }
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.presentationml.presentation' || file.name.endsWith('.pptx')) {
+        // Handle PPTX files
+        const pptxSlides = await extractPPTXContent(file);
+        pageCount = pptxSlides.length;
+
+        const importantCount = Math.max(1, Math.round(pageCount * 0.2));
+        const importantIndices = new Set<number>();
+        while (importantIndices.size < importantCount) {
+          importantIndices.add(Math.floor(Math.random() * pageCount) + 1);
+        }
+
+        pptxSlides.forEach((slide, index) => {
+          const firstLine = slide.textContent.split('.').filter(line => line.length > 5)[0] || "Slide Analysis";
+
+          extractedSlides.push({
+            id: `slide-${Math.random().toString(36).substr(2, 9)}`,
+            number: slide.slideNumber,
+            topic: firstLine.substring(0, 40) + (firstLine.length > 40 ? '...' : ''),
+            isImportant: importantIndices.has(slide.slideNumber),
+            textContent: slide.textContent,
+            thumbnail: undefined // PPTX doesn't have thumbnails yet
+          });
+
+          const currentProgress = ((index + 1) / pageCount) * 100;
+          setUploadProgress(currentProgress);
+          if ((index + 1) % 5 === 0) setSlides([...extractedSlides]);
+        });
       } else {
-        throw new Error('Please upload a PDF file for full analysis.');
+        throw new Error('Please upload a PDF or PPTX file for analysis.');
       }
 
       setSlides(extractedSlides);
     } catch (error: any) {
       console.error('Error processing document:', error);
-      setUploadError(error.message || 'Error processing PDF. Try again or check the file format.');
+      setUploadError(error.message || 'Error processing file. Try again or check the file format.');
       setSlides([]);
     } finally {
       setIsUploading(false);
