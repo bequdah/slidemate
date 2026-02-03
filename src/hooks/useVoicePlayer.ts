@@ -70,6 +70,9 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         };
 
         utterance.onerror = (e) => {
+            if (e.error === 'interrupted' || e.error === 'canceled') {
+                return; // Intentional stop/pause
+            }
             console.error("TTS Error at sentence index", idx, e);
             stop();
         };
