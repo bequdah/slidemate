@@ -30,8 +30,7 @@ STRICT OUTPUT KEYS:
 1) "explanation": structured object (ALWAYS)
 2) "examInsight": structured object (ALWAYS)
 - Do NOT mention the slide/image/analysis process.
-- All content in "explanation", "examInsight", "voiceScript", and "quiz" (including reasoning) MUST be in ENGLISH.
-- "voiceScript" (MANDATORY): A 2-4 paragraph narrative script explaining the slide content as if a teacher is talking to a student. It must be engaging, cohesive, and NOT formatted as a list or bullets.
+- All content in "explanation", "examInsight", and "quiz" (including reasoning) MUST be in ENGLISH.
 
 - If labels are visible, you MUST use their exact wording.
 
@@ -67,8 +66,7 @@ MODE RULES:
 JSON SCHEMA:
 1) "explanation": { "title": string, "overview": string, "sections": [{ "heading": string, "bullets": string[] } OR { "heading": string, "text": string }] }
 2) "examInsight": { "title": string, "overview": string, "sections": [{ "heading": string, "text": string }] }
-3) "voiceScript": string
-4) "quiz": Array of objects: { "q": string, "options": [string (exactly 4)], "a": number (0-3), "reasoning": string }
+3) "quiz": Array of objects: { "q": string, "options": [string (exactly 4)], "a": number (0-3), "reasoning": string }
 
 LaTeX Rules:
 - Use $...$ for inline and $$...$$ for block math (ALWAYS use block math for primary formulas/equations).
@@ -138,10 +136,6 @@ function validateResultShape(result: any, mode: Mode) {
         }
         if (!isStructuredObject(result.examInsight)) {
             console.warn("Validation Failed: 'examInsight' is missing or not an object");
-            return false;
-        }
-        if (typeof result.voiceScript !== 'string' || result.voiceScript.length === 0) {
-            console.warn("Validation Failed: 'voiceScript' is missing or empty");
             return false;
         }
     }

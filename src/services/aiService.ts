@@ -77,9 +77,41 @@ export const analyzeSlide = async (
         return {
             explanation: `Error: ${errorMessage}`,
             examInsight: "N/A",
-            voiceScript: "An error occurred, please try again.",
+            voiceScript: "",
             arabic: { explanation: "خطأ في الاتصال", examInsight: "N/A", voiceScript: "حدث خطأ، يرجى المحاولة مرة أخرى." },
             quiz: []
         };
     }
 };
+
+export const generateVoiceScript = async (
+    slideNumbers: number[],
+    textContentArray?: string[]
+): Promise<{ voiceScript: string }> => {
+    try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Not logged in");
+
+        const token = await user.getIdToken();
+
+        const response = await fetch('/api/generateVoice', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                slideNumbers,
+                textContentArray
+            })
+        });
+
+        if (!response.ok) throw new Error("Failed to generate voice");
+
+        return await response.json();
+    } catch (error) {
+        console.error("Voice Generation Error:", error);
+        return { voiceScript: "Sorry, I couldn't generate the voice explanation at this time." };
+    }
+};
+

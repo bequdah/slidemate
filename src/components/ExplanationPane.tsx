@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useVoicePlayer } from '../hooks/useVoicePlayer';
-import { analyzeSlide, type SlideExplanation, type ExplanationMode } from '../services/aiService';
+import { analyzeSlide, generateVoiceScript, type SlideExplanation, type ExplanationMode } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -42,6 +42,7 @@ interface ExplanationPaneProps {
 export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onClose }: ExplanationPaneProps) => {
     const [data, setData] = useState<SlideExplanation | null>(null);
     const [loading, setLoading] = useState(false);
+    const [voiceLoading, setVoiceLoading] = useState(false);
     const [mode, setMode] = useState<ExplanationMode | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({});
     const [lang, setLang] = useState<'en' | 'ar'>('en');
@@ -79,11 +80,21 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         setMode(selectedMode);
         setLoading(true);
         setData(null);
+        setVoiceLoading(false);
         setSelectedOptions({});
 
         analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail).then(res => {
             setData(res);
             setLoading(false);
+
+            // Fetch voice script in background (Llama 3.3)
+            if (selectedMode !== 'exam') {
+                setVoiceLoading(true);
+                generateVoiceScript(slideNumbers, textContentArray).then(voiceRes => {
+                    setData(prev => prev ? { ...prev, voiceScript: voiceRes.voiceScript } : prev);
+                    setVoiceLoading(false);
+                }).catch(() => setVoiceLoading(false));
+            }
         }).catch(err => {
             console.error("Analysis Error:", err);
             setLoading(false);
@@ -338,12 +349,14 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                             )}
                                             <button
                                                 onClick={isPlaying ? stop : play}
-                                                disabled={loading || translating || lang === 'ar'}
-                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${translating || loading || lang === 'ar' ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white shadow-lg border-none' : 'bg-white/5 text-slate-400 border border-white/10'}`}
-                                                title={lang === 'ar' ? 'English Only' : isPlaying ? 'Stop Teaching' : 'AI Teacher Voice'}
+                                                disabled={loading || translating || lang === 'ar' || (voiceLoading && !isPlaying)}
+                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${translating || loading || lang === 'ar' || (voiceLoading && !isPlaying) ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white shadow-lg border-none' : 'bg-white/5 text-slate-400 border border-white/10'}`}
+                                                title={lang === 'ar' ? 'English Only' : isPlaying ? 'Stop Teaching' : voiceLoading ? 'Preparing Voice...' : 'AI Teacher Voice'}
                                             >
                                                 {isPlaying ? (
                                                     <div className="w-3 h-3 bg-white rounded-sm" />
+                                                ) : voiceLoading ? (
+                                                    <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
                                                 ) : (
                                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
@@ -479,12 +492,14 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
                                             <button
                                                 onClick={isPlaying ? stop : play}
-                                                disabled={loading || translating || lang === 'ar'}
-                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all border active:scale-95 ${translating || loading || lang === 'ar' ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white border-none shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border-white/5'}`}
-                                                title={lang === 'ar' ? 'English Only' : isPlaying ? 'Stop Teaching' : 'AI Teacher Voice'}
+                                                disabled={loading || translating || lang === 'ar' || (voiceLoading && !isPlaying)}
+                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all border active:scale-95 ${translating || loading || lang === 'ar' || (voiceLoading && !isPlaying) ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white border-none shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border-white/5'}`}
+                                                title={lang === 'ar' ? 'English Only' : isPlaying ? 'Stop Teaching' : voiceLoading ? 'Preparing Voice...' : 'AI Teacher Voice'}
                                             >
                                                 {isPlaying ? (
                                                     <div className="w-4 h-4 bg-white rounded-sm" />
+                                                ) : voiceLoading ? (
+                                                    <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
                                                 ) : (
                                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
