@@ -84,14 +84,17 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     }, [playSentence, stop]);
 
     const pause = useCallback(() => {
-        window.speechSynthesis.pause();
+        isPlayingRef.current = false; // Prevent onend from triggering next sentence
+        window.speechSynthesis.cancel();
         setIsPaused(true);
     }, []);
 
     const resume = useCallback(() => {
-        window.speechSynthesis.resume();
+        if (indexRef.current === -1) return;
         setIsPaused(false);
-    }, []);
+        playSentence(indexRef.current);
+    }, [playSentence]);
+
 
     // Cleanup on unmount
     useEffect(() => {
