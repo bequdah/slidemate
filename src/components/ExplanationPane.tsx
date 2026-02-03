@@ -46,9 +46,17 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
     const [lang, setLang] = useState<'en' | 'ar'>('en');
     const [showIntro, setShowIntro] = useState(true);
 
+    // TTS State
+    const [isSpeaking, setIsSpeaking] = useState(false);
+    const [isPaused, setIsPaused] = useState(false);
+    const [utterance, setUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+
     useEffect(() => {
         const timer = setTimeout(() => setShowIntro(false), 4500);
-        return () => clearTimeout(timer);
+        return () => {
+            clearTimeout(timer);
+            window.speechSynthesis.cancel();
+        };
     }, []);
 
     const handleModeSelect = (selectedMode: ExplanationMode) => {
@@ -83,6 +91,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
     };
 
     const handleLanguageToggle = async () => {
+        // Stop speech on language switch
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+        setIsPaused(false);
+
         const nextLang = lang === 'en' ? 'ar' : 'en';
         setLang(nextLang);
 
@@ -129,6 +142,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
     };
 
     const handleBack = () => {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+        setIsPaused(false);
         setMode(null);
         setData(null);
         setTranslatedData(null);
@@ -139,6 +155,81 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         if (selectedOptions[qIndex] !== undefined) return;
         setSelectedOptions(prev => ({ ...prev, [qIndex]: oIndex }));
     };
+
+    /* =======================
+       TTS Logic
+    ======================= */
+    const stripMarkdown = (text: string) => {
+        return text
+            .replace(/#{1,6}\s/g, '') // Headers
+            .replace(/(\*\*|__)(.*?)\1/g, '$2') // Bold
+            .replace(/(\*|_)(.*?)\1/g, '$2') // Italic
+            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
+            .replace(/`{1,3}(.*?)`{1,3}/g, '$1') // Code
+            .replace(/\n/g, '. '); // Newlines to pauses
+    };
+
+    const handleSpeak = () => {
+        if (!currentContent.explanation && !currentContent.examInsight) return;
+
+        // If paused, just resume
+        if (isPaused) {
+            window.speechSynthesis.resume();
+            setIsPaused(false);
+            setIsSpeaking(true);
+            return;
+        }
+
+        // Stop any current speech
+        window.speechSynthesis.cancel();
+
+        const textToSpeak = stripMarkdown(
+            (currentContent.explanation ? renderMarkdown(currentContent.explanation) : "") +
+            ". " +
+            (currentContent.examInsight ? renderMarkdown(currentContent.examInsight) : "")
+        );
+
+        const u = new SpeechSynthesisUtterance(textToSpeak);
+        u.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+        u.rate = 1.0;
+        u.pitch = 1.0;
+
+        u.onstart = () => {
+            setIsSpeaking(true);
+            setIsPaused(false);
+        };
+
+        u.onend = () => {
+            setIsSpeaking(false);
+            setIsPaused(false);
+            setUtterance(null);
+        };
+
+        u.onerror = (e) => {
+            console.error("TTS Error:", e);
+            setIsSpeaking(false);
+            setIsPaused(false);
+        };
+
+        setUtterance(u);
+        window.speechSynthesis.speak(u);
+    };
+
+    const handlePause = () => {
+        if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            setIsPaused(true);
+            setIsSpeaking(false); // UI state update
+        }
+    };
+
+    const handleStop = () => {
+        window.speechSynthesis.cancel();
+        setIsSpeaking(false);
+        setIsPaused(false);
+        setUtterance(null);
+    };
+
 
     /* =======================
        Structured Parsing
@@ -302,6 +393,21 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
                                 <div className="flex md:hidden items-center gap-2">
                                     {mode && (
+                                        <>
+                                            <button
+                                                onClick={isSpeaking ? handlePause : isPaused ? handleSpeak : handleSpeak}
+                                                className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 active:scale-95 transition-all text-sm"
+                                            >
+                                                {isSpeaking ? '⏸️' : '▶️'}
+                                            </button>
+                                            {isPaused && (
+                                                <button onClick={handleStop} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 active:scale-95 transition-all text-sm">
+                                                    ⏹️
+                                                </button>
+                                            )}
+                                        </>
+                                    )}
+                                    {mode && (
                                         <button
                                             onClick={handleLanguageToggle}
                                             disabled={translating}
@@ -347,6 +453,26 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
 
                             {/* ACTIONS & CLOSE */}
                             <div className="hidden md:flex items-center justify-end gap-4 relative z-[60]">
+                                {mode && (
+                                    <>
+                                        <button
+                                            onClick={isSpeaking ? handlePause : isPaused ? handleSpeak : handleSpeak}
+                                            className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl"
+                                            title={isSpeaking ? "Pause" : "Listen"}
+                                        >
+                                            {isSpeaking ? '⏸' : '▶'}
+                                        </button>
+                                        {isPaused && (
+                                            <button
+                                                onClick={handleStop}
+                                                className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl"
+                                                title="Stop"
+                                            >
+                                                ⏹
+                                            </button>
+                                        )}
+                                    </>
+                                )}
                                 {mode && (
                                     <button
                                         onClick={handleLanguageToggle}
