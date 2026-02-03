@@ -3,16 +3,18 @@ import { auth } from "../firebase";
 export interface SlideExplanation {
     explanation: string;
     examInsight: string;
-    arabic: {
-        explanation: string;
-        examInsight: string;
-    };
+    voiceScript: string;
     quiz: {
         q: string;
         options: string[];
-        a: number; // Index of the correct option
+        a: number;
         reasoning: string;
     }[];
+    arabic: {
+        explanation: any;
+        examInsight: any;
+        voiceScript: string;
+    };
 }
 
 export type ExplanationMode = 'simple' | 'deep' | 'exam';
@@ -75,7 +77,8 @@ export const analyzeSlide = async (
         return {
             explanation: `Error: ${errorMessage}`,
             examInsight: "N/A",
-            arabic: { explanation: "خطأ في الاتصال", examInsight: "N/A" },
+            voiceScript: "An error occurred, please try again.",
+            arabic: { explanation: "خطأ في الاتصال", examInsight: "N/A", voiceScript: "حدث خطأ، يرجى المحاولة مرة أخرى." },
             quiz: []
         };
     }

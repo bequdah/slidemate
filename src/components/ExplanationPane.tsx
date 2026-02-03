@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useVoicePlayer } from '../hooks/useVoicePlayer';
 import { analyzeSlide, type SlideExplanation, type ExplanationMode } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -45,14 +46,29 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
     const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({});
     const [lang, setLang] = useState<'en' | 'ar'>('en');
     const [showIntro, setShowIntro] = useState(true);
+    const [translatedData, setTranslatedData] = useState<any>(null);
+    const [translating, setTranslating] = useState(false);
 
-    // TTS State
-    const [isSpeaking, setIsSpeaking] = useState(false);
-    const [isPaused, setIsPaused] = useState(false);
+    const currentContent = lang === 'en' ? {
+        explanation: data?.explanation,
+        examInsight: data?.examInsight,
+        voiceScript: data?.voiceScript,
+        dir: 'ltr' as const
+    } : {
+        explanation: translatedData?.explanation || data?.explanation,
+        examInsight: translatedData?.examInsight || data?.examInsight,
+        voiceScript: translatedData?.voiceScript || data?.voiceScript,
+        dir: 'rtl' as const
+    };
 
+    const {
+        isPlaying, isPaused, currentSentence,
+        play, pause, resume, stop
+    } = useVoicePlayer(currentContent?.voiceScript, lang);
 
     useEffect(() => {
         const timer = setTimeout(() => setShowIntro(false), 4500);
+
         return () => {
             clearTimeout(timer);
             window.speechSynthesis.cancel();
@@ -74,8 +90,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         });
     };
 
-    const [translatedData, setTranslatedData] = useState<any>(null);
-    const [translating, setTranslating] = useState(false);
 
     const translateText = async (text: string): Promise<string> => {
         if (!text || typeof text !== 'string') return text;
@@ -91,11 +105,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
     };
 
     const handleLanguageToggle = async () => {
-        // Stop speech on language switch
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-        setIsPaused(false);
-
         const nextLang = lang === 'en' ? 'ar' : 'en';
         setLang(nextLang);
 
@@ -130,6 +139,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     }
                 }
 
+                if (translated.voiceScript) {
+                    taskQueue.push(translateText(translated.voiceScript).then(t => { translated.voiceScript = t; }));
+                }
+
                 await Promise.all(taskQueue);
 
                 setTranslatedData(translated);
@@ -142,91 +155,19 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
     };
 
     const handleBack = () => {
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-        setIsPaused(false);
+        stop();
         setMode(null);
         setData(null);
         setTranslatedData(null);
         setLoading(false);
     };
 
+    // Replaced by useVoicePlayer hook
+
     const handleOptionSelect = (qIndex: number, oIndex: number) => {
         if (selectedOptions[qIndex] !== undefined) return;
-        setSelectedOptions(prev => ({ ...prev, [qIndex]: oIndex }));
+        setSelectedOptions((prev: Record<number, number>) => ({ ...prev, [qIndex]: oIndex }));
     };
-
-    /* =======================
-       TTS Logic
-    ======================= */
-    const stripMarkdown = (text: string) => {
-        return text
-            .replace(/#{1,6}\s/g, '') // Headers
-            .replace(/(\*\*|__)(.*?)\1/g, '$2') // Bold
-            .replace(/(\*|_)(.*?)\1/g, '$2') // Italic
-            .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
-            .replace(/`{1,3}(.*?)`{1,3}/g, '$1') // Code
-            .replace(/\n/g, '. '); // Newlines to pauses
-    };
-
-    const handleSpeak = () => {
-        if (!currentContent.explanation && !currentContent.examInsight) return;
-
-        // If paused, just resume
-        if (isPaused) {
-            window.speechSynthesis.resume();
-            setIsPaused(false);
-            setIsSpeaking(true);
-            return;
-        }
-
-        // Stop any current speech
-        window.speechSynthesis.cancel();
-
-        const textToSpeak = stripMarkdown(
-            (currentContent.explanation ? renderMarkdown(currentContent.explanation) : "") +
-            ". " +
-            (currentContent.examInsight ? renderMarkdown(currentContent.examInsight) : "")
-        );
-
-        const u = new SpeechSynthesisUtterance(textToSpeak);
-        u.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
-        u.rate = 1.0;
-        u.pitch = 1.0;
-
-        u.onstart = () => {
-            setIsSpeaking(true);
-            setIsPaused(false);
-        };
-
-        u.onend = () => {
-            setIsSpeaking(false);
-            setIsPaused(false);
-        };
-
-        u.onerror = (e) => {
-            console.error("TTS Error:", e);
-            setIsSpeaking(false);
-            setIsPaused(false);
-        };
-
-        window.speechSynthesis.speak(u);
-    };
-
-    const handlePause = () => {
-        if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.pause();
-            setIsPaused(true);
-            setIsSpeaking(false); // UI state update
-        }
-    };
-
-    const handleStop = () => {
-        window.speechSynthesis.cancel();
-        setIsSpeaking(false);
-        setIsPaused(false);
-    };
-
 
     /* =======================
        Structured Parsing
@@ -346,15 +287,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         );
     };
 
-    const currentContent = lang === 'en' ? {
-        explanation: data?.explanation,
-        examInsight: data?.examInsight,
-        dir: 'ltr' as const
-    } : {
-        explanation: translatedData?.explanation || data?.explanation,
-        examInsight: translatedData?.examInsight || data?.examInsight,
-        dir: 'rtl' as const
-    };
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-[100] animate-in fade-in duration-500">
@@ -362,7 +294,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose} />
 
             {/* Modal Content */}
-            <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${currentContent.dir === 'rtl' ? 'font-arabic' : ''}`} dir={currentContent.dir}>
+            <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${lang === 'ar' ? 'font-arabic' : ''}`}>
                 <div className="flex flex-col h-full overflow-hidden">
                     {/* Header */}
                     <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl relative flex-shrink-0 min-h-[140px] md:min-h-[180px]">
@@ -389,32 +321,57 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                 </div>
 
                                 <div className="flex md:hidden items-center gap-2">
-                                    {mode && (
-                                        <>
-                                            <button
-                                                onClick={isSpeaking ? handlePause : isPaused ? handleSpeak : handleSpeak}
-                                                className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 active:scale-95 transition-all text-sm"
-                                            >
-                                                {isSpeaking ? '⏸️' : '▶️'}
-                                            </button>
-                                            {isPaused && (
-                                                <button onClick={handleStop} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 active:scale-95 transition-all text-sm">
-                                                    ⏹️
+                                    {data && (
+                                        <div className="flex items-center gap-2">
+                                            {isPlaying && (
+                                                <button
+                                                    onClick={isPaused ? resume : pause}
+                                                    className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-indigo-400 transition-all border border-white/10 active:scale-95"
+                                                    title={isPaused ? 'Resume' : 'Pause'}
+                                                >
+                                                    {isPaused ? (
+                                                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                                    ) : (
+                                                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                                                    )}
                                                 </button>
                                             )}
-                                        </>
+                                            <button
+                                                onClick={isPlaying ? stop : play}
+                                                disabled={loading || translating || lang === 'ar'}
+                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${translating || loading || lang === 'ar' ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white shadow-lg border-none' : 'bg-white/5 text-slate-400 border border-white/10'}`}
+                                                title={lang === 'ar' ? 'English Only' : isPlaying ? 'Stop Teaching' : 'AI Teacher Voice'}
+                                            >
+                                                {isPlaying ? (
+                                                    <div className="w-3 h-3 bg-white rounded-sm" />
+                                                ) : (
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        </div>
                                     )}
                                     {mode && (
-                                        <button
-                                            onClick={handleLanguageToggle}
-                                            disabled={translating}
-                                            className={`flex bg-white/5 p-1 rounded-lg border border-white/10 ${translating ? 'opacity-50 cursor-wait' : ''}`}
-                                        >
-                                            <span className={`px-2 py-1 rounded md:px-4 md:py-2 rounded-lg text-[10px] font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
-                                            <span className={`px-2 py-1 rounded md:px-4 md:py-2 rounded-lg text-[10px] font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>
-                                                {translating ? '...' : 'AR'}
-                                            </span>
-                                        </button>
+                                        <div className={`flex bg-white/5 p-0.5 rounded-lg border border-white/10 relative ${isPlaying ? 'opacity-70 cursor-not-allowed' : ''}`}>
+                                            {isPlaying && (
+                                                <div className="absolute -top-3 -right-1 bg-amber-500 text-[8px] px-1 rounded-full text-black font-black z-20">🔒</div>
+                                            )}
+                                            <button
+                                                onClick={handleLanguageToggle}
+                                                disabled={translating || isPlaying}
+                                                className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'} ${isPlaying ? 'pointer-events-none' : ''}`}
+                                            >
+                                                EN
+                                            </button>
+                                            <button
+                                                onClick={handleLanguageToggle}
+                                                disabled={translating || isPlaying}
+                                                className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'} ${isPlaying ? 'pointer-events-none' : ''}`}
+                                            >
+                                                {translating ? '..' : 'AR'}
+                                            </button>
+                                        </div>
                                     )}
                                     {mode && (
                                         <button onClick={handleBack} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">←</button>
@@ -423,9 +380,24 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                 </div>
                             </div>
 
-                            {/* ANIMATION AREA */}
-                            <div className="relative w-full h-20 md:h-full flex items-center justify-center pointer-events-none">
-                                {showIntro && (
+                            {/* TRANSCRIPTION / ANIMATION AREA */}
+                            <div className="relative w-full h-20 md:h-full flex items-center justify-center z-[70]">
+                                {isPlaying && currentSentence && (
+                                    <div className="absolute inset-0 flex items-center justify-center px-4 animate-in fade-in zoom-in-95 duration-300">
+                                        <div className="bg-indigo-600/10 border border-indigo-500/20 px-6 py-3 rounded-2xl backdrop-blur-md shadow-xl flex items-center gap-4 max-w-xl">
+                                            <div className="flex-shrink-0 flex gap-1 items-center">
+                                                <div className={`w-1 h-3 bg-indigo-400 ${!isPaused ? 'animate-bounce [animation-delay:-0.3s]' : 'opacity-50'}`} />
+                                                <div className={`w-1 h-4 bg-indigo-400 ${!isPaused ? 'animate-bounce [animation-delay:-0.15s]' : 'opacity-50'}`} />
+                                                <div className={`w-1 h-2 bg-indigo-400 ${!isPaused ? 'animate-bounce' : 'opacity-50'}`} />
+                                            </div>
+                                            <p className="text-white text-sm md:text-base font-bold italic leading-tight text-center">
+                                                "{currentSentence}"
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {showIntro && !isPlaying && (
                                     <div className="relative flex items-center scale-75 md:scale-100 mt-4 md:mt-0">
                                         <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white/30 uppercase select-none flex items-center gap-2">
                                             <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
@@ -449,49 +421,85 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                             </div>
 
                             {/* ACTIONS & CLOSE */}
-                            <div className="hidden md:flex items-center justify-end gap-4 relative z-[60]">
-                                {mode && (
-                                    <>
+                            <div className="hidden md:flex flex-col items-end gap-4 relative z-[60]">
+                                {/* Row 1: Navigation Tools */}
+                                <div className="flex items-center gap-3">
+                                    {mode && (
                                         <button
-                                            onClick={isSpeaking ? handlePause : isPaused ? handleSpeak : handleSpeak}
-                                            className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl"
-                                            title={isSpeaking ? "Pause" : "Listen"}
+                                            onClick={handleBack}
+                                            className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-xl"
+                                            title="Back to Selection"
                                         >
-                                            {isSpeaking ? '⏸' : '▶'}
+                                            ←
                                         </button>
-                                        {isPaused && (
-                                            <button
-                                                onClick={handleStop}
-                                                className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl"
-                                                title="Stop"
-                                            >
-                                                ⏹
-                                            </button>
-                                        )}
-                                    </>
-                                )}
-                                {mode && (
+                                    )}
                                     <button
-                                        onClick={handleLanguageToggle}
-                                        disabled={translating}
-                                        className={`flex bg-white/5 p-1 rounded-xl border border-white/10 hover:bg-white/10 transition-all active:scale-95 ${translating ? 'opacity-50 cursor-wait' : ''}`}
+                                        onClick={onClose}
+                                        className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-xl"
+                                        title="Close"
                                     >
-                                        <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
-                                        <span className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>
-                                            {translating ? '...' : 'AR'}
-                                        </span>
+                                        ✕
                                     </button>
-                                )}
-                                {mode && (
-                                    <button onClick={handleBack} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl">←</button>
-                                )}
-                                <button onClick={onClose} className="w-14 h-14 rounded-2xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-2xl">✕</button>
+                                </div>
+
+                                {/* Row 2: Content Tools */}
+                                <div className="flex items-center gap-3 w-full justify-end">
+                                    {mode && (
+                                        <button
+                                            onClick={handleLanguageToggle}
+                                            disabled={translating || isPlaying}
+                                            className={`flex bg-white/5 p-1 rounded-xl border border-white/10 hover:bg-white/10 transition-all active:scale-95 h-12 relative ${translating || isPlaying ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                            title={isPlaying ? 'Finish speech to change language' : 'Change Language'}
+                                        >
+                                            {isPlaying && (
+                                                <div className="absolute -top-2 -right-2 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-[10px] shadow-lg z-20">🔒</div>
+                                            )}
+                                            <span className={`px-4 flex items-center rounded-lg text-xs font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
+                                            <span className={`px-4 flex items-center rounded-lg text-xs font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>
+                                                {translating ? '...' : 'AR'}
+                                            </span>
+                                        </button>
+                                    )}
+
+                                    {data && (
+                                        <div className="flex items-center gap-2">
+                                            {isPlaying && (
+                                                <button
+                                                    onClick={isPaused ? resume : pause}
+                                                    className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-indigo-400 hover:text-white transition-all active:scale-95"
+                                                    title={isPaused ? 'Resume' : 'Pause'}
+                                                >
+                                                    {isPaused ? (
+                                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                                    ) : (
+                                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                                                    )}
+                                                </button>
+                                            )}
+
+                                            <button
+                                                onClick={isPlaying ? stop : play}
+                                                disabled={loading || translating || lang === 'ar'}
+                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all border active:scale-95 ${translating || loading || lang === 'ar' ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white border-none shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border-white/5'}`}
+                                                title={lang === 'ar' ? 'English Only' : isPlaying ? 'Stop Teaching' : 'AI Teacher Voice'}
+                                            >
+                                                {isPlaying ? (
+                                                    <div className="w-4 h-4 bg-white rounded-sm" />
+                                                ) : (
+                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                                    </svg>
+                                                )}
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative">
+                    <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative" dir={currentContent.dir}>
                         {!mode ? (
                             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
@@ -586,7 +594,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                             <h4 className="text-white/40 font-black text-[11px] uppercase tracking-[0.4em] mb-2">Test Your Understanding</h4>
                                             <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Active Recall Questions</p>
                                         </div>
-                                        {data.quiz.map((item, qIndex) => (
+                                        {data.quiz.map((item: any, qIndex: number) => (
                                             <div key={qIndex} className="space-y-6">
                                                 <div className="flex gap-3 md:gap-4">
                                                     <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-400 flex-shrink-0">Q{qIndex + 1}</div>
@@ -597,7 +605,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                                                     </div>
                                                 </div>
                                                 <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 pl-0 md:pl-4">
-                                                    {item.options.map((option, oIndex) => (
+                                                    {item.options.map((option: string, oIndex: number) => (
                                                         <button key={oIndex} onClick={() => handleOptionSelect(qIndex, oIndex)} disabled={selectedOptions[qIndex] !== undefined} className={`p-4 md:p-5 rounded-xl md:rounded-2xl border text-left text-sm md:text-base font-bold transition-all shadow-sm active:scale-98 ${selectedOptions[qIndex] !== undefined ? (item.a === oIndex ? 'bg-green-500/20 border-green-500/40 text-green-400' : selectedOptions[qIndex] === oIndex ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.01] border-white/5 opacity-30') : 'bg-white/[0.03] border-white/5 hover:bg-white/10 hover:border-white/20'}`}>
                                                             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                                                                 {renderMarkdown(option)}
@@ -629,6 +637,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
                     </div>
                 </div>
             </div>
+
 
             <style>{`
                 @keyframes robot-write {

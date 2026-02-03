@@ -44,8 +44,8 @@ MODE RULES:
 - Content: Break down complex ideas into simple terms. Use bullet points for lists.
 - Include sections like: "What Is This?", "How It Works", "Key Terms", "Simple Example".
 - MANDATORY: The "explanation" object MUST contain "title", "overview", and "sections".
-- MANDATORY: "examInsight" object MUST be present.
-- MANDATORY: EXACTLY 2 easy MCQs.
+- MANDATORY: "examInsight" and "voiceScript" objects MUST be present.
+- MANDATORY: EXACTLY 2 easy MCQs (questions and options must be in English).
 
 2) deep:
 - Tone: University professor teaching an undergraduate. High academic depth.
@@ -54,8 +54,8 @@ MODE RULES:
 - Structure: 4–6 sections. Each section must be detailed and cover a specific aspect thoroughly.
 - Do NOT summarize briefly; explain fully.
 - Include sections like: Concept Overview, Detailed Analysis, Implications, Key Definitions.
-- MANDATORY: EXACTLY 2 difficult MCQs.
-- MANDATORY: "examInsight" object MUST be present.
+- MANDATORY: EXACTLY 2 difficult MCQs (questions and options must be in English).
+- MANDATORY: "examInsight" and "voiceScript" objects MUST be present.
 
 
 3) exam:
@@ -82,29 +82,66 @@ function requiredQuizCount(mode: Mode) {
     return mode === 'exam' ? 10 : 2;
 }
 
+function isVisionRequest(thumbnail?: string) {
+    return !!thumbnail && typeof thumbnail === 'string' && thumbnail.startsWith('data:image');
+}
+
+function coerceMessagesForModel(messages: any[], isVisionModel: boolean) {
+    return messages.map(m => {
+        if (!isVisionModel && Array.isArray(m.content)) {
+            const textPart = m.content.find((p: any) => p.type === 'text');
+            return { ...m, content: textPart ? textPart.text : '' };
+        }
+        return m;
+    });
+}
+
 function isStructuredObject(x: any) {
     return x && typeof x === 'object' && !Array.isArray(x);
 }
 
 function validateResultShape(result: any, mode: Mode) {
     if (!result || typeof result !== 'object') {
+        console.warn("Validation Failed: Result is not an object");
         return false;
     }
 
+    // quiz must exist and have correct count
     if (!Array.isArray(result.quiz)) {
+        console.warn("Validation Failed: 'quiz' is not an array");
         return false;
     }
 
     const requiredCount = requiredQuizCount(mode);
     if (result.quiz.length !== requiredCount) {
+        console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected ${requiredCount}`);
         return false;
+    }
+
+    // Validate MCQ options strictness
+    for (let i = 0; i < result.quiz.length; i++) {
+        const q = result.quiz[i];
+        if (!Array.isArray(q.options) || q.options.length !== 4) {
+            console.warn(`Validation Failed: Question ${i} does not have exactly 4 options`);
+            return false;
+        }
+        if (typeof q.a !== 'number' || q.a < 0 || q.a > 3) {
+            console.warn(`Validation Failed: Question ${i} has invalid correct answer index (a): ${q.a}`);
+            return false;
+        }
     }
 
     if (mode !== 'exam') {
         if (!isStructuredObject(result.explanation)) {
+            console.warn("Validation Failed: 'explanation' is missing or not an object");
             return false;
         }
-        if (typeof result.voiceScript !== 'string' || result.voiceScript.trim().length === 0) {
+        if (!isStructuredObject(result.examInsight)) {
+            console.warn("Validation Failed: 'examInsight' is missing or not an object");
+            return false;
+        }
+        if (typeof result.voiceScript !== 'string' || result.voiceScript.length === 0) {
+            console.warn("Validation Failed: 'voiceScript' is missing or empty");
             return false;
         }
     }
@@ -164,12 +201,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const resolvedMode: Mode = mode || 'simple';
 
+        // Block analysis if no text content is provided (Vision is disabled)
         const combinedText = (textContentArray || []).join(' ').trim();
         if (!combinedText) {
             return res.status(200).json({
                 explanation: { title: "Image-only Slide", overview: "This slide contains only an image. Please use text-based slides for analysis.", sections: [] },
                 examInsight: { title: "Exam Insight", overview: "No text found to analyze.", sections: [] },
-                voiceScript: "This slide appears to have only images and no text content for me to explain verbally. Please try a slide with text.",
                 quiz: [],
                 note: "Image-only slides are currently not supported. Please upload slides with text content."
             });
@@ -182,9 +219,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const systemPrompt = buildSystemPrompt();
 
-        const userPrompt = `
+        let userPrompt = `
 CONTENT (TEXT MAY BE EMPTY):
 ${slideContexts || ''}
+
+VISION/CONTEXT RULE:
+- If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation.
+- ONLY return empty sections if BOTH image and text are insufficient.
+- DO NOT explain abstract concepts, variables, or general relationships unless explicitly present in the text.
+- DO NOT use placeholders like "Variable A / Variable B".
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
@@ -193,32 +236,108 @@ REMINDER:
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs in the quiz array.
 `;
 
-        const finalPrompt = `${systemPrompt}\n\nUSER REQUEST:\n${userPrompt}`;
-
-        const result = await model_gemini.generateContent(finalPrompt);
-        const responseText = result.response.text();
-
-        // Clean potentially markdown-wrapped JSON
-        const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-
-        let parsed: any;
-        try {
-            parsed = JSON.parse(cleanJson);
-        } catch (e) {
-            console.error("JSON Parse Error:", e, responseText);
-            throw new Error('MODEL_RETURNED_INVALID_JSON');
+        if (resolvedMode !== 'exam') {
+            userPrompt += `
+- explanation/examInsight rules per mode must be respected.
+`;
+        } else {
+            userPrompt += `
+- DO NOT generate explanation or examInsight.
+- Output ONLY the quiz array.
+`;
         }
 
-        if (!validateResultShape(parsed, resolvedMode)) {
-            throw new Error('INVALID_RESULTS_SHAPE');
+
+        // STRATEGY: Use ONLY the smartest model (70b).
+        // We list it multiple times to act as "retries" in case of a random network glitch or bad output.
+        // We DO NOT fallback to dumber models (8b/Mixtral) to preserve quality.
+        let messages: any[] = [{ role: 'system', content: systemPrompt }];
+        messages.push({ role: 'user', content: userPrompt });
+
+
+
+
+        const isRetryable = (err: any) => {
+            const msg = String(err?.message || '').toLowerCase();
+            return (
+                err?.status === 503 ||
+                err?.status === 429 ||
+                msg.includes('system is busy') ||
+                msg.includes('service unavailable') ||
+                msg.includes('rate limit') ||
+                msg.includes('rate_limit')
+            );
+        };
+
+        const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+        let lastError: any = null;
+        let errorDetails: string[] = [];
+
+        // Validation: Check if we have at least one valid key
+        const hasGeminiKey = !!(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY);
+
+        if (!hasGeminiKey) {
+            console.error("CRITICAL: No Gemini API key found in environment variables.");
+            return res.status(500).json({ error: "Service configuration error: Missing API keys." });
         }
 
-        await updateUsage(uid, today, (userRef as any));
-        res.status(200).json(parsed);
+        // RETRY LOOP: 4 attempts with exponential backoff
+        for (let attempt = 0; attempt < 4; attempt++) {
+            try {
+                if (!hasGeminiKey) {
+                    throw new Error("GEMINI_API_KEY_MISSING");
+                }
 
+                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it (Google AI SDK)`);
+                const prompt = systemPrompt + "\n\n" + userPrompt;
+                const result = await model_gemini.generateContent(prompt);
+                const response = await result.response;
+                const raw = response.text();
+
+                let parsed: any;
+                try {
+                    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                    parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
+                } catch (e: any) {
+                    console.error("Gemma JSON Parse Error. Raw response:", raw.substring(0, 200));
+                    throw new Error(`GEMMA_JSON_PARSE_FAILED: ${e.message}`);
+                }
+
+                if (!validateResultShape(parsed, resolvedMode)) {
+                    throw new Error('GEMMA_INVALID_SHAPE');
+                }
+
+                await updateUsage(uid, today, (userRef as any));
+                res.status(200).json(parsed);
+                return;
+            } catch (err: any) {
+                console.warn(`[Gemma] Attempt ${attempt + 1} failed: ${err?.message}`);
+                lastError = err;
+                errorDetails.push(`Gemma: ${err?.message}`);
+
+                if (!isRetryable(err) && !err?.message?.includes('JSON') && !err?.message?.includes('SHAPE') && !err?.message?.includes('MISSING')) {
+                    break;
+                }
+
+                if (attempt < 3) {
+                    await sleep(700 * (attempt + 1));
+                }
+            }
+        }
+
+        // FAILURE after all retries
+        res.status(503).json({
+            error: 'System busy. Please retry in a moment.',
+            details: errorDetails.join(" | ")
+        });
     } catch (error: any) {
         console.error('API Error:', error);
-        res.status(500).json({ error: error?.message || 'Server error' });
+        if (error?.message === 'RATE_LIMIT_EXCEEDED') {
+            res.status(429).json({ error: 'Daily limit reached (200/200)' });
+        } else {
+            res.status(500).json({ error: error?.message || 'Server error' });
+        }
     }
 }
 
