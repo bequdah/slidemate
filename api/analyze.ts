@@ -5,8 +5,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const geminiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '').trim();
 const genAI = new GoogleGenerativeAI(geminiKey);
-const model_flash = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
-const model_gemma = genAI.getGenerativeModel({ model: 'gemma-3-27b-it' });
+const model_gemma = genAI.getGenerativeModel({
+    model: 'gemma-3-27b-it'
+});
 
 type Mode = 'simple' | 'deep' | 'exam';
 
@@ -250,15 +251,10 @@ REMINDER:
                     throw new Error("GEMINI_API_KEY_MISSING");
                 }
 
-                // First 2 attempts with Flash, last 2 with Gemma
-                const useFlash = attempt < 2;
-                const currentModel = useFlash ? model_flash : model_gemma;
-                const modelName = useFlash ? 'gemini-2.0-flash' : 'gemma-3-27b-it';
-
-                console.log(`Attempt ${attempt + 1}/4 | Model: ${modelName}`);
+                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it`);
                 const prompt = systemPrompt + "\n\n" + userPrompt;
 
-                const result = await currentModel.generateContent({
+                const result = await model_gemma.generateContent({
                     contents: [{ role: 'user', parts: [{ text: prompt }] }],
                     generationConfig: {
                         responseMimeType: 'application/json'
@@ -272,8 +268,8 @@ REMINDER:
                 try {
                     parsed = JSON.parse(raw);
                 } catch (e: any) {
-                    console.error(`${modelName} JSON Parse Error. Raw response:`, raw.substring(0, 200));
-                    throw new Error(`${modelName}_JSON_PARSE_FAILED: ${e.message}`);
+                    console.error("Gemma JSON Parse Error. Raw response:", raw.substring(0, 200));
+                    throw new Error(`GEMMA_JSON_PARSE_FAILED: ${e.message}`);
                 }
 
 
