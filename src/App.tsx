@@ -119,7 +119,7 @@ function MainApp() {
             topic: firstLine.substring(0, 40) + (firstLine.length > 40 ? '...' : ''),
             isImportant: importantIndices.has(slide.slideNumber),
             textContent: slide.textContent,
-            thumbnail: undefined // PPTX doesn't have thumbnails yet
+            thumbnail: slide.thumbnail // Use extracted thumbnail from PPTX
           });
 
           const currentProgress = ((index + 1) / pageCount) * 100;

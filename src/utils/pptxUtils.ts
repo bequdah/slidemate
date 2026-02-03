@@ -3,12 +3,14 @@ import JSZip from 'jszip';
 export interface PPTXSlide {
     slideNumber: number;
     textContent: string;
+    thumbnail?: string; // Base64 image data
 }
 
 /**
- * Extracts text content from a PPTX file.
- * PPTX files are ZIP archives containing XML files.
+ * Extracts text content and thumbnails from a PPTX file.
+ * PPTX files are ZIP archives containing XML files and media.
  * Text is stored in ppt/slides/slide*.xml files.
+ * Thumbnails can be found in ppt/media/ or docProps/thumbnail.jpeg
  */
 export async function extractPPTXContent(file: File): Promise<PPTXSlide[]> {
     try {
@@ -32,15 +34,45 @@ export async function extractPPTXContent(file: File): Promise<PPTXSlide[]> {
             return numA - numB;
         });
 
-        // Extract text from each slide
+        // Collect slide relationship files to find images
+        const slideRels: Map<number, string[]> = new Map();
+        zip.folder('ppt/slides/_rels')?.forEach((relativePath, file) => {
+            const match = relativePath.match(/^slide(\d+)\.xml\.rels$/);
+            if (match) {
+                const slideNum = parseInt(match[1]);
+                file.async('text').then(content => {
+                    const imageRefs = extractImageReferences(content);
+                    slideRels.set(slideNum, imageRefs);
+                });
+            }
+        });
+
+        // Wait for all relationship files to be processed
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Extract text and thumbnail from each slide
         for (let i = 0; i < slideFiles.length; i++) {
             const slideFile = slideFiles[i].file;
+            const slideNumber = i + 1;
             const xmlContent = await slideFile.async('text');
             const textContent = extractTextFromSlideXML(xmlContent);
 
+            // Try to get the first image for this slide as thumbnail
+            let thumbnail: string | undefined;
+            const imageRefs = slideRels.get(slideNumber);
+            if (imageRefs && imageRefs.length > 0) {
+                const imagePath = `ppt/media/${imageRefs[0]}`;
+                const imageFile = zip.file(imagePath);
+                if (imageFile) {
+                    const imageBlob = await imageFile.async('blob');
+                    thumbnail = await blobToBase64(imageBlob);
+                }
+            }
+
             slides.push({
-                slideNumber: i + 1,
-                textContent: textContent.trim()
+                slideNumber,
+                textContent: textContent.trim(),
+                thumbnail
             });
         }
 
@@ -49,6 +81,31 @@ export async function extractPPTXContent(file: File): Promise<PPTXSlide[]> {
         console.error('Error extracting PPTX content:', error);
         throw new Error('Failed to process PPTX file. Please ensure it is a valid PowerPoint file.');
     }
+}
+
+/**
+ * Extracts image references from slide relationship XML.
+ */
+function extractImageReferences(relsXML: string): string[] {
+    const imageRefs: string[] = [];
+    const regex = /<Relationship[^>]*Type="[^"]*image"[^>]*Target="\.\.\/media\/([^"]+)"/g;
+    let match;
+    while ((match = regex.exec(relsXML)) !== null) {
+        imageRefs.push(match[1]);
+    }
+    return imageRefs;
+}
+
+/**
+ * Converts a Blob to Base64 data URL.
+ */
+async function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
 }
 
 /**
