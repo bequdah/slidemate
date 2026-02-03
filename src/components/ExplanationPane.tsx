@@ -49,7 +49,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
     // TTS State
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
-    const [utterance, setUtterance] = useState<SpeechSynthesisUtterance | null>(null);
+
 
     useEffect(() => {
         const timer = setTimeout(() => setShowIntro(false), 4500);
@@ -202,7 +202,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         u.onend = () => {
             setIsSpeaking(false);
             setIsPaused(false);
-            setUtterance(null);
         };
 
         u.onerror = (e) => {
@@ -211,7 +210,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
             setIsPaused(false);
         };
 
-        setUtterance(u);
         window.speechSynthesis.speak(u);
     };
 
@@ -227,7 +225,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         window.speechSynthesis.cancel();
         setIsSpeaking(false);
         setIsPaused(false);
-        setUtterance(null);
     };
 
 
