@@ -46,14 +46,14 @@ export const FileUpload = ({ onUpload }: FileUploadProps) => {
                 type="file"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                 onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
-                accept=".pdf,.pptx"
+                accept=".pdf"
             />
             <div className="text-center">
                 <div className="w-16 h-16 bg-slate-700 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                     <span className="text-3xl text-indigo-400">📄</span>
                 </div>
                 <h3 className="text-xl font-bold mb-2">Upload Lecture Slides</h3>
-                <p className="text-slate-400 mb-6">Drag and drop PDF or PPTX files here</p>
+                <p className="text-slate-400 mb-6">Drag and drop PDF files here</p>
                 <div className="inline-block px-6 py-2 bg-indigo-600 rounded-full text-sm font-bold group-hover:bg-indigo-500 transition-colors">
                     Browse Files
                 </div>
