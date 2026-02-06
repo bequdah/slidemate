@@ -254,19 +254,15 @@ REMINDER:
                 console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it`);
                 const prompt = systemPrompt + "\n\n" + userPrompt;
 
-                const result = await model_gemma.generateContent({
-                    contents: [{ role: 'user', parts: [{ text: prompt }] }],
-                    generationConfig: {
-                        responseMimeType: 'application/json'
-                    }
-                });
-
+                // Gemma-3 currently might not support strict JSON output mode via SDK config config
+                const result = await model_gemma.generateContent(prompt);
                 const response = await result.response;
                 const raw = response.text();
 
                 let parsed: any;
                 try {
-                    parsed = JSON.parse(raw);
+                    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+                    parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
                 } catch (e: any) {
                     console.error("Gemma JSON Parse Error. Raw response:", raw.substring(0, 200));
                     throw new Error(`GEMMA_JSON_PARSE_FAILED: ${e.message}`);
