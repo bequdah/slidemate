@@ -154,11 +154,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return;
         }
 
-        const { slideNumbers, textContentArray, mode, thumbnail } = req.body as {
+        const { slideNumbers, textContentArray, mode, thumbnail, previousTopics } = req.body as {
             slideNumbers: number[];
             textContentArray?: string[];
             mode?: Mode;
             thumbnail?: string;
+            previousTopics?: string[];
         };
 
         const resolvedMode: Mode = mode || 'simple';
@@ -181,14 +182,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const systemPrompt = buildSystemPrompt();
 
+        const contextInfo = (previousTopics && previousTopics.length > 0)
+            ? `\nPREVIOUSLY COVERED TOPICS (DO NOT RE-EXPLAIN THESE IN DETAIL):\n- ${previousTopics.join('\n- ')}\n`
+            : '';
+
         let userPrompt = `
+${contextInfo}
 CONTENT (TEXT MAY BE EMPTY):
 ${slideContexts || ''}
 
 VISION/CONTEXT RULE:
 - If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation.
 - ONLY return empty sections if BOTH image and text are insufficient.
-- DO NOT explain abstract concepts, variables, or general relationships unless explicitly present in the text.
+- DO NOT re-explain or define concepts that are part of the "PREVIOUSLY COVERED TOPICS". Focus on new connections or specific specialization in the current slide.
 - DO NOT use placeholders like "Variable A / Variable B".
 
 MODE: ${resolvedMode.toUpperCase()}

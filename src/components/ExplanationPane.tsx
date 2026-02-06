@@ -31,6 +31,7 @@ interface ExplanationPaneProps {
     slideIds: string[];
     slideNumbers: number[];
     textContentArray?: string[];
+    allSlidesTexts?: string[]; // Added: all document texts
     thumbnail?: string;
     onClose: () => void;
 }
@@ -39,7 +40,7 @@ interface ExplanationPaneProps {
    Component
 ======================= */
 
-export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onClose }: ExplanationPaneProps) => {
+export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts, thumbnail, onClose }: ExplanationPaneProps) => {
     const [data, setData] = useState<SlideExplanation | null>(null);
     const [loading, setLoading] = useState(false);
     const [voiceLoading, setVoiceLoading] = useState(false);
@@ -83,7 +84,21 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, thumbnail, onC
         setVoiceLoading(false);
         setSelectedOptions({});
 
-        analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail).then(res => {
+        // Calculate Context: Get topics of all slides BEFORE the current selection
+        let previousTopics: string[] = [];
+        if (allSlidesTexts && slideNumbers.length > 0) {
+            const minSlideNum = Math.min(...slideNumbers);
+            // Grab the first ~60 chars of each slide before the current one
+            previousTopics = allSlidesTexts
+                .slice(0, minSlideNum - 1)
+                .map(text => {
+                    const clean = (text || "").replace(/\s+/g, ' ').trim();
+                    return clean.substring(0, 60) + (clean.length > 60 ? '...' : '');
+                })
+                .filter(t => t.length > 5); // Filter out empty or too short slides
+        }
+
+        analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail, previousTopics).then(res => {
             setData(res);
             setLoading(false);
 

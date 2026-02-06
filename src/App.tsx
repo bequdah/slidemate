@@ -248,6 +248,7 @@ function MainApp() {
             textContentArray={selectedSlide.id === 'batch-mode'
               ? slides.filter(s => selectedSlideIds.includes(s.id)).map(s => s.textContent || "")
               : [selectedSlide.textContent || ""]}
+            allSlidesTexts={slides.map(s => s.textContent || "")}
             thumbnail={selectedSlide.thumbnail}
             onClose={() => setSelectedSlide(null)}
           />
