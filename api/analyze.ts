@@ -188,30 +188,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         let userPrompt = `
 ${contextInfo}
-CONTENT (TEXT MAY BE EMPTY):
+SLIDE CONTENT TO ANALYZE:
 ${slideContexts || ''}
 
-VISION/CONTEXT RULE:
-- If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation.
-- ONLY return empty sections if BOTH image and text are insufficient.
-- DO NOT re-explain or define concepts that are part of the "PREVIOUSLY COVERED TOPICS". Focus on new connections or specific specialization in the current slide.
-- DO NOT use placeholders like "Variable A / Variable B".
+CRITICAL EXTRACTION REQUIREMENTS:
+1. **Extract EVERY point, bullet, concept, and sentence from the slide**
+2. **For EACH extracted point**: Write a comprehensive Arabic explanation
+3. **Complete Coverage**: Do NOT skip any content from the slide
+4. **Explanation Style**: 
+   - Use natural, conversational Arabic (ببساطة، يعني، تخيل)
+   - Explain technical terms clearly
+   - Add examples when helpful
+   - Make it feel like a personal tutor
+
+EXAMPLE FORMAT:
+If slide says: "Machine Learning uses algorithms to learn from data"
+Your explanation should extract this and explain:
+"**التعلم الآلي (Machine Learning):** ببساطة، هو تقنية بتستخدم خوارزميات (Algorithms) عشان الكمبيوتر يتعلم من البيانات. يعني بدل ما تبرمج الكمبيوتر خطوة بخطوة، بتعطيه أمثلة وهو بتعلم منها. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - بتوريه أمثلة كثيرة وهو بتعلم الفرق."
+
+VISION/CONTEXT RULES:
+- If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation
+- ONLY return empty sections if BOTH image and text are insufficient
+- DO NOT re-explain concepts from "PREVIOUSLY COVERED TOPICS" - focus on new information
+- DO NOT use placeholders like "Variable A / Variable B"
+- ALWAYS provide real, specific explanations
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
-- You MUST follow ${resolvedMode.toUpperCase()} rules.
-- You MUST follow the JSON SCHEMA exactly.
-- Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs in the quiz array.
+- You MUST extract ALL slide content
+- You MUST explain each point comprehensively in Arabic
+- You MUST follow ${resolvedMode.toUpperCase()} rules
+- You MUST follow the JSON SCHEMA exactly
+- Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs in the quiz array
 `;
 
         if (resolvedMode !== 'exam') {
             userPrompt += `
-- explanation/examInsight rules per mode must be respected.
+- explanation/examInsight must cover 100% of slide content
+- Each bullet/section must have detailed Arabic explanation
 `;
         } else {
             userPrompt += `
-- DO NOT generate explanation or examInsight.
-- Output ONLY the quiz array.
+- DO NOT generate explanation or examInsight
+- Output ONLY the quiz array with ${requiredQuizCount(resolvedMode)} questions
 `;
         }
 
