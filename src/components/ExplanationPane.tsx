@@ -798,6 +798,28 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .prose p, .prose li {
                     font-variant-numeric: tabular-nums;
                 }
+
+                /* Slide Point Styling: English (bold) = Red, Arabic (normal) = White */
+                .prose strong {
+                    color: #ef4444 !important; /* Red for English slide points */
+                    font-weight: 900 !important;
+                    display: block !important;
+                    margin-bottom: 0.75rem !important;
+                    font-size: 1.1em !important;
+                    line-height: 1.4 !important;
+                }
+
+                .prose p {
+                    color: #e2e8f0 !important; /* White for Arabic explanations */
+                    margin-bottom: 1.5rem !important;
+                    padding-left: 1rem !important;
+                    line-height: 1.8 !important;
+                }
+
+                /* Ensure proper spacing between points */
+                .prose p + p {
+                    margin-top: 1.5rem !important;
+                }
             `}</style>
         </div>
     );
