@@ -200,6 +200,7 @@ CRITICAL EXTRACTION & FORMATTING REQUIREMENTS:
 3. **Complete Coverage**: Do NOT skip any content from the slide
 4. **Explanation Style**: 
    - Use warm, conversational Jordanian Arabic (ببساطة، يعني، تخيل، خلينا نفهم)
+   - Jordanian vocabulary: Use "هاض" (not "هاد"), "هسا" (not "هلا" for "now")
    - Explain like a friendly tutor, not a textbook
    - Add real-world examples when helpful
    - Break down technical terms naturally
