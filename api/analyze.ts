@@ -207,17 +207,24 @@ CRITICAL EXTRACTION & FORMATTING REQUIREMENTS:
      * Use "مش رح" not "مش هت"
    - **ABSOLUTE PROHIBITION: The word "هاد" is COMPLETELY BANNED. Replace ALL instances with "هاض"**
    - Before finalizing your response, scan for "هاد" and replace with "هاض"
+   - **Balanced Explanation Strategy:**
+     * Complex/important concepts: Detailed explanation with examples (3-4 sentences)
+     * Simple/straightforward points: Concise clear explanation (1-2 sentences)
+     * NOT every point needs an example - use examples strategically
+     * Prioritize clarity over length
    - Explain like a friendly tutor, not a textbook
-   - Add real-world examples when helpful
    - Break down technical terms naturally
 
 EXAMPLE FORMAT:
-If slide contains: "Machine Learning uses algorithms to learn from data"
-
-Your output should be:
+Complex concept example:
 "**Machine Learning uses algorithms to learn from data**
 
-ببساطة، التعلم الآلي هو تقنية بتخلي الكمبيوتر يتعلم من البيانات بدون ما تبرمجه خطوة بخطوة. يعني بدل ما تكتب كود معقد، بتعطي الكمبيوتر أمثلة كثيرة وهو بيتعلم منها. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - مش رح تشرحله بالتفصيل الممل، بس بتوريه صور كثيرة وهو بيفهم الفرق لحاله. هاض بالضبط الخوارزميات بتشتغل! وهسا، خلينا نفهم كيف بيصير هاض الإشي عمليًا."
+ببساطة، التعلم الآلي هو تقنية بتخلي الكمبيوتر يتعلم من البيانات. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - بتوريه أمثلة كثيرة وهو بيفهم الفرق لحاله. هاض بالضبط الخوارزميات بتشتغل!"
+
+Simple concept example:
+"**Data is stored in databases**
+
+ببساطة، البيانات بتنخزن في قواعد بيانات عشان نقدر نرجعلها وقت ما بدنا."
 
 VISION/CONTEXT RULES:
 - If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation
