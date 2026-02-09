@@ -205,6 +205,8 @@ CRITICAL EXTRACTION & FORMATTING REQUIREMENTS:
      * ALWAYS use "هسا" (NEVER "هلا" for "now")
      * Use "بيتعلم" not "بتعلم"
      * Use "مش رح" not "مش هت"
+   - **ABSOLUTE PROHIBITION: The word "هاد" is COMPLETELY BANNED. Replace ALL instances with "هاض"**
+   - Before finalizing your response, scan for "هاد" and replace with "هاض"
    - Explain like a friendly tutor, not a textbook
    - Add real-world examples when helpful
    - Break down technical terms naturally

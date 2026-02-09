@@ -807,6 +807,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     margin-bottom: 0.75rem !important;
                     font-size: 1.1em !important;
                     line-height: 1.4 !important;
+                    direction: ltr !important; /* English: Left to Right */
+                    text-align: left !important;
+                    unicode-bidi: embed !important;
                 }
 
                 .prose p {
@@ -814,6 +817,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     margin-bottom: 1.5rem !important;
                     padding-left: 1rem !important;
                     line-height: 1.8 !important;
+                    direction: rtl !important; /* Arabic: Right to Left */
+                    text-align: right !important;
+                    unicode-bidi: embed !important;
                 }
 
                 /* Ensure proper spacing between points */
