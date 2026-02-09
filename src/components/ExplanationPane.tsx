@@ -364,9 +364,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             )}
                                             <button
                                                 onClick={isPlaying ? stop : play}
-                                                disabled={loading || translating || lang === 'ar' || (voiceLoading && !isPlaying)}
-                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${translating || loading || lang === 'ar' || (voiceLoading && !isPlaying) ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white shadow-lg border-none' : 'bg-white/5 text-slate-400 border border-white/10'}`}
-                                                title={lang === 'ar' ? 'English Only' : isPlaying ? 'Stop Teaching' : voiceLoading ? 'Preparing Voice...' : 'AI Teacher Voice'}
+                                                disabled={loading || (voiceLoading && !isPlaying)}
+                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${loading || (voiceLoading && !isPlaying) ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white shadow-lg border-none' : 'bg-white/5 text-slate-400 border border-white/10'}`}
+                                                title={isPlaying ? 'Stop Teaching' : voiceLoading ? 'Preparing Voice...' : 'AI Teacher Voice'}
                                             >
                                                 {isPlaying ? (
                                                     <div className="w-3 h-3 bg-white rounded-sm" />
@@ -380,27 +380,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             </button>
                                         </div>
                                     )}
-                                    {mode && (
-                                        <div className={`flex bg-white/5 p-0.5 rounded-lg border border-white/10 relative ${isPlaying ? 'opacity-70 cursor-not-allowed' : ''}`}>
-                                            {isPlaying && (
-                                                <div className="absolute -top-3 -right-1 bg-amber-500 text-[8px] px-1 rounded-full text-black font-black z-20">🔒</div>
-                                            )}
-                                            <button
-                                                onClick={handleLanguageToggle}
-                                                disabled={translating || isPlaying}
-                                                className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'} ${isPlaying ? 'pointer-events-none' : ''}`}
-                                            >
-                                                EN
-                                            </button>
-                                            <button
-                                                onClick={handleLanguageToggle}
-                                                disabled={translating || isPlaying}
-                                                className={`px-2 py-1 rounded-md text-[10px] font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400'} ${isPlaying ? 'pointer-events-none' : ''}`}
-                                            >
-                                                {translating ? '..' : 'AR'}
-                                            </button>
-                                        </div>
-                                    )}
+
                                     {mode && (
                                         <button onClick={handleBack} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">←</button>
                                     )}
@@ -472,22 +452,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
                                 {/* Row 2: Content Tools */}
                                 <div className="flex items-center gap-3 w-full justify-end">
-                                    {mode && (
-                                        <button
-                                            onClick={handleLanguageToggle}
-                                            disabled={translating || isPlaying}
-                                            className={`flex bg-white/5 p-1 rounded-xl border border-white/10 hover:bg-white/10 transition-all active:scale-95 h-12 relative ${translating || isPlaying ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                            title={isPlaying ? 'Finish speech to change language' : 'Change Language'}
-                                        >
-                                            {isPlaying && (
-                                                <div className="absolute -top-2 -right-2 w-5 h-5 bg-amber-500 rounded-full flex items-center justify-center text-[10px] shadow-lg z-20">🔒</div>
-                                            )}
-                                            <span className={`px-4 flex items-center rounded-lg text-xs font-black transition-all ${lang === 'en' && !translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>EN</span>
-                                            <span className={`px-4 flex items-center rounded-lg text-xs font-black transition-all ${lang === 'ar' || translating ? 'bg-indigo-600 text-white shadow-lg' : 'text-slate-400'}`}>
-                                                {translating ? '...' : 'AR'}
-                                            </span>
-                                        </button>
-                                    )}
+
 
                                     {data && (
                                         <div className="flex items-center gap-2">
@@ -507,9 +472,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
                                             <button
                                                 onClick={isPlaying ? stop : play}
-                                                disabled={loading || translating || lang === 'ar' || (voiceLoading && !isPlaying)}
-                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all border active:scale-95 ${translating || loading || lang === 'ar' || (voiceLoading && !isPlaying) ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white border-none shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border-white/5'}`}
-                                                title={lang === 'ar' ? 'English Only' : isPlaying ? 'Stop Teaching' : voiceLoading ? 'Preparing Voice...' : 'AI Teacher Voice'}
+                                                disabled={loading || (voiceLoading && !isPlaying)}
+                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all border active:scale-95 ${loading || (voiceLoading && !isPlaying) ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white border-none shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border-white/5'}`}
+                                                title={isPlaying ? 'Stop Teaching' : voiceLoading ? 'Preparing Voice...' : 'AI Teacher Voice'}
                                             >
                                                 {isPlaying ? (
                                                     <div className="w-4 h-4 bg-white rounded-sm" />
@@ -813,13 +778,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 }
 
                 .prose p {
-                    color: #e2e8f0 !important; /* White for Arabic explanations */
+                    color: #e2e8f0 !important;
                     margin-bottom: 1.5rem !important;
-                    padding-left: 1rem !important;
                     line-height: 1.8 !important;
-                    direction: rtl !important; /* Arabic: Right to Left */
-                    text-align: right !important;
-                    unicode-bidi: embed !important;
                 }
 
                 /* Ensure proper spacing between points */

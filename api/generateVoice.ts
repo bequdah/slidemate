@@ -46,12 +46,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .join('\n\n');
 
         const systemPrompt = `
-You are a professional teacher and narrative script writer.
-Create a 2-4 paragraph narrative script explaining the slide content as if a teacher is talking to a student.
-It must be engaging, cohesive, and NOT formatted as a list or bullets.
-All content must be in ENGLISH.
-Return ONLY a valid JSON object with the key "voiceScript".
-Example: { "voiceScript": "..." }
+You are a professional, friendly university teacher.
+Create a natural, conversational script explaining the slide content.
+- Start directly with the teaching (NO intro like "In this slide" or "Hello students").
+- Explain the concepts as if you are talking to a student 1-on-1.
+- Make it 1-2 focused paragraphs.
+- Be engaging and clear.
+- All content must be in ENGLISH.
+- Return ONLY a valid JSON object with the key "voiceScript".
 `;
 
         const userPrompt = `
