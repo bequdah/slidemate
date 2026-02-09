@@ -199,7 +199,7 @@ CRITICAL EXTRACTION & FORMATTING REQUIREMENTS:
    - Second: Provide a detailed Arabic explanation directly underneath
 3. **Complete Coverage**: Do NOT skip any content from the slide
 4. **Explanation Style**: 
-   - Use warm, conversational Arabic (ببساطة، يعني، تخيل، خلينا نفهم)
+   - Use warm, conversational Jordanian Arabic (ببساطة، يعني، تخيل، خلينا نفهم)
    - Explain like a friendly tutor, not a textbook
    - Add real-world examples when helpful
    - Break down technical terms naturally
@@ -210,7 +210,7 @@ If slide contains: "Machine Learning uses algorithms to learn from data"
 Your output should be:
 "**Machine Learning uses algorithms to learn from data**
 
-ببساطة، التعلم الآلي هو تقنية بتخلي الكمبيوتر يتعلم من البيانات بدون ما تبرمجه خطوة بخطوة. يعني بدل ما تكتب كود معقد، بتعطي الكمبيوتر أمثلة كثيرة وهو بتعلم منها. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - مش هتشرحله بالتفصيل الممل، بس بتوريه صور كثيرة وهو بفهم الفرق لحاله. هيك بالضبط الخوارزميات بتشتغل!"
+ببساطة، التعلم الآلي هو تقنية بتخلي الكمبيوتر يتعلم من البيانات بدون ما تبرمجه خطوة بخطوة. يعني بدل ما تكتب كود معقد، بتعطي الكمبيوتر أمثلة كثيرة وهو بيتعلم منها. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - مش رح تشرحله بالتفصيل الممل، بس بتوريه صور كثيرة وهو بيفهم الفرق لحاله. هيك بالضبط الخوارزميات بتشتغل!"
 
 VISION/CONTEXT RULES:
 - If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation
