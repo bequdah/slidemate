@@ -200,7 +200,11 @@ CRITICAL EXTRACTION & FORMATTING REQUIREMENTS:
 3. **Complete Coverage**: Do NOT skip any content from the slide
 4. **Explanation Style**: 
    - Use warm, conversational Jordanian Arabic (ببساطة، يعني، تخيل، خلينا نفهم)
-   - Jordanian vocabulary: Use "هاض" (not "هاد"), "هسا" (not "هلا" for "now")
+   - **CRITICAL Jordanian vocabulary rules:**
+     * ALWAYS use "هاض" (NEVER "هاد")
+     * ALWAYS use "هسا" (NEVER "هلا" for "now")
+     * Use "بيتعلم" not "بتعلم"
+     * Use "مش رح" not "مش هت"
    - Explain like a friendly tutor, not a textbook
    - Add real-world examples when helpful
    - Break down technical terms naturally
@@ -211,7 +215,7 @@ If slide contains: "Machine Learning uses algorithms to learn from data"
 Your output should be:
 "**Machine Learning uses algorithms to learn from data**
 
-ببساطة، التعلم الآلي هو تقنية بتخلي الكمبيوتر يتعلم من البيانات بدون ما تبرمجه خطوة بخطوة. يعني بدل ما تكتب كود معقد، بتعطي الكمبيوتر أمثلة كثيرة وهو بيتعلم منها. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - مش رح تشرحله بالتفصيل الممل، بس بتوريه صور كثيرة وهو بيفهم الفرق لحاله. هيك بالضبط الخوارزميات بتشتغل!"
+ببساطة، التعلم الآلي هو تقنية بتخلي الكمبيوتر يتعلم من البيانات بدون ما تبرمجه خطوة بخطوة. يعني بدل ما تكتب كود معقد، بتعطي الكمبيوتر أمثلة كثيرة وهو بيتعلم منها. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - مش رح تشرحله بالتفصيل الممل، بس بتوريه صور كثيرة وهو بيفهم الفرق لحاله. هاض بالضبط الخوارزميات بتشتغل! وهسا، خلينا نفهم كيف بيصير هاض الإشي عمليًا."
 
 VISION/CONTEXT RULES:
 - If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation
