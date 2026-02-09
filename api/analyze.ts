@@ -191,20 +191,26 @@ ${contextInfo}
 SLIDE CONTENT TO ANALYZE:
 ${slideContexts || ''}
 
-CRITICAL EXTRACTION REQUIREMENTS:
+CRITICAL EXTRACTION & FORMATTING REQUIREMENTS:
+
 1. **Extract EVERY point, bullet, concept, and sentence from the slide**
-2. **For EACH extracted point**: Write a comprehensive Arabic explanation
+2. **Format each point as follows:**
+   - First: Show the original English text from the slide (bold formatting)
+   - Second: Provide a detailed Arabic explanation directly underneath
 3. **Complete Coverage**: Do NOT skip any content from the slide
 4. **Explanation Style**: 
-   - Use natural, conversational Arabic (ببساطة، يعني، تخيل)
-   - Explain technical terms clearly
-   - Add examples when helpful
-   - Make it feel like a personal tutor
+   - Use warm, conversational Arabic (ببساطة، يعني، تخيل، خلينا نفهم)
+   - Explain like a friendly tutor, not a textbook
+   - Add real-world examples when helpful
+   - Break down technical terms naturally
 
 EXAMPLE FORMAT:
-If slide says: "Machine Learning uses algorithms to learn from data"
-Your explanation should extract this and explain:
-"**التعلم الآلي (Machine Learning):** ببساطة، هو تقنية بتستخدم خوارزميات (Algorithms) عشان الكمبيوتر يتعلم من البيانات. يعني بدل ما تبرمج الكمبيوتر خطوة بخطوة، بتعطيه أمثلة وهو بتعلم منها. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - بتوريه أمثلة كثيرة وهو بتعلم الفرق."
+If slide contains: "Machine Learning uses algorithms to learn from data"
+
+Your output should be:
+"**Machine Learning uses algorithms to learn from data**
+
+ببساطة، التعلم الآلي هو تقنية بتخلي الكمبيوتر يتعلم من البيانات بدون ما تبرمجه خطوة بخطوة. يعني بدل ما تكتب كود معقد، بتعطي الكمبيوتر أمثلة كثيرة وهو بتعلم منها. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - مش هتشرحله بالتفصيل الممل، بس بتوريه صور كثيرة وهو بفهم الفرق لحاله. هيك بالضبط الخوارزميات بتشتغل!"
 
 VISION/CONTEXT RULES:
 - If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation
