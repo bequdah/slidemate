@@ -19,35 +19,28 @@ function buildSlideContexts(slideNumbers: number[], textContentArray?: string[])
 
 function buildSystemPrompt() {
     return `
-You are the "QudahWay Expert Tutor", a friendly, engaging Jordanian private tutor. 
-Your goal is to explain complex slide content to students like a mentor/big brother, using the unique "Qudah Way" style.
+You are an Elite University Professor. Return ONLY a valid JSON object. No extra text.
 
-STRICT RULES:
-1. Return ONLY a valid JSON object. No extra text.
-2. 100% FIDELITY: Every single bullet, term, and concept from the slide MUST be extracted. 
-3. STRUCTURE: For EVERY point, start with the Original English Text (**Bold**), then follow with a detailed Arabic explanation.
-4. TABLE INTERPRETATION: If the slide contains a table, DO NOT just transcribe it. Use your vision to UNDERSTAND the relationships. Explain what the rows/columns represent and point out key patterns like a real tutor (e.g., "Notice how Term X only appears in the first two documents"). The goal is to explain the table's "story", not just its data.
-5. LANGUAGE: Informal Jordanian Arabic (Ammiya). 
-6. ABSOLUTE BAN: No "هاد" (use "هاض"), no "متل" (use "مثل"), no "كتير" (use "كثير"), no "تانية" (use "ثانية").
-7. TONE: The "QudahWay Expert" - Like a private tutor explaining a complex chart on a whiteboard. Use specific examples from high-fidelity visual analysis.
+GOAL:
+- Reconstruct slide content into structured JSON.
+- Do NOT add new concepts (reasonable clarification only).
 
 STRICT OUTPUT KEYS:
 1) "explanation": { "title", "overview", "sections" }
-2) "quiz": Array of MCQs
+2) "examInsight": { "title", "overview", "sections" }
+3) "quiz": Array of MCQs
 
 MODE RULES:
-- simple: Use simple analogies, very informal language. 3-4 sections. 2 easy MCQs.
-- deep: Detailed technical breakdown while maintaining the "Qudah Way" tone. 4-6 sections. 2 hard MCQs.
-- exam: Focused on "Exam strategy", common pitfalls, and "The Secret Here". 10 hard MCQs.
+- simple: 3-4 concise sections, easy language. 2 easy MCQs.
+- deep: 4-6 detailed sections, academic depth. 2 hard MCQs.
+- exam: Empty explanation/examInsight. Exactly 10 hard MCQs.
 
 JSON SCHEMA:
 - explanation: { "title": string, "overview": string, "sections": [{ "heading": string, "bullets": string[] } | { "heading": string, "text": string }] }
+- examInsight: { "title": string, "overview": string, "sections": [{ "heading": string, "text": string }] }
 - quiz: [{ "q": string, "options": [string (4)], "a": number (0-3), "reasoning": string }]
 
-LaTeX: Use $...$ for inline and $$...$$ for block formulas.
-STRICT MATH RULE: For mathematical content, formulas, or technical notation (like V={w1...}, q=q1...), you MUST use proper LaTeX syntax. DO NOT use plain text for math.
-English ONLY for LaTeX.
-QUIZ RULE: All quiz questions ("q") and "options" MUST be in English ONLY. No Arabic in the quiz questions or options. "reasoning" remains in Jordanian Arabic.
+LaTeX: $...$ for inline, $$...$$ for block. Use \\\\frac. English ONLY.
 `;
 }
 
@@ -109,6 +102,10 @@ function validateResultShape(result: any, mode: Mode) {
             console.warn("Validation Failed: 'explanation' is missing or not an object");
             return false;
         }
+        if (!isStructuredObject(result.examInsight)) {
+            console.warn("Validation Failed: 'examInsight' is missing or not an object");
+            return false;
+        }
     }
 
     return true;
@@ -167,20 +164,49 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const resolvedMode: Mode = mode || 'simple';
 
-        // Allow analysis if either text or image is provided
+        // Prepare text content
         const combinedText = (textContentArray || []).join(' ').trim();
-        if (!combinedText && !thumbnail) {
+
+        // If vision API token is available and we have image data, enhance text with vision analysis
+        let enhancedText = combinedText;
+        const huggingFaceToken = process.env.HUGGING_FACE_API_KEY || process.env.VITE_HUGGING_FACE_API_KEY || '';
+        
+        if (thumbnail && huggingFaceToken) {
+            try {
+                console.log('Attempting vision analysis with BLIP-2...');
+                const visionResult = await callBLIP2Vision(
+                    thumbnail,
+                    'Describe this slide in detail. Include all text, diagrams, tables, charts, and visual elements. For tables, provide markdown format. For equations, use LaTeX format.',
+                    huggingFaceToken
+                );
+                
+                if (visionResult) {
+                    console.log('Vision analysis successful');
+                    // Combine OCR text with vision analysis
+                    enhancedText = combinedText 
+                        ? `${combinedText}\n\n[VISION ANALYSIS]:\n${visionResult}`
+                        : `[VISION ANALYSIS]:\n${visionResult}`;
+                }
+            } catch (visionError: any) {
+                console.warn(`Vision analysis failed, continuing with OCR text only: ${visionError.message}`);
+                // Fall back to text-only if vision fails
+            }
+        }
+
+        // If we still have no content, return empty response
+        if (!enhancedText) {
             return res.status(200).json({
-                explanation: { title: "Empty Slide", overview: "No text or image found to analyze. Please upload a slide with content.", sections: [] },
+                explanation: { title: "Unable to Extract Content", overview: "This slide could not be analyzed. Please try with a different slide.", sections: [] },
+                examInsight: { title: "Exam Insight", overview: "No content found to analyze.", sections: [] },
                 quiz: [],
-                note: "Empty slides are not supported."
+                note: "No text or visual content could be extracted from this slide."
             });
         }
 
         const isMulti = Array.isArray(slideNumbers) && slideNumbers.length > 1;
         const slideContexts = isMulti
-            ? buildSlideContexts(slideNumbers, textContentArray)
-            : (textContentArray?.[0] || '');
+            ? buildSlideContexts(slideNumbers, enhancedText.split('\n\n'))
+            : enhancedText;
 
         const systemPrompt = buildSystemPrompt();
 
@@ -193,49 +219,65 @@ ${contextInfo}
 SLIDE CONTENT TO ANALYZE:
 ${slideContexts || ''}
 
-CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
+CRITICAL EXTRACTION & FORMATTING REQUIREMENTS:
 
-1. **100% Text-to-Explanation**: For every single bullet or line in the slide, you MUST provide:
-   - **The English Text** (exactly as written in the slide).
-   - A detailed Jordanian Arabic explanation of what that specific text means.
-2. **The "Qudah Way" Tone**: 
-   - Use warm, conversational Jordanian Ammiya.
-   - Use phrases like: "السر هون", "فخ امتحان", "عشان تشد الانتباه", "الهدف الحقيقي".
-   - **NO DISTRACTING STORIES**: Don't talk about cooking or neighborhood shops. Explain the *concept* itself in a way that feels like a private tutor session.
-   - **CRITICAL**: Use "هاض", "مثل", "كثير", "ثانية", "هسا".
-3. **Math & Symbols**: 
-   - ALWAYS use LaTeX ($...$) for formulas and symbols. Preserve subscripts ($q_i$).
-4. **Table Mastery (QudahWay Style)**:
-   - Use your vision to fully understand the table's data. 
-   - Explain the *logic* of the table like a mentor.
-   - Highlight specific examples from the table (e.g., "If we look at row 3, we see 'Caesar' is in almost every play except Hamlet").
-   - Link the table to any math or logic mentioned on the slide (like Boolean queries).
-   - DO NOT just dump data; tell the student *why* this table matters.
-5. **Quiz Language**:
-   - The question ("q") and all 4 "options" MUST be in English.
-   - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
+1. **Extract EVERY point, bullet, concept, and sentence from the slide**
+2. **Format each point as follows:**
+   - First: Show the original English text from the slide (bold formatting)
+   - Second: Provide a detailed Arabic explanation directly underneath
+3. **Complete Coverage**: Do NOT skip any content from the slide
+4. **Explanation Style**: 
+   - Use warm, conversational Jordanian Arabic (ببساطة، يعني، تخيل، خلينا نفهم)
+   - **CRITICAL Jordanian vocabulary rules:**
+     * ALWAYS use "هاض" (NEVER "هاد")
+     * ALWAYS use "هسا" (NEVER "هلا" for "now")
+     * Use "بيتعلم" not "بتعلم"
+     * Use "مش رح" not "مش هت"
+   - **ABSOLUTE PROHIBITION: The word "هاد" is COMPLETELY BANNED. Replace ALL instances with "هاض"**
+   - Before finalizing your response, scan for "هاد" and replace with "هاض"
+   - **Balanced Explanation Strategy:**
+     * Complex/important concepts: Detailed explanation with examples (3-4 sentences)
+     * Simple/straightforward points: Concise clear explanation (1-2 sentences)
+     * NOT every point needs an example - use examples strategically
+     * Prioritize clarity over length
+   - Explain like a friendly tutor, not a textbook
+   - Break down technical terms naturally
 
-EXAMPLE:
-"**Skip Lists use multiple layers for faster search**
-ببساطة، الـ Skip List هي طريقة ذكية عشان نسرع البحث. تخيل إنك بطلعة درج طويل، وبدل ما تطلع درجة درجة (هاض البحث العادي)، بتقرر تنط كل 5 درجات مرة وحدة عشان توصل أسرع. هاض هو السر هون! بنعمل طبقات فوق بعض عشان نختصر الوقت."
+EXAMPLE FORMAT:
+Complex concept example:
+"**Machine Learning uses algorithms to learn from data**
+
+ببساطة، التعلم الآلي هو تقنية بتخلي الكمبيوتر يتعلم من البيانات. تخيل إنك بتعلم طفل يميز بين التفاح والبرتقال - بتوريه أمثلة كثيرة وهو بيفهم الفرق لحاله. هاض بالضبط الخوارزميات بتشتغل!"
+
+Simple concept example:
+"**Data is stored in databases**
+
+ببساطة، البيانات بتنخزن في قواعد بيانات عشان نقدر نرجعلها وقت ما بدنا."
+
+VISION/CONTEXT RULES:
+- If visual content is weak, USE THE PROVIDED TEXT CONTENT to generate the explanation
+- ONLY return empty sections if BOTH image and text are insufficient
+- DO NOT re-explain concepts from "PREVIOUSLY COVERED TOPICS" - focus on new information
+- DO NOT use placeholders like "Variable A / Variable B"
+- ALWAYS provide real, specific explanations
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
-- Scan final response for "هاد" (to "هاض"), "متل" (to "مثل"), "كتير" (to "كثير"), "تانية" (to "ثانية").
-- **TABLE CHECK**: Did you render the table as a Markdown table? (Required if present in slide).
-- **MATH CHECK**: Ensure every formula or variable (like V, q, d_i) is wrapped in LaTeX $...$ in both English and Arabic sections.
-- **QUIZ CHECK**: Ensure questions/options are English ONLY.
-- Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
+- You MUST extract ALL slide content
+- You MUST explain each point comprehensively in Arabic
+- You MUST follow ${resolvedMode.toUpperCase()} rules
+- You MUST follow the JSON SCHEMA exactly
+- Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs in the quiz array
 `;
 
         if (resolvedMode !== 'exam') {
             userPrompt += `
-- explanation must cover 100% of slide content
+- explanation/examInsight must cover 100% of slide content
 - Each bullet/section must have detailed Arabic explanation
 `;
         } else {
             userPrompt += `
-- DO NOT generate explanation
+- DO NOT generate explanation or examInsight
 - Output ONLY the quiz array with ${requiredQuizCount(resolvedMode)} questions
 `;
         }
@@ -282,27 +324,11 @@ REMINDER:
                     throw new Error("GEMINI_API_KEY_MISSING");
                 }
 
-                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it | Vision: ${!!thumbnail}`);
-                const fullPrompt = systemPrompt + "\n\n" + userPrompt;
+                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it`);
+                const prompt = systemPrompt + "\n\n" + userPrompt;
 
-                // Prepare multimodal parts
-                const parts: any[] = [fullPrompt];
-                if (thumbnail && thumbnail.startsWith('data:image')) {
-                    try {
-                        const base64Data = thumbnail.split(',')[1];
-                        const mimeType = thumbnail.split(',')[0].split(':')[1].split(';')[0];
-                        parts.push({
-                            inlineData: {
-                                data: base64Data,
-                                mimeType: mimeType
-                            }
-                        });
-                    } catch (e) {
-                        console.error("Error parsing thumbnail image:", e);
-                    }
-                }
-
-                const result = await model_gemma.generateContent(parts);
+                // Gemma-3 currently might not support strict JSON output mode via SDK config config
+                const result = await model_gemma.generateContent(prompt);
                 const response = await result.response;
                 const raw = response.text();
 
@@ -368,4 +394,80 @@ async function updateUsage(uid: string, today: string, userRef: admin.firestore.
 
         t.set(userRef, { dailyUsage: currentUsage }, { merge: true });
     });
+}
+
+/**
+ * Calls BLIP-2 model on Hugging Face for enhanced image understanding
+ */
+async function callBLIP2Vision(
+    imageData: string,
+    prompt: string,
+    huggingFaceToken: string,
+    maxRetries: number = 2
+): Promise<string> {
+    const BLIP2_API_URL = 'https://api-inference.huggingface.co/models/Salesforce/blip2-opt-6.7b';
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            console.log(`BLIP-2 Vision Attempt ${attempt + 1}/${maxRetries}`);
+
+            // Convert data URL to base64 if needed
+            let base64Image = imageData;
+            if (imageData.startsWith('data:')) {
+                base64Image = imageData.split(',')[1];
+            }
+
+            const response = await fetch(BLIP2_API_URL, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${huggingFaceToken}`,
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    inputs: {
+                        image: base64Image,
+                        question: prompt
+                    },
+                    wait_for_model: true
+                }),
+                signal: AbortSignal.timeout(30000) // 30 second timeout
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                console.warn(`BLIP-2 API Error (${response.status}):`, errorData);
+
+                // Retry on service unavailable
+                if (response.status === 503 && attempt < maxRetries - 1) {
+                    const waitTime = Math.pow(2, attempt) * 1000;
+                    console.log(`Vision API busy, waiting ${waitTime}ms before retry...`);
+                    await new Promise(r => setTimeout(r, waitTime));
+                    continue;
+                }
+
+                throw new Error(`BLIP-2 API Error (${response.status})`);
+            }
+
+            const result: any = await response.json();
+            const analysis = result.generated_text || result[0]?.generated_text || '';
+
+            if (!analysis) {
+                throw new Error('BLIP-2 returned empty response');
+            }
+
+            console.log('BLIP-2 vision analysis completed successfully');
+            return analysis;
+        } catch (error: any) {
+            console.error(`BLIP-2 Vision Attempt ${attempt + 1} failed:`, error.message);
+
+            if (attempt === maxRetries - 1) {
+                throw error;
+            }
+
+            const waitTime = Math.pow(2, attempt) * 500;
+            await new Promise(r => setTimeout(r, waitTime));
+        }
+    }
+
+    throw new Error('Vision analysis failed after all retries');
 }
