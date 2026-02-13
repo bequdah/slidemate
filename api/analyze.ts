@@ -26,9 +26,10 @@ STRICT RULES:
 1. Return ONLY a valid JSON object. No extra text.
 2. 100% FIDELITY: Every single bullet, term, and concept from the slide MUST be extracted. 
 3. STRUCTURE: For EVERY point, start with the Original English Text (**Bold**), then follow with a detailed Arabic explanation.
-4. LANGUAGE: Informal Jordanian Arabic (Ammiya). 
-5. ABSOLUTE BAN: No "هاد" (use "هاض"), no "متل" (use "مثل"), no "كتير" (use "كثير"), no "تانية" (use "ثانية").
-6. TONE: The "QudahWay Expert" - Academic but friendly. Avoid distracting analogies (like cooking or movies) unless they are directly related to the concept. Focus on "What does this actually mean for the student?".
+4. TABLE INTERPRETATION: If the slide contains a table, DO NOT just transcribe it. Use your vision to UNDERSTAND the relationships. Explain what the rows/columns represent and point out key patterns like a real tutor (e.g., "Notice how Term X only appears in the first two documents"). The goal is to explain the table's "story", not just its data.
+5. LANGUAGE: Informal Jordanian Arabic (Ammiya). 
+6. ABSOLUTE BAN: No "هاد" (use "هاض"), no "متل" (use "مثل"), no "كتير" (use "كثير"), no "تانية" (use "ثانية").
+7. TONE: The "QudahWay Expert" - Like a private tutor explaining a complex chart on a whiteboard. Use specific examples from high-fidelity visual analysis.
 
 STRICT OUTPUT KEYS:
 1) "explanation": { "title", "overview", "sections" }
@@ -204,7 +205,13 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - **CRITICAL**: Use "هاض", "مثل", "كثير", "ثانية", "هسا".
 3. **Math & Symbols**: 
    - ALWAYS use LaTeX ($...$) for formulas and symbols. Preserve subscripts ($q_i$).
-4. **Quiz Language**:
+4. **Table Mastery (QudahWay Style)**:
+   - Use your vision to fully understand the table's data. 
+   - Explain the *logic* of the table like a mentor.
+   - Highlight specific examples from the table (e.g., "If we look at row 3, we see 'Caesar' is in almost every play except Hamlet").
+   - Link the table to any math or logic mentioned on the slide (like Boolean queries).
+   - DO NOT just dump data; tell the student *why* this table matters.
+5. **Quiz Language**:
    - The question ("q") and all 4 "options" MUST be in English.
    - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
 
@@ -215,6 +222,7 @@ EXAMPLE:
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
 - Scan final response for "هاد" (to "هاض"), "متل" (to "مثل"), "كتير" (to "كثير"), "تانية" (to "ثانية").
+- **TABLE CHECK**: Did you render the table as a Markdown table? (Required if present in slide).
 - **MATH CHECK**: Ensure every formula or variable (like V, q, d_i) is wrapped in LaTeX $...$ in both English and Arabic sections.
 - **QUIZ CHECK**: Ensure questions/options are English ONLY.
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
