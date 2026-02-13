@@ -177,32 +177,18 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
         return (
             <div className="space-y-8">
-                {(data.title || data.overview) && (
+                {data.overview && (
                     <div className="space-y-3">
-                        {data.title && (
-                            <h3 className="text-indigo-400 uppercase tracking-[0.1em] font-black flex items-center gap-3">
-                                <span className="w-1.5 h-6 bg-indigo-500 rounded-full" />
-                                {data.title}
-                            </h3>
-                        )}
-                        {data.overview && (
-                            <div className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
-                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                    {data.overview}
-                                </ReactMarkdown>
-                            </div>
-                        )}
+                        <div className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
+                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                {data.overview}
+                            </ReactMarkdown>
+                        </div>
                     </div>
                 )}
 
                 {sections.map((s, i) => (
                     <div key={i} className="space-y-3">
-                        {'heading' in s && s.heading && (
-                            <h3 className="text-indigo-400 uppercase tracking-[0.1em] font-black flex items-center gap-3">
-                                <span className="w-1.5 h-6 bg-indigo-500 rounded-full" />
-                                {s.heading}
-                            </h3>
-                        )}
 
                         {'text' in s && s.text && (
                             <div className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">

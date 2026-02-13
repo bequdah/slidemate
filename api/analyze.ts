@@ -26,7 +26,7 @@ STRICT RULES:
 1. Return ONLY a valid JSON object. No extra text.
 2. Reconstruct slide content into structured JSON with 100% fidelity. Do NOT skip any content.
 3. LANGUAGE: Informal Jordanian Arabic (Ammiya). 
-4. ABSOLUTE BAN: The word "هاد" is COMPLETELY BANNED (use "هاض"). The word "متل" is BANNED (use "مثل"). The word "كتير" is BANNED (use "كثير").
+4. ABSOLUTE BAN: The word "هاد" (use "هاض"), "متل" (use "مثل"), "كتير" (use "كثير"), "تانية" (use "ثانية").
 5. VIBE: Friendly, analogies-driven, "Explain it like I'm five, but with depth".
 
 STRICT OUTPUT KEYS:
@@ -207,6 +207,7 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - **CRITICAL**: Use "هاض" (NEVER "هاد").
    - **CRITICAL**: Use "مثل" or "زي" (NEVER "متل").
    - **CRITICAL**: Use "كثير" (NEVER "كتير").
+   - **CRITICAL**: Use "ثانية" (NEVER "تانية").
    - **CRITICAL**: Use "هسا" (NEVER "هلاً" or "الان").
 4. **Analogy-First**: Whenever possible, explain concepts using daily life analogies (like water tanks, neighborhood shops, etc.).
 
@@ -216,7 +217,7 @@ EXAMPLE:
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
-- Scan your final response for "هاد" (to "هاض"), "متل" (to "مثل"), and "كتير" (to "كثير").
+- Scan final response for "هاد" (to "هاض"), "متل" (to "مثل"), "كتير" (to "كثير"), "تانية" (to "ثانية").
 - Each section in 'explanation' and 'examInsight' must follow the English-then-Arabic format.
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
 `;
