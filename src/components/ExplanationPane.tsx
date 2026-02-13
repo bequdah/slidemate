@@ -255,9 +255,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             <span>SLIDE</span>
                                             <span className="text-indigo-400">MΛTE</span>
                                         </h3>
-                                        <h4 className="text-indigo-400/80 font-bold text-[9px] md:text-xs tracking-widest uppercase">
-                                            {slideNumbers.length > 1 ? (lang === 'en' ? 'Batch Analysis' : 'تحليل مجمع') : (lang === 'en' ? 'Insights' : 'رؤى')}
-                                        </h4>
                                     </div>
                                 </div>
 
@@ -414,7 +411,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl">
-                                    {['simple', 'deep', 'exam'].map((m) => {
+                                    {['exam', 'deep', 'simple'].map((m) => {
                                         const bgClass = m === 'simple' ? 'bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20' :
                                             m === 'deep' ? 'bg-purple-500/10 border-purple-500/20 hover:bg-purple-500/20' :
                                                 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20';
