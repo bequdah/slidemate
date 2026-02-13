@@ -7,8 +7,8 @@ import Groq from 'groq-sdk';
 const groqKey = (process.env.GROQ_API_KEY || process.env.VITE_GROQ_API_KEY || '').trim();
 const groq = new Groq({ apiKey: groqKey });
 
-// Using Llama 4 Scout (NEW Multimodal Free Model on Groq)
-const MODEL_ID = 'meta-llama/llama-4-scout-17b-16e-instruct';
+// Using Llama 3.3 70B (Rock solid stable on Groq)
+const MODEL_ID = 'llama-3.3-70b-versatile';
 
 type Mode = 'simple' | 'deep' | 'exam';
 
