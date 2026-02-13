@@ -69,10 +69,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 SLIDE TEXT CONTENT:
 ${combinedText}
 
+CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
+
+1. **100% Text-to-Explanation**: For every single bullet, title, or important line in the slide, you MUST provide:
+   - "heading": The English Text (exactly as written in the slide).
+   - "text": A detailed Jordanian Arabic explanation in QudahWay style.
+2. **The "Qudah Way" Tone**: 
+   - Use warm, conversational Jordanian Ammiya.
+   - Use phrases like: "السر هون", "فخ امتحان", "عشان تشد الانتباه", "الهدف الحقيقي".
+   - **CRITICAL**: Use "هاض", "مثل", "كثير", "ثانية", "هسا".
+3. **Quiz Language**:
+   - The question ("q") and all 4 "options" MUST be in English.
+   - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
+
+EXAMPLE JSON ELEMENT:
+{
+  "heading": "Skip Lists use multiple layers for faster search",
+  "text": "ببساطة، الـ Skip List هي طريقة ذكية عشان نسرع البحث. تخيل إنك بطلعة درج طويل، وبدل ما تطلع درجة درجة (هاض البحث العادي)، بتقرر تنط كل 5 درجات مرة وحدة عشان توصل أسرع. هاض هو السر هون! بنعمل طبقات فوق بعض عشان نختصر الوقت."
+}
+
 MODE: ${resolvedMode.toUpperCase()}
 REQUIRED MCQS: ${requiredQuizCount(resolvedMode)}
 
-JSON SCHEMA: { "explanation": { "title", "overview", "sections": [{"heading", "text"}] }, "quiz": [{"q", "options", "a", "reasoning"}] }
+REMINDER: Scan for "هاد" (to "هاض"), "متل" (to "مثل"), "كتير" (to "كثير").
 `;
 
         const messages: any[] = [
