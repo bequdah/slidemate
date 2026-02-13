@@ -166,14 +166,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const resolvedMode: Mode = mode || 'simple';
 
-        // Block analysis if no text content is provided (Vision is disabled)
+        // Allow analysis if either text or image is provided
         const combinedText = (textContentArray || []).join(' ').trim();
-        if (!combinedText) {
+        if (!combinedText && !thumbnail) {
             return res.status(200).json({
-                explanation: { title: "Image-only Slide", overview: "This slide contains only an image. Please use text-based slides for analysis.", sections: [] },
-                examInsight: { title: "Exam Insight", overview: "No text found to analyze.", sections: [] },
+                explanation: { title: "Empty Slide", overview: "No text or image found to analyze. Please upload a slide with content.", sections: [] },
                 quiz: [],
-                note: "Image-only slides are currently not supported. Please upload slides with text content."
+                note: "Empty slides are not supported."
             });
         }
 
@@ -275,11 +274,27 @@ REMINDER:
                     throw new Error("GEMINI_API_KEY_MISSING");
                 }
 
-                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it`);
-                const prompt = systemPrompt + "\n\n" + userPrompt;
+                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it | Vision: ${!!thumbnail}`);
+                const fullPrompt = systemPrompt + "\n\n" + userPrompt;
 
-                // Gemma-3 currently might not support strict JSON output mode via SDK config config
-                const result = await model_gemma.generateContent(prompt);
+                // Prepare multimodal parts
+                const parts: any[] = [fullPrompt];
+                if (thumbnail && thumbnail.startsWith('data:image')) {
+                    try {
+                        const base64Data = thumbnail.split(',')[1];
+                        const mimeType = thumbnail.split(',')[0].split(':')[1].split(';')[0];
+                        parts.push({
+                            inlineData: {
+                                data: base64Data,
+                                mimeType: mimeType
+                            }
+                        });
+                    } catch (e) {
+                        console.error("Error parsing thumbnail image:", e);
+                    }
+                }
+
+                const result = await model_gemma.generateContent(parts);
                 const response = await result.response;
                 const raw = response.text();
 
