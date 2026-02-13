@@ -46,19 +46,13 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const [voiceLoading, setVoiceLoading] = useState(false);
     const [mode, setMode] = useState<ExplanationMode | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({});
-    const [lang, setLang] = useState<'en' | 'ar'>('en');
+    const [lang] = useState<'en' | 'ar'>('ar');
     const [showIntro, setShowIntro] = useState(true);
-    const [translatedData, setTranslatedData] = useState<any>(null);
 
-    const currentContent = lang === 'en' ? {
+    const currentContent = {
         explanation: data?.explanation,
         examInsight: data?.examInsight,
         voiceScript: data?.voiceScript,
-        dir: 'ltr' as const
-    } : {
-        explanation: translatedData?.explanation || data?.explanation,
-        examInsight: translatedData?.examInsight || data?.examInsight,
-        voiceScript: translatedData?.voiceScript || data?.voiceScript,
         dir: 'rtl' as const
     };
 
@@ -120,7 +114,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         stop();
         setMode(null);
         setData(null);
-        setTranslatedData(null);
         setLoading(false);
     };
 
