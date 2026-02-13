@@ -44,7 +44,9 @@ JSON SCHEMA:
 - examInsight: { "title": string, "overview": string, "sections": [{ "heading": string, "text": string }] }
 - quiz: [{ "q": string, "options": [string (4)], "a": number (0-3), "reasoning": string }]
 
-LaTeX: $...$ for inline, $$...$$ for block. Use \\\\frac. English ONLY for LaTeX.
+LaTeX: Use $...$ for inline and $$...$$ for block formulas.
+STRICT MATH RULE: For mathematical content, formulas, or technical notation (like V={w1...}, q=q1...), you MUST use proper LaTeX syntax. DO NOT use plain text for math.
+English ONLY for LaTeX. Preserve subscripts (e.g., q_i) and technical symbols (e.g., \in, \subseteq, \approx) with 100% precision.
 `;
 }
 
@@ -209,7 +211,10 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - **CRITICAL**: Use "كثير" (NEVER "كتير").
    - **CRITICAL**: Use "ثانية" (NEVER "تانية").
    - **CRITICAL**: Use "هسا" (NEVER "هلاً" or "الان").
-4. **Analogy-First**: Whenever possible, explain concepts using daily life analogies (like water tanks, neighborhood shops, etc.).
+5. **Math & Symbols**: 
+   - ALWAYS use LaTeX ($...$) for formulas, variables, and mathematical sets.
+   - Example: If the slide has "q = q1, ..., qm", extract it as "**$q = q_1, \dots, q_m$**".
+   - NEVER skip subscripts or symbols like $\in$, $\subseteq$, $\approx$, etc.
 
 EXAMPLE:
 "**Skip Lists use multiple layers for faster search**
@@ -218,7 +223,7 @@ EXAMPLE:
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
 - Scan final response for "هاد" (to "هاض"), "متل" (to "مثل"), "كتير" (to "كثير"), "تانية" (to "ثانية").
-- Each section in 'explanation' and 'examInsight' must follow the English-then-Arabic format.
+- **MATH CHECK**: Ensure every formula or variable (like V, q, d_i) is wrapped in LaTeX $...$ in both English and Arabic sections.
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
 `;
 
