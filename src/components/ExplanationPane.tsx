@@ -476,23 +476,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                     </section>
                                 ) : null}
 
-                                {/* Exam Insight - Hidden in Exam Mode */}
-                                {mode !== 'exam' && currentContent.examInsight ? (
-                                    <section className="bg-indigo-500/[0.04] border border-indigo-500/20 p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] animate-in fade-in slide-in-from-bottom-8 duration-700 relative overflow-hidden group">
-                                        <h4 className="flex items-center gap-3 text-indigo-400 font-black mb-4 text-xs md:text-sm uppercase tracking-[0.3em] shadow-indigo-500/20 drop-shadow-md">🎯 {lang === 'en' ? 'Exam Insight' : 'نصيحة الامتحان'}</h4>
-                                        <div className="text-base md:text-lg text-slate-200 leading-relaxed font-bold relative z-10 exam-insight-content pl-2">
-                                            {(() => {
-                                                const structured = tryParseStructured(currentContent.examInsight);
-                                                if (structured) return <StructuredRenderer data={structured} />;
-                                                return (
-                                                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                        {renderMarkdown(currentContent.examInsight)}
-                                                    </ReactMarkdown>
-                                                );
-                                            })()}
-                                        </div>
-                                    </section>
-                                ) : null}
 
                                 {/* MCQs */}
                                 {data.quiz && data.quiz.length > 0 && (

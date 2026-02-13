@@ -32,8 +32,7 @@ STRICT RULES:
 
 STRICT OUTPUT KEYS:
 1) "explanation": { "title", "overview", "sections" }
-2) "examInsight": { "title", "overview", "sections" }
-3) "quiz": Array of MCQs
+2) "quiz": Array of MCQs
 
 MODE RULES:
 - simple: Use simple analogies, very informal language. 3-4 sections. 2 easy MCQs.
@@ -42,12 +41,12 @@ MODE RULES:
 
 JSON SCHEMA:
 - explanation: { "title": string, "overview": string, "sections": [{ "heading": string, "bullets": string[] } | { "heading": string, "text": string }] }
-- examInsight: { "title": string, "overview": string, "sections": [{ "heading": string, "text": string }] }
 - quiz: [{ "q": string, "options": [string (4)], "a": number (0-3), "reasoning": string }]
 
 LaTeX: Use $...$ for inline and $$...$$ for block formulas.
 STRICT MATH RULE: For mathematical content, formulas, or technical notation (like V={w1...}, q=q1...), you MUST use proper LaTeX syntax. DO NOT use plain text for math.
-English ONLY for LaTeX. Preserve subscripts (e.g., q_i) and technical symbols (e.g., \in, \subseteq, \approx) with 100% precision.
+English ONLY for LaTeX.
+QUIZ RULE: All quiz questions ("q") and "options" MUST be in English ONLY. No Arabic in the quiz questions or options. "reasoning" remains in Jordanian Arabic.
 `;
 }
 
@@ -107,10 +106,6 @@ function validateResultShape(result: any, mode: Mode) {
     if (mode !== 'exam') {
         if (!isStructuredObject(result.explanation)) {
             console.warn("Validation Failed: 'explanation' is missing or not an object");
-            return false;
-        }
-        if (!isStructuredObject(result.examInsight)) {
-            console.warn("Validation Failed: 'examInsight' is missing or not an object");
             return false;
         }
     }
@@ -210,6 +205,9 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - **CRITICAL**: Use "هاض", "مثل", "كثير", "ثانية", "هسا".
 3. **Math & Symbols**: 
    - ALWAYS use LaTeX ($...$) for formulas and symbols. Preserve subscripts ($q_i$).
+4. **Quiz Language**:
+   - The question ("q") and all 4 "options" MUST be in English.
+   - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
 
 EXAMPLE:
 "**Skip Lists use multiple layers for faster search**
@@ -219,17 +217,18 @@ MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
 - Scan final response for "هاد" (to "هاض"), "متل" (to "مثل"), "كتير" (to "كثير"), "تانية" (to "ثانية").
 - **MATH CHECK**: Ensure every formula or variable (like V, q, d_i) is wrapped in LaTeX $...$ in both English and Arabic sections.
+- **QUIZ CHECK**: Ensure questions/options are English ONLY.
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
 `;
 
         if (resolvedMode !== 'exam') {
             userPrompt += `
-- explanation/examInsight must cover 100% of slide content
+- explanation must cover 100% of slide content
 - Each bullet/section must have detailed Arabic explanation
 `;
         } else {
             userPrompt += `
-- DO NOT generate explanation or examInsight
+- DO NOT generate explanation
 - Output ONLY the quiz array with ${requiredQuizCount(resolvedMode)} questions
 `;
         }
