@@ -49,7 +49,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const [lang, setLang] = useState<'en' | 'ar'>('en');
     const [showIntro, setShowIntro] = useState(true);
     const [translatedData, setTranslatedData] = useState<any>(null);
-    const [translating, setTranslating] = useState(false);
 
     const currentContent = lang === 'en' ? {
         explanation: data?.explanation,
@@ -116,69 +115,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         });
     };
 
-
-    const translateText = async (text: string): Promise<string> => {
-        if (!text || typeof text !== 'string') return text;
-        try {
-            // Using a free, unauthenticated Google Translate endpoint (unofficial)
-            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=ar&dt=t&q=${encodeURIComponent(text)}`);
-            const json = await res.json();
-            return json[0].map((s: any) => s[0]).join('');
-        } catch (error) {
-            console.error("Translation Error:", error);
-            return text;
-        }
-    };
-
-    const handleLanguageToggle = async () => {
-        const nextLang = lang === 'en' ? 'ar' : 'en';
-        setLang(nextLang);
-
-        if (nextLang === 'ar' && data && !translatedData) {
-            setTranslating(true);
-            try {
-                const translated = JSON.parse(JSON.stringify(data));
-                const taskQueue: Promise<void>[] = [];
-
-                if (translated.explanation) {
-                    if (translated.explanation.title) taskQueue.push(translateText(translated.explanation.title).then(t => { translated.explanation.title = t; }));
-                    if (translated.explanation.overview) taskQueue.push(translateText(translated.explanation.overview).then(t => { translated.explanation.overview = t; }));
-                    if (translated.explanation.sections) {
-                        translated.explanation.sections.forEach((s: any) => {
-                            if (s.heading) taskQueue.push(translateText(s.heading).then(t => { s.heading = t; }));
-                            if (s.text) taskQueue.push(translateText(s.text).then(t => { s.text = t; }));
-                            if (s.bullets) {
-                                taskQueue.push(Promise.all(s.bullets.map((b: string) => translateText(b))).then(t => { s.bullets = t; }));
-                            }
-                        });
-                    }
-                }
-
-                if (translated.examInsight) {
-                    if (translated.examInsight.title) taskQueue.push(translateText(translated.examInsight.title).then(t => { translated.examInsight.title = t; }));
-                    if (translated.examInsight.overview) taskQueue.push(translateText(translated.examInsight.overview).then(t => { translated.examInsight.overview = t; }));
-                    if (translated.examInsight.sections) {
-                        translated.examInsight.sections.forEach((s: any) => {
-                            if (s.heading) taskQueue.push(translateText(s.heading).then(t => { s.heading = t; }));
-                            if (s.text) taskQueue.push(translateText(s.text).then(t => { s.text = t; }));
-                        });
-                    }
-                }
-
-                if (translated.voiceScript) {
-                    taskQueue.push(translateText(translated.voiceScript).then(t => { translated.voiceScript = t; }));
-                }
-
-                await Promise.all(taskQueue);
-
-                setTranslatedData(translated);
-            } catch (err) {
-                console.error("Translation logic error:", err);
-            } finally {
-                setTranslating(false);
-            }
-        }
-    };
 
     const handleBack = () => {
         stop();
