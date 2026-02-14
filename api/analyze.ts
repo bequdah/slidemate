@@ -9,7 +9,7 @@ const model_gemma = genAI.getGenerativeModel({
     model: 'gemma-3-27b-it'
 });
 
-type Mode = 'simple' | 'deep' | 'exam';
+type Mode = 'simple' | 'exam';
 
 function buildSlideContexts(slideNumbers: number[], textContentArray?: string[]) {
     return slideNumbers
@@ -35,8 +35,7 @@ STRICT OUTPUT KEYS:
 2) "quiz": Array of MCQs (Used ONLY in exam mode)
 
 MODE RULES:
-- simple: Focus on explanation only. 3-4 sections. NO QUIZ.
-- deep: Detailed technical breakdown only. 4-6 sections. NO QUIZ.
+- simple: Focus on a clear explanation. No section limits (AI decides length based on content), but sentences must be short and punchy. NO QUIZ.
 - exam: Focused on "Exam strategy" and generating MCQs. Return 10 hard MCQs. NO EXPLANATION TEXT.
 
 JSON SCHEMA:
@@ -225,17 +224,9 @@ REMINDER:
 
         if (resolvedMode === 'simple') {
             userPrompt += `
-- SIMPLE MODE: Focus 100% on the BIG PICTURE and KEY TAKEAWAYS.
-- Use only 3-4 sections in total.
-- Group minor points together to keep it fast and punchy.
-- DO NOT generate a quiz array (return empty array "quiz": []).
-`;
-        } else if (resolvedMode === 'deep') {
-            userPrompt += `
-- DEEP MODE: This is an EXHAUSTIVE technical breakdown.
-- Every single bullet and detail MUST have its own detailed sub-explanation.
-- Use 6-8 sections to ensure everything is covered.
-- Explain the "Why" and "How" behind every concept.
+- EXPLANATION MODE: Provide a comprehensive but concise explanation of all slide content.
+- Do not limit the number of sections; use as many as needed to cover the material (e.g., 4 to 8 sections).
+- IMPORTANT: Keep each explanation point short and punchy (maximum 2 sentences per bullet/point).
 - DO NOT generate a quiz array (return empty array "quiz": []).
 `;
         } else {
