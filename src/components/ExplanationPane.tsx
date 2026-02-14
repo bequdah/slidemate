@@ -177,15 +177,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
         return (
             <div className="space-y-8">
-                {data.overview && (
-                    <div className="space-y-3">
-                        <div className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
-                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                {data.overview}
-                            </ReactMarkdown>
-                        </div>
-                    </div>
-                )}
+                {/* Overview removed as per user request */}
 
                 {sections.map((s, i) => (
                     <div key={i} className="space-y-3">
@@ -644,7 +636,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 /* Enhanced Math & Numbers Rendering */
                 .katex { 
                     font-size: 1.15em !important; 
-                    color: #e2e8f0;
+                    color: #fbbf24;
                 }
                 .katex-display {
                     margin: 1.5rem 0 !important;
