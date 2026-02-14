@@ -197,23 +197,19 @@ ${slideContexts || ''}
 
 CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
 
-1. **Impact-Focused Content ONLY (NO FILLER)**: 
-   - Explain *only* what is on the slide. 
-   - **IMAGE-TO-TEXT TASK (STRICT OCR)**: If an image is provided, your *only* job is to treat it as a source of text. 
-     - 1. Perform high-accuracy OCR to extract every single word, bullet, and formula.
-     - 2. Explain this extracted text exactly as you would for a PDF.
-     - 3. **NEVER** mention visual elements: No "In this image", "I see a diagram", "the blue box", or "this screenshot". 
-     - 4. **indistinguishable from PDF**: The user should not know if the input was a PDF page or a screenshot. 
-   - **SKIP META-DATA**: Ignore section numbers like "Sec. 1.1", "4.3", page numbers, or textbook references.
-   - **NO CLOSING REMARKS**: Stop writing immediately after the last point is explained. 
-   - Keep it short: Maximum 2 punchy sentences per point.
-2. **LISTS, STEPS & PROCESSES (CRITICAL)**:
-   - **NEVER SUMMARIZE A LIST**: If the slide has a numbered list (1, 2, 3...) or steps (First, Second...), you MUST extract each step as its own separate bullet point.
-   - **FLATTEN NESTED LISTS**: If a bullet has a sub-list, extract the sub-list items as separate main bullets immediately following their parent.
-   - **PROCESS STRUCTURE**: If the slide describes a process (e.g., "To find X:", "How it works:"):
-     - Make the **GOAL/TITLE** the \`heading\` (e.g., "To find matching documents").
-     - Make **EACH STEP** a separate \`bullet\` (e.g., "Locate BRUTUS", "Retrieve postings").
-     - **DO NOT** lump steps into one paragraph.
+1. **LINE-BY-LINE EXTRACTION (NO SUMMARIZATION)**: 
+   - **THE GOLDEN RULE**: You must extract **EVERY SINGLE LINE of text** from the slide exactly as it appears in English, then explain it.
+   - **NO SKIPPING**: Do not skip steps, examples, or sub-points. If the slide has 6 steps, your output MUST have 6 separate bullets.
+   - **ONE-TO-ONE MAPPING**: 
+     - Input Line: "1. Locate BRUTUS in the dictionary"
+     - Output Bullet: "**Locate BRUTUS in the dictionary**\\nشرح النقطة..."
+   - **NEVER COMBINE**: Do not merge multiple lines into one paragraph. Keep them separate.
+   - **STRICT CONSTRAINTS**:
+     - **IMAGE-TO-TEXT**: Treat images purely as text sources. Never say "In this image".
+     - **SKIP META-DATA**: Ignore "Sec 1.1", page numbers, or footers.
+     - **NO OPENING/CLOSING**: Start immediately with the first point and stop after the last.
+1b. **HANDLING LISTS & PROCESSES**:
+   - treated exactly like normal text. If a list has items A, B, C, you output three separate bullets: one for A, one for B, one for C.
 3. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
    - Prohibited words: "هاد" (use "هاض"), "منيح" (use "مليح"), "متل" (use "مثل"), "كتير" (use "كثير"), "تانية" (use "ثانية").
    - This applies to EVERYTHING you write.
