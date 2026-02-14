@@ -6,6 +6,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { LogoModal } from './components/LogoModal';
+import { extractTextFromPDFPage, processImageForAnalysis } from './utils/ocrService';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Use a more reliable worker source from unpkg
@@ -49,10 +50,20 @@ function MainApp() {
         const pdf = await loadingTask.promise;
         pageCount = pdf.numPages;
 
-        const importantCount = Math.max(1, Math.round(pageCount * 0.2));
-        const importantIndices = new Set<number>();
-        while (importantIndices.size < importantCount) {
-          importantIndices.add(Math.floor(Math.random() * pageCount) + 1);
+        // Check if PDF has real text or if it's scanned (image-only)
+        let isScannedPDF = false;
+        if (pageCount > 0) {
+          const firstPage = await pdf.getPage(1);
+          const textContent = await firstPage.getTextContent();
+          const firstPageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+          
+          // If first page has very little text, assume it's a scanned PDF
+          isScannedPDF = firstPageText.length < 50;
+          console.log(`PDF type: ${isScannedPDF ? 'Scanned (OCR needed)' : 'Text-based'}`);
         }
 
         for (let i = 1; i <= pageCount; i++) {
@@ -71,13 +82,29 @@ function MainApp() {
           }).promise;
           const thumbnailData = canvas.toDataURL('image/webp', 0.5);
 
-          const textContent = await page.getTextContent();
+          let fullText = '';
 
-          const fullText = textContent.items
-            .map((item: any) => item.str)
-            .join(' ')
-            .replace(/\s+/g, ' ')
-            .trim();
+          if (isScannedPDF) {
+            // Use OCR for scanned PDFs
+            console.log(`Extracting text from page ${i} using OCR...`);
+            try {
+              fullText = await extractTextFromPDFPage(canvas);
+              if (!fullText) {
+                fullText = `[Scanned Page ${i}] Unable to extract text. Visual analysis may be needed.`;
+              }
+            } catch (error) {
+              console.error(`OCR failed for page ${i}:`, error);
+              fullText = `[Scanned Page ${i}] OCR extraction failed.`;
+            }
+          } else {
+            // Use native PDF text extraction for text-based PDFs
+            const textContent = await page.getTextContent();
+            fullText = textContent.items
+              .map((item: any) => item.str)
+              .join(' ')
+              .replace(/\s+/g, ' ')
+              .trim();
+          }
 
           const firstLine = fullText.split('.').filter(line => line.length > 5)[0] || "Lecture Analysis";
 
@@ -85,7 +112,7 @@ function MainApp() {
             id: `slide-${Math.random().toString(36).substr(2, 9)}`,
             number: i,
             topic: firstLine.substring(0, 40) + (firstLine.length > 40 ? '...' : ''),
-            isImportant: importantIndices.has(i),
+            isImportant: false,
             textContent: fullText,
             thumbnail: thumbnailData
           });
@@ -95,19 +122,28 @@ function MainApp() {
           if (i % 5 === 0) setSlides([...extractedSlides]);
         }
       } else if (file.type.startsWith('image/')) {
-        // Handle Image Upload
+        // Handle Image Upload with OCR
         const reader = new FileReader();
         const imageData = await new Promise<string>((resolve) => {
           reader.onload = (e) => resolve(e.target?.result as string);
           reader.readAsDataURL(file);
         });
 
+        // Extract text from image using OCR
+        let extractedText = '';
+        try {
+          extractedText = await processImageForAnalysis(imageData);
+        } catch (error) {
+          console.error('OCR processing failed:', error);
+          extractedText = '[IMAGE_UPLOADED] Slide image uploaded. Please note: OCR extraction may have failed. The model will analyze the image visually.';
+        }
+
         extractedSlides.push({
           id: `img-${Date.now()}`,
           number: 1,
           topic: "Screenshot Analysis",
           isImportant: true,
-          textContent: "[IMAGE_UPLOAD] analyze this slide visual content directly.",
+          textContent: extractedText,
           thumbnail: imageData
         });
         setUploadProgress(100);
