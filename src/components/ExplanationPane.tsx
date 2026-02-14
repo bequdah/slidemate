@@ -650,6 +650,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .katex { 
                     font-size: 1.15em !important; 
                     color: #fbbf24;
+                    direction: ltr !important;
+                    unicode-bidi: isolate;
                 }
                 .katex-display {
                     margin: 1.5rem 0 !important;
@@ -661,6 +663,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     border: 1px solid rgba(255,255,255,0.05);
                     min-height: 2em;
                     -webkit-overflow-scrolling: touch;
+                    direction: ltr !important;
+                    text-align: center !important;
                 }
                 .prose p, .prose li {
                     font-variant-numeric: tabular-nums;
