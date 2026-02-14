@@ -465,7 +465,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             {lang === 'en' ? 'Explanation' : 'الشرح التفصيلي'}
                                         </h4>
                                         <div className="p-5 md:p-8 bg-white/[0.03] rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 shadow-inner">
-                                            <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-base md:prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-base md:prose-li:text-lg prose-li:font-medium prose-h3:!text-red-400 prose-h3:!uppercase prose-h3:!tracking-[0.1em] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 prose-hr:border-white/10 max-w-none">
+                                            <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-base md:prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-base md:prose-li:text-lg prose-li:font-medium prose-h1:!text-red-400 prose-h2:!text-red-400 prose-h3:!text-red-400 prose-h1:!uppercase prose-h2:!uppercase prose-h3:!uppercase prose-h3:!tracking-[0.1em] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 first:prose-h1:!mt-0 first:prose-h2:!mt-0 prose-hr:border-white/10 max-w-none">
                                                 {(() => {
                                                     const structured = tryParseStructured(currentContent.explanation);
                                                     if (structured) return <StructuredRenderer data={structured} />;
@@ -564,14 +564,16 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 20px; }
                 
-                /* Force h3 styling – headers in red */
-                .prose h3 {
+                /* Force all headings (h1, h2, h3) in explanation to red */
+                .prose h1, .prose h2, .prose h3 {
                     color: #f87171 !important;
                     text-transform: uppercase !important;
-                    letter-spacing: 0.1em !important;
-                    font-size: 1.25rem !important;
                     font-weight: 900 !important;
                     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif !important;
+                }
+                .prose h3 {
+                    letter-spacing: 0.1em !important;
+                    font-size: 1.25rem !important;
                     margin-top: 2.5rem !important;
                     margin-bottom: 1.25rem !important;
                     display: flex !important;
@@ -586,7 +588,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     border-radius: 99px;
                     display: inline-block;
                 }
-                .prose h3:first-of-type {
+                .prose h1:first-of-type, .prose h2:first-of-type, .prose h3:first-of-type {
                     margin-top: 0 !important;
                 }
 
