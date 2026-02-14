@@ -26,8 +26,8 @@ export interface SlideExplanation {
     };
 }
 
-/** Must match API Mode: only 'simple' and 'exam' are supported. */
-export type ExplanationMode = 'simple' | 'exam';
+/** Must match API Mode: simple, exam, or visual (tables/charts/diagrams). */
+export type ExplanationMode = 'simple' | 'exam' | 'visual';
 
 export const analyzeSlide = async (
     slideNumbers: number[],

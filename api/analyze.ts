@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, auth } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
 const geminiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '').trim();
 const genAI = new GoogleGenerativeAI(geminiKey);
@@ -9,7 +10,10 @@ const model_gemma = genAI.getGenerativeModel({
     model: 'gemma-3-27b-it'
 });
 
-type Mode = 'simple' | 'exam';
+const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
+const GROQ_VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+
+type Mode = 'simple' | 'exam' | 'visual';
 
 function buildSlideContexts(slideNumbers: number[], textContentArray?: string[]) {
     return slideNumbers
@@ -59,8 +63,34 @@ function getQuizRange(mode: Mode): { min: number; max: number } | null {
     return mode === 'exam' ? { min: QUIZ_MIN, max: QUIZ_MAX } : null;
 }
 
+/** For validation/prompt: visual behaves like simple (explanation, no quiz). */
+function resolveModeForAnalysis(mode?: Mode): Mode {
+    return mode === 'exam' ? 'exam' : 'simple';
+}
+
 function isVisionRequest(thumbnail?: string) {
     return !!thumbnail && typeof thumbnail === 'string' && thumbnail.startsWith('data:image');
+}
+
+const VISION_EXTRACT_PROMPT = `Extract ALL text from this slide exactly as shown. Then describe in detail every table, chart, diagram, and figure: list columns/rows for tables, explain what each chart shows and its trends, and describe diagrams step by step. Preserve structure (headings, bullets). Output only the extracted and described content in English. No conversational filler.`;
+
+async function extractSlideContentWithGroqVision(thumbnail: string): Promise<string> {
+    const completion = await groq.chat.completions.create({
+        model: GROQ_VISION_MODEL,
+        messages: [
+            {
+                role: 'user',
+                content: [
+                    { type: 'text', text: VISION_EXTRACT_PROMPT },
+                    { type: 'image_url', image_url: { url: thumbnail } }
+                ]
+            }
+        ],
+        max_tokens: 4096,
+        temperature: 0.2
+    });
+    const text = completion.choices[0]?.message?.content?.trim() || '';
+    return text || '[No content extracted from image.]';
 }
 
 function coerceMessagesForModel(messages: any[], isVisionModel: boolean) {
@@ -178,7 +208,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             previousTopics?: string[];
         };
 
-        const resolvedMode: Mode = mode === 'exam' ? 'exam' : 'simple';
+        const resolvedMode: Mode = resolveModeForAnalysis(mode);
 
 
 
@@ -301,10 +331,30 @@ REMINDER:
 
         // Validation: Check if we have at least one valid key
         const hasGeminiKey = !!(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY);
+        const hasGroqKey = !!(process.env.GROQ_API_KEY);
 
+        if (mode === 'visual' && isVisionRequest(thumbnail) && !hasGroqKey) {
+            console.error("CRITICAL: Visual mode requires GROQ_API_KEY for image analysis.");
+            return res.status(500).json({ error: "Service configuration error: Missing GROQ_API_KEY for visual mode." });
+        }
         if (!hasGeminiKey) {
             console.error("CRITICAL: No Gemini API key found in environment variables.");
             return res.status(500).json({ error: "Service configuration error: Missing API keys." });
+        }
+
+        // When user chose "visual" mode and sent thumbnail: run Groq Vision once to get full slide description (tables, charts, diagrams).
+        let initialFinalText: string[] | undefined = textContentArray;
+        let initialFinalThumbnail: string | undefined = thumbnail;
+        if (mode === 'visual' && thumbnail && isVisionRequest(thumbnail)) {
+            try {
+                console.log("Visual mode: Running Groq Llama 4 Vision for tables/charts/diagrams...");
+                const visionText = await extractSlideContentWithGroqVision(thumbnail);
+                console.log(`Groq Vision provided ${visionText.length} chars.`);
+                initialFinalText = [visionText];
+                initialFinalThumbnail = undefined;
+            } catch (err: any) {
+                console.warn("Groq Vision failed, falling back to text content:", err?.message);
+            }
         }
 
         // RETRY LOOP: 4 attempts with exponential backoff
@@ -314,16 +364,14 @@ REMINDER:
                     throw new Error("GEMINI_API_KEY_MISSING");
                 }
 
-                let finalTextContentArray = textContentArray;
-                let finalThumbnail = thumbnail;
+                let finalTextContentArray = initialFinalText;
+                let finalThumbnail = initialFinalThumbnail;
 
-                if (isVisionRequest(thumbnail) && thumbnail) {
+                if (mode !== 'visual' && isVisionRequest(thumbnail) && thumbnail) {
                     console.log("Vision Request Detected: Running OCR with Vision Model...");
                     const mimeType = thumbnail.split(';')[0].split(':')[1];
                     const base64Data = thumbnail.split(',')[1];
 
-                    // We need a VISION-capable model to read the image. Gemma-27b-it is text-only.
-                    // We use Flash purely as an OCR tool here.
                     const visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
                     for (let i = 0; i < 3; i++) {
@@ -336,7 +384,7 @@ REMINDER:
                             console.log(`OCR Success provided ${ocrText.length} chars.`);
 
                             finalTextContentArray = [ocrText];
-                            finalThumbnail = undefined; // Remove thumbnail to force TEXT-ONLY processing downstream
+                            finalThumbnail = undefined;
                             break;
                         } catch (err: any) {
                             console.warn(`OCR Attempt ${i + 1} failed: ${err.message}`);
