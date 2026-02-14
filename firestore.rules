@@ -25,6 +25,11 @@ service cloud.firestore {
       match /chats/{chatId} {
         allow read, write: if isOwner(userId);
       }
+
+      // Analyses cache: saved slide explanations (API writes, same user can read via API)
+      match /analyses/{analysisId} {
+        allow read, write: if isOwner(userId);
+      }
     }
   }
 }

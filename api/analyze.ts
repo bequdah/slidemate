@@ -1,8 +1,30 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import crypto from 'node:crypto';
 import { db, auth } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
+
+const CACHE_TTL_DAYS = 30;
+
+function getAnalysisCacheKey(
+    slideNumbers: number[],
+    textContentArray: string[] | undefined,
+    thumbnail: string | undefined,
+    mode: Mode
+): string {
+    const thumbHash = thumbnail
+        ? crypto.createHash('sha256').update(thumbnail).digest('hex')
+        : '';
+    const payload = JSON.stringify({
+        n: slideNumbers,
+        t: textContentArray || [],
+        th: thumbHash,
+        m: mode
+    });
+    const contentHash = crypto.createHash('sha256').update(payload).digest('hex');
+    return `${contentHash}_${mode}`.replace(/[/\\]/g, '_');
+}
 
 const geminiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '').trim();
 const genAI = new GoogleGenerativeAI(geminiKey);
@@ -250,7 +272,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const resolvedMode: Mode = resolveModeForAnalysis(mode);
 
-
+        const cacheKey = getAnalysisCacheKey(slideNumbers, textContentArray, thumbnail, resolvedMode);
+        const cacheRef = userRef.collection('analyses').doc(cacheKey);
+        const cacheSnap = await cacheRef.get();
+        if (cacheSnap.exists) {
+            const cached = cacheSnap.data();
+            const createdAt = cached?.createdAt as admin.firestore.Timestamp | undefined;
+            if (createdAt) {
+                const ageMs = Date.now() - createdAt.toMillis();
+                if (ageMs < CACHE_TTL_DAYS * 24 * 60 * 60 * 1000) {
+                    console.log('Cache hit:', cacheKey);
+                    return res.status(200).json(cached?.result ?? {});
+                }
+            }
+        }
 
         const systemPrompt = buildSystemPrompt();
 
@@ -485,6 +520,11 @@ REMINDER:
 
                 const polishedResult = punitiveReview(parsed);
 
+                await cacheRef.set({
+                    mode: resolvedMode,
+                    result: polishedResult,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
                 await updateUsage(uid, today, (userRef as any));
                 res.status(200).json(polishedResult);
                 return;
