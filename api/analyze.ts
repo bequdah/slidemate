@@ -215,6 +215,7 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - This applies to EVERYTHING you write.
 4. **Math & Symbols (MOBILE OPTIMIZED)**: 
    - **DETECT FORMULAS**: If a line is a mathematical formula (contains =, <, >, sum, integral, etc.), you MUST wrap the ENTIRE line in Block LaTeX \`$$ ... $$\`.
+   - **NO BOLDING**: NEVER put bold markers (\`**\`) around formulas. Just use \`$$...$$\`. Bolding breaks the math rendering.
    - **COMPLEX SYMBOLS**: Ensure proper LaTeX for sums (\`\\\\sum\`), integrals (\`\\\\int\`), fractions (\`\\\\frac\`), and subscripts (\`_\`).
    - **DOUBLE BACKSLASHES**: You MUST use \`\\\\\` for all LaTeX commands (e.g., \`\\\\sum\`, \`\\\\frac\`). This is non-negotiable for JSON safety.
 5. **Quiz Language (Exam mode only)**:
