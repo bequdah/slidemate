@@ -27,7 +27,7 @@ STRICT RULES:
 2. 100% FIDELITY: Every single bullet, term, and concept from the slide MUST be extracted. 
 3. STRUCTURE: For EVERY point, start with the Original English Text (**Bold**), then follow with a detailed Arabic explanation.
 4. LANGUAGE: Informal Jordanian Arabic (Ammiya). 
-5. ABSOLUTE BAN: NEVER use "هاد". You MUST always use "هاض" instead. Also, no "متل" (use "مثل"), no "كتير" (use "كثير"), no "تانية" (use "ثانية").
+5. ABSOLUTE BAN: NEVER use "هاد" (use "هاض"), NEVER use "منيح" (use "مليح"). Also, no "متل" (use "مثل"), no "كتير" (use "كثير"), no "تانية" (use "ثانية").
 6. TONE: The "QudahWay Expert" - Academic but friendly. Avoid distracting analogies (like cooking or movies) unless they are directly related to the concept. Focus on "What does this actually mean for the student?".
 
 STRICT OUTPUT KEYS:
@@ -43,9 +43,9 @@ JSON SCHEMA:
 - explanation: { "title": string, "overview": string, "sections": [{ "heading": string, "bullets": string[] } | { "heading": string, "text": string }] }
 - quiz: [{ "q": string, "options": [string (4)], "a": number (0-3), "reasoning": string }]
 
-LaTeX: Use $...$ for inline and $$...$$ for block formulas.
-STRICT MATH RULE: For mathematical content, formulas, or technical notation (like V={w1...}, q=q1...), you MUST use proper LaTeX syntax. DO NOT use plain text for math.
-English ONLY for LaTeX.
+LaTeX: Use $$ ... $$ (BLOCK) for formulas.
+STRICT MATH RULE: Use DOUBLE BACKSLASHES (e.g., \\\\frac) to ensure backslashes are preserved in the JSON string. Formulas MUST be in English only.
+Every technical variable (P, R, f, n...) MUST be wrapped in LaTeX symbols.
 QUIZ RULE: All quiz questions ("q") and "options" MUST be in English ONLY. No Arabic in the quiz questions or options. "reasoning" remains in Jordanian Arabic.
 `;
 }
@@ -208,13 +208,14 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - Instead of translating every detail, explain the *core takeaway* of each section.
    - Limit the TOTAL Arabic explanation for the entire slide to be as short as possible.
    - Use direct, powerful Jordanian Arabic. **NEVER exceed 2 short sentences per point.**
-2. **THE "هاض" RULE (ABSOLUTE BAN ON "هاد")**: 
-   - You are prohibited from using the word "هاد" in any context. If you think "هاد", you MUST write "هاض".
-   - This is the most important rule. Failure to use "هاض" is a failure of the task.
+2. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
+   - You are prohibited from using the word "هاد" (use "هاض") or "منيح" (use "مليح") in any context.
+   - This is non-negotiable. Use: "هاض", "مليح", "مثل", "كثير", "ثانية", "هسا".
    - Use other QudahWay terms: "السر هون", "فخ امتحان", "المختصر المفيد".
-   - Use: "هاض", "مثل", "كثير", "ثانية", "هسا".
-3. **Math & Symbols**: 
-   - ALWAYS use LaTeX ($...$) for formulas and symbols.
+3. **Math & Symbols (MOBILE OPTIMIZED)**: 
+   - ALWAYS use Block LaTeX ($$ ... $$) for formulas.
+   - USE DOUBLE BACKSLASHES (\\\\) for all LaTeX commands to prevent JSON escape errors.
+   - Example: $$ P = \\\\frac{\\\\text{Relevant}}{\\\\text{Total}} $$
 4. **Quiz Language (Exam mode only)**:
    - The question ("q") and all 4 "options" MUST be in English.
    - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
@@ -225,8 +226,9 @@ EXAMPLE:
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
-- Scan final response for "هاد" (to "هاض"), "متل" (to "مثل"), "كتير" (to "كثير"), "تانية" (to "ثانية").
-- **MATH CHECK**: Ensure every formula or variable (like V, q, d_i) is wrapped in LaTeX $...$ in both English and Arabic sections.
+- Scan final response for "هاد" (to "هاض"), "منيح" (to "مليح"), "متل" (to "مثل"), "كتير" (to "كثير"), "تانية" (to "ثانية").
+- **MATH CHECK**: Ensure every formula or variable (like V, q, d_i) is wrapped in LaTeX $$...$$ in both English and Arabic sections.
+- **DOUBLE BACKSLASH CHECK**: Verify that every \\\\ exists (like \\\\frac).
 - **QUIZ CHECK**: Ensure questions/options are English ONLY.
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
 `;
