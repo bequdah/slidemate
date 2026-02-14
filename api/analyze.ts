@@ -177,12 +177,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const resolvedMode: Mode = mode || 'simple';
 
-        const combinedText = (textContentArray || []).join(' ').trim();
 
-        const isMulti = Array.isArray(slideNumbers) && slideNumbers.length > 1;
-        const slideContexts = isMulti
-            ? buildSlideContexts(slideNumbers, textContentArray)
-            : (textContentArray?.[0] || '');
 
         const systemPrompt = buildSystemPrompt();
 
@@ -193,7 +188,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         let userPrompt = `
 ${contextInfo}
 SLIDE CONTENT TO ANALYZE:
-${slideContexts || ''}
+[[SLIDE_CONTENT]]
 
 CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
 
@@ -283,10 +278,6 @@ REMINDER:
         // We list it multiple times to act as "retries" in case of a random network glitch or bad output.
         // We DO NOT fallback to dumber models (8b/Mixtral) to preserve quality.
         let messages: any[] = [{ role: 'system', content: systemPrompt }];
-        messages.push({ role: 'user', content: userPrompt });
-
-
-
 
         const isRetryable = (err: any) => {
             const msg = String(err?.message || '').toLowerCase();
@@ -320,15 +311,49 @@ REMINDER:
                     throw new Error("GEMINI_API_KEY_MISSING");
                 }
 
-                const isVision = isVisionRequest(thumbnail);
+                let finalTextContentArray = textContentArray;
+                let finalThumbnail = thumbnail;
+
+                if (isVisionRequest(thumbnail) && thumbnail) {
+                    console.log("Vision Request Detected: Running OCR with Gemma-3...");
+                    for (let i = 0; i < 3; i++) {
+                        try {
+                            const base64Data = thumbnail.split(',')[1];
+                            // transform image to text using the SAME model (Gemma)
+                            const ocrResult = await model_gemma.generateContent([
+                                "OCR INSTRUCTION: Extract ALL text from this slide verbatim. Preserve structure (headings, bullets). Do not summarize or add conversational filler. Output ONLY the extracted text.",
+                                { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
+                            ]);
+                            const ocrText = ocrResult.response.text();
+                            console.log(`OCR Success provided ${ocrText.length} chars.`);
+
+                            finalTextContentArray = [ocrText];
+                            finalThumbnail = undefined; // Remove thumbnail to force TEXT-ONLY processing downstream
+                            break;
+                        } catch (err: any) {
+                            console.warn(`OCR Attempt ${i + 1} failed: ${err.message}`);
+                            await new Promise(r => setTimeout(r, 1000));
+                        }
+                    }
+                }
+
+                const isMulti = Array.isArray(slideNumbers) && slideNumbers.length > 1;
+                const slideContexts = isMulti
+                    ? buildSlideContexts(slideNumbers, finalTextContentArray)
+                    : (finalTextContentArray?.[0] || '');
+
+                const currentMessages = [{ role: 'system', content: systemPrompt }];
+                currentMessages.push({ role: 'user', content: userPrompt.replace('[[SLIDE_CONTENT]]', slideContexts || '') });
+
+                const isVision = isVisionRequest(finalThumbnail);
                 console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it | Vision: ${isVision}`);
-                const prompt = systemPrompt + "\n\n" + userPrompt;
 
                 let result;
-                if (isVision && thumbnail) {
-                    const base64Data = thumbnail.split(',')[1];
+                if (isVision && finalThumbnail) {
+                    const base64Data = finalThumbnail.split(',')[1];
                     result = await model_gemma.generateContent([
-                        prompt,
+                        currentMessages[0].content, // System prompt
+                        currentMessages[1].content, // User prompt (with slide content)
                         {
                             inlineData: {
                                 data: base64Data,
@@ -337,7 +362,7 @@ REMINDER:
                         }
                     ]);
                 } else {
-                    result = await model_gemma.generateContent(prompt);
+                    result = await model_gemma.generateContent(currentMessages.map(m => m.content).join('\n\n'));
                 }
 
                 const response = await result.response;
