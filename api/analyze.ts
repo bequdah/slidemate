@@ -29,6 +29,7 @@ STRICT RULES:
 4. LANGUAGE: Informal Jordanian Arabic (Ammiya). 
 5. ABSOLUTE BAN: NEVER use "هاد" (use "هاض"), NEVER use "منيح" (use "مليح"). Also, no "متل" (use "مثل"), no "كتير" (use "كثير"), no "تانية" (use "ثانية").
 6. TONE: The "QudahWay Expert" - Academic but friendly. Avoid distracting analogies (like cooking or movies) unless they are directly related to the concept. Focus on "What does this actually mean for the student?".
+7. IGNORE META-DATA: Do NOT extract or explain textbook references, section numbers (e.g., "Sec. 1.1", "4.3"), page numbers, slide numbers, or administrative headers/footers. Skip them entirely.
 
 STRICT OUTPUT KEYS:
 1) "explanation": { "title", "overview", "sections" }  (Used in simple/deep)
@@ -36,7 +37,7 @@ STRICT OUTPUT KEYS:
 
 MODE RULES:
 - simple: Focus on a clear explanation. No section limits (AI decides length based on content), but sentences must be short and punchy. NO QUIZ.
-- exam: Focused on "Exam strategy" and generating MCQs. Return 10 hard MCQs. NO EXPLANATION TEXT.
+- exam: Focused on "Exam strategy" and generating MCQs. Return between 2 and 8 hard MCQs depending on slide complexity. NO EXPLANATION TEXT.
 
 JSON SCHEMA:
 - explanation: { "title": string, "overview": string, "sections": [{ "heading": string, "bullets": string[] } | { "heading": string, "text": string }] }
@@ -80,14 +81,14 @@ function validateResultShape(result: any, mode: Mode) {
     const requiredCount = requiredQuizCount(mode);
 
     // Validate quiz if required
-    if (requiredCount > 0) {
+    if (mode === 'exam') {
         if (!Array.isArray(result.quiz)) {
             console.warn("Validation Failed: 'quiz' is not an array");
             return false;
         }
 
-        if (result.quiz.length !== requiredCount) {
-            console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected ${requiredCount}`);
+        if (result.quiz.length < 2 || result.quiz.length > 8) {
+            console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected 2-8`);
             return false;
         }
 
@@ -196,7 +197,8 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
 
 1. **Impact-Focused Content ONLY (NO FILLER)**: 
    - Explain *only* what is on the slide. 
-   - **IMAGE UPLOAD**: If an image is provided, it is a SCREENSHOT OF A LECTURE SLIDE. Extract the text content and explain it. DO NOT describe the image visually. Treat it as a text slide.
+   - **SKIP META-DATA**: Ignore section numbers like "Sec. 1.1", "4.3", page numbers, or textbook references. These are useless to the student here.
+   - **IMAGE UPLOAD**: If an image is provided, it is a SCREENSHOT OF A LECTURE SLIDE. Extract the educational text and explain it.
    - **ABSOLUTE BAN**: Never mention "فخ امتحان" (exam trap), "سؤال متوقع", or any exam advice in Simple/Deep modes. 
    - **NO CLOSING REMARKS**: Stop writing immediately after the last point is explained. No "هاض كله مقدمة".
    - Keep it short: Maximum 2 punchy sentences per point.
@@ -215,11 +217,9 @@ EXAMPLE:
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
-- Scan final response for "هاد" (to "هاض"), "منيح" (to "مليح"), "متل" (to "مثل"), "كتير" (to "كثير"), "تانية" (to "ثانية").
-- **MATH CHECK**: Ensure every formula or variable (like V, q, d_i) is wrapped in LaTeX $$...$$ in both English and Arabic sections.
-- **DOUBLE BACKSLASH CHECK**: Verify that every \\\\ exists (like \\\\frac).
-- **QUIZ CHECK**: Ensure questions/options are English ONLY.
-- Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
+- Scan final response for banned words and replace them.
+- **MATH CHECK**: Ensure LaTeX $$...$$ with \\\\.
+- Return between 2 and 8 MCQs (comprehensive to the slide).
 `;
 
         if (resolvedMode === 'simple') {
@@ -233,7 +233,7 @@ REMINDER:
             userPrompt += `
 - EXAM MODE: Focus ONLY on finding the hardest exam points.
 - DO NOT generate explanation (return empty object "explanation": {}).
-- Output ONLY the quiz array with ${requiredQuizCount(resolvedMode)} questions.
+- Generate between 2 and 8 MCQs depending on the amount of content.
 `;
         }
 

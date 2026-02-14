@@ -415,7 +415,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                         {!mode ? (
                             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full max-w-3xl">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 w-full max-w-3xl" dir="ltr">
                                     {['simple', 'exam'].map((m) => {
                                         const bgClass = m === 'simple'
                                             ? 'bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20'
