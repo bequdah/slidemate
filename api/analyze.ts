@@ -316,13 +316,15 @@ REMINDER:
 
                 if (isVisionRequest(thumbnail) && thumbnail) {
                     console.log("Vision Request Detected: Running OCR with Gemma-3...");
+                    const mimeType = thumbnail.split(';')[0].split(':')[1];
+                    const base64Data = thumbnail.split(',')[1];
+
                     for (let i = 0; i < 3; i++) {
                         try {
-                            const base64Data = thumbnail.split(',')[1];
                             // transform image to text using the SAME model (Gemma)
                             const ocrResult = await model_gemma.generateContent([
                                 "OCR INSTRUCTION: Extract ALL text from this slide verbatim. Preserve structure (headings, bullets). Do not summarize or add conversational filler. Output ONLY the extracted text.",
-                                { inlineData: { data: base64Data, mimeType: "image/jpeg" } }
+                                { inlineData: { data: base64Data, mimeType: mimeType } }
                             ]);
                             const ocrText = ocrResult.response.text();
                             console.log(`OCR Success provided ${ocrText.length} chars.`);
@@ -350,6 +352,8 @@ REMINDER:
 
                 let result;
                 if (isVision && finalThumbnail) {
+                    // Fallback to Visual Analysis if OCR failed to clear the thumbnail
+                    const mimeType = finalThumbnail.split(';')[0].split(':')[1];
                     const base64Data = finalThumbnail.split(',')[1];
                     result = await model_gemma.generateContent([
                         currentMessages[0].content, // System prompt
@@ -357,7 +361,7 @@ REMINDER:
                         {
                             inlineData: {
                                 data: base64Data,
-                                mimeType: "image/jpeg"
+                                mimeType: mimeType
                             }
                         }
                     ]);
