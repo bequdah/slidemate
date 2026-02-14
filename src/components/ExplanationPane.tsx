@@ -189,13 +189,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
                 {sections.map((s, i) => (
                     <div key={i} className="space-y-3">
-                        {s.heading && (
-                            <div className="text-white font-black">
-                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                    {`**${s.heading}**`}
-                                </ReactMarkdown>
-                            </div>
-                        )}
 
                         {'text' in s && s.text && (
                             <div className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">

@@ -3,26 +3,20 @@ interface SlideCardProps {
     thumbnail?: string;
     isImportant?: boolean;
     onUnderstand: () => void;
-    selected?: boolean;
-    onToggleSelect?: () => void;
 }
 
-export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, selected, onToggleSelect }: SlideCardProps) => {
+export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand }: SlideCardProps) => {
     return (
         <div className="relative w-full max-w-5xl mx-auto mb-4 group">
             {/* Main Card Container */}
             <div
-                onClick={onToggleSelect}
-                className={`relative aspect-[16/9] bg-slate-900 rounded-[2rem] border transition-all duration-500 cursor-pointer overflow-hidden shadow-2xl ${selected
-                    ? 'border-indigo-500 ring-4 ring-indigo-500/20 shadow-indigo-500/20'
-                    : 'border-white/5 group-hover:border-indigo-500/30'
-                    }`}
+                className="relative aspect-[16/9] bg-slate-900 rounded-[2rem] border border-white/5 group-hover:border-indigo-500/30 transition-all duration-500 overflow-hidden shadow-2xl"
             >
                 {thumbnail ? (
                     <img
                         src={thumbnail}
                         alt={`Slide ${slideNumber}`}
-                        className={`w-full h-full object-contain transition-transform duration-700 ${selected ? 'scale-95' : ''}`}
+                        className="w-full h-full object-contain transition-transform duration-700"
                     />
                 ) : (
                     <div className="flex flex-col items-center justify-center h-full space-y-6 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -41,29 +35,8 @@ export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, s
                     </div>
                 )}
 
-                {/* Selection Pulse Overlay */}
-                {selected && (
-                    <div className="absolute inset-0 bg-indigo-600/10 animate-pulse pointer-events-none" />
-                )}
-
                 {/* Overlays & Buttons */}
-                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-
-                {/* Selection Checkbox (Professional Style) */}
-                <div className="absolute top-6 left-6 z-20">
-                    <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${selected
-                        ? 'bg-indigo-500 border-indigo-500 scale-110'
-                        : 'bg-slate-950/50 border-white/20 opacity-0 group-hover:opacity-100'
-                        }`}>
-                        {selected && (
-                            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                        )}
-                    </div>
-                </div>
-
-                <div className="absolute top-4 right-4 md:top-6 md:right-6 flex gap-3 z-30" onClick={(e) => e.stopPropagation()}>
+                <div className="absolute top-4 right-4 md:top-6 md:right-6 flex gap-3 z-30">
                     <button
                         onClick={onUnderstand}
                         className={`w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-[1.25rem] flex items-center justify-center overflow-hidden transition-all duration-300 group/ai border border-white/10 ${isImportant
@@ -75,10 +48,7 @@ export const SlideCard = ({ slideNumber, isImportant, thumbnail, onUnderstand, s
                         <img src="/logo_white_bg.jpg" alt="AI" className="w-full h-full object-cover group-hover/ai:scale-110 transition-transform" />
                     </button>
                 </div>
-
-
             </div>
-
         </div>
     );
 };

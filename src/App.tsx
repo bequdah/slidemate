@@ -27,8 +27,6 @@ function MainApp() {
   const [chapterTitle, setChapterTitle] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [selectedSlide, setSelectedSlide] = useState<Slide | null>(null);
-  const [selectedSlideIds, setSelectedSlideIds] = useState<string[]>([]);
-  // Removed isBatchMode as it was unused and defaulting to true is fine if logic doesn't need state
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
@@ -94,12 +92,27 @@ function MainApp() {
 
           const currentProgress = (i / pageCount) * 100;
           setUploadProgress(currentProgress);
-          // Optimize rendering: batch updates or use proper buffering if needed
-          // For now, minimal updates to prevent UI lag
           if (i % 5 === 0) setSlides([...extractedSlides]);
         }
+      } else if (file.type.startsWith('image/')) {
+        // Handle Image Upload
+        const reader = new FileReader();
+        const imageData = await new Promise<string>((resolve) => {
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.readAsDataURL(file);
+        });
+
+        extractedSlides.push({
+          id: `img-${Date.now()}`,
+          number: 1,
+          topic: "Screenshot Analysis",
+          isImportant: true,
+          textContent: "[IMAGE_UPLOAD] analyze this slide visual content directly.",
+          thumbnail: imageData
+        });
+        setUploadProgress(100);
       } else {
-        throw new Error('Please upload a PDF file for analysis.');
+        throw new Error('Please upload a PDF or an Image.');
       }
 
       setSlides(extractedSlides);
@@ -112,29 +125,20 @@ function MainApp() {
     }
   };
 
-  const toggleSlideSelection = (id: string) => {
-    setSelectedSlideIds(prev => {
-      if (prev.includes(id)) return prev.filter(i => i !== id);
-      if (prev.length >= 5) return prev;
-      return [...prev, id];
-    });
-  };
-
-  const handleBatchAnalyze = () => {
-    if (selectedSlideIds.length === 0) return;
-    const batchSlides = slides.filter(s => selectedSlideIds.includes(s.id));
-    setSelectedSlide({
-      id: 'batch-mode',
-      number: 0,
-      isImportant: false,
-      textContent: batchSlides.map(s => s.textContent).join('\n\n'),
-      thumbnail: batchSlides[0]?.thumbnail
-    } as any);
+  const resetApp = () => {
+    setSlides([]);
+    setChapterTitle('');
+    setUploadProgress(0);
+    setUploadError(null);
+    setIsUploading(false);
   };
 
   return (
-    <div className="min-h-screen transition-all duration-700 bg-slate-900 text-white">
-      <nav className="border-b transition-colors duration-500 p-4 flex justify-between items-center sticky top-0 backdrop-blur-xl z-50 border-slate-800 bg-slate-900/80">
+    <div className="min-h-screen transition-all duration-700 bg-[#020617] text-white selection:bg-indigo-500/30">
+      {/* Animated Background Element */}
+      <div className="mesh-bg" />
+
+      <nav className="border-b border-white/5 p-4 flex justify-between items-center sticky top-0 backdrop-blur-2xl z-50 bg-[#020617]/40">
         <div className="flex items-center gap-3 group cursor-pointer">
           <div className="relative">
             <div className="absolute inset-0 bg-indigo-500/20 rounded-xl blur-xl group-hover:bg-indigo-500/40 transition-all duration-700 animate-pulse" />
@@ -142,28 +146,33 @@ function MainApp() {
               src="/logo_white_bg.jpg"
               alt="SlideMate Logo"
               onClick={() => setIsLogoModalOpen(true)}
-              className="w-10 h-10 rounded-xl shadow-lg border border-indigo-500/30 relative z-10 transition-transform duration-500 group-hover:scale-110 group-hover:rotate-3 cursor-pointer"
+              className="w-10 h-10 rounded-xl shadow-2xl border border-white/10 relative z-10 transition-all duration-500 group-hover:scale-110 group-hover:rotate-3"
             />
           </div>
-          <h1 className="text-lg sm:text-2xl font-black tracking-tighter uppercase italic text-white flex items-center gap-1">
-            <span>SLIDE</span>
-            <span className="text-indigo-400">MΛTE</span>
-          </h1>
+          <div className="flex flex-col">
+            <h1 className="text-xl font-black tracking-tighter uppercase italic text-white leading-none">
+              SLIDE<span className="text-indigo-400">MΛTE</span>
+            </h1>
+            <span className="text-[8px] font-bold tracking-[0.3em] text-slate-500 uppercase">AI Study Hub</span>
+          </div>
         </div>
 
         <div className="flex items-center gap-4">
           {user && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-medium text-slate-400 hidden md:block">
-                {user.displayName}
-              </span>
+            <div className="flex items-center gap-3">
+              <div className="flex flex-col items-end hidden md:flex">
+                <span className="text-xs font-bold text-slate-300">
+                  {user.displayName}
+                </span>
+                <span className="text-[10px] text-indigo-400/80 font-medium">Premium Member</span>
+              </div>
               <button
                 onClick={async () => await logout()}
-                className="text-[10px] sm:text-xs bg-white/5 hover:bg-white/10 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors border border-white/5 text-white whitespace-nowrap"
+                className="text-[10px] sm:text-xs glass hover:bg-white/10 px-3 sm:px-4 py-2 rounded-xl transition-all font-bold text-white uppercase tracking-wider"
               >
                 Sign Out
               </button>
-              {user.photoURL && <img src={user.photoURL} className="w-6 h-6 sm:w-8 sm:h-8 rounded-full border border-indigo-500/50" />}
+              {user.photoURL && <img src={user.photoURL} className="w-8 h-8 rounded-full border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/20" />}
             </div>
           )}
         </div>
@@ -172,7 +181,7 @@ function MainApp() {
 
       <main className="max-w-7xl mx-auto p-4 sm:p-8 relative z-10">
         {uploadError && (
-          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/30 rounded-2xl text-red-500 text-center font-bold animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="mb-8 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-400 text-center font-bold animate-in fade-in slide-in-from-top-4 duration-300 glass">
             ⚠️ {uploadError}
           </div>
         )}
@@ -180,19 +189,54 @@ function MainApp() {
         {isUploading ? (
           <LoadingScreen progress={uploadProgress} chapterTitle={chapterTitle} />
         ) : slides.length === 0 ? (
-          <div className="py-10 sm:py-20 animate-in fade-in zoom-in duration-1000">
-            <div className="text-center mb-16">
-              <h2 className="text-5xl sm:text-7xl font-black mb-6 tracking-tighter leading-none text-white uppercase">
-                Master the <span className="text-indigo-500">Node</span>.
-              </h2>
-              <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto font-medium leading-relaxed">
-                Upload your lecture PDF for real-time semantic extraction and exam prediction.
+          <div className="py-12 sm:py-24 animate-in fade-in zoom-in duration-1000">
+            <div className="text-center mb-16 relative">
+              {/* Decorative Blur */}
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-indigo-500/10 blur-[120px] rounded-full -z-10" />
+
+              <h1 className="text-5xl sm:text-8xl font-black mb-6 tracking-tighter leading-[0.9] text-white uppercase">
+                YOUR AI STUDY <br />
+                <span className="text-gradient-indigo animate-float inline-block">PARTNER</span>
+              </h1>
+              <p className="text-slate-400 text-lg sm:text-xl max-w-2xl mx-auto font-semibold leading-relaxed tracking-tight">
+                Transform your lecture slides into <span className="text-amber-500 font-bold">interactive knowledge</span>.
+                Smart analysis and exam prep, tailored <span className="text-amber-500 font-bold">for you</span>.
               </p>
             </div>
-            <FileUpload onUpload={handleUpload} />
+
+            <div className="max-w-xl mx-auto glass p-2 rounded-[2.5rem] shadow-2xl relative group">
+              <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 blur opacity-20 rounded-[2.5rem] group-hover:opacity-40 transition-opacity" />
+              <FileUpload onUpload={handleUpload} />
+            </div>
+
+            <div className="mt-20 grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto opacity-50">
+              {[
+                { title: "Smart Extraction", desc: "No more copy-pasting." },
+                { title: "Deep Analysis", desc: "Understand every detail." },
+                { title: "Exam Prep", desc: "Predict what's coming." }
+              ].map((f, i) => (
+                <div key={i} className="text-center space-y-2">
+                  <h3 className="text-xs font-black uppercase tracking-widest text-indigo-400">{f.title}</h3>
+                  <p className="text-[10px] text-slate-500 font-bold">{f.desc}</p>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="pt-10 space-y-4 pb-40 overflow-y-auto scroll-smooth">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+              <div>
+                <button
+                  onClick={resetApp}
+                  className="flex items-center gap-2 text-indigo-400 hover:text-indigo-300 font-bold text-sm uppercase tracking-widest transition-all group"
+                >
+                  <svg className="w-5 h-5 group-hover:-translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                  </svg>
+                  <span>Back</span>
+                </button>
+              </div>
+            </div>
             {slides.map(slide => (
               <div key={slide.id} className="snap-center">
                 <SlideCard
@@ -200,8 +244,6 @@ function MainApp() {
                   isImportant={slide.isImportant}
                   thumbnail={slide.thumbnail}
                   onUnderstand={() => setSelectedSlide(slide)}
-                  selected={selectedSlideIds.includes(slide.id)}
-                  onToggleSelect={() => toggleSlideSelection(slide.id)}
                 />
               </div>
             ))}
@@ -209,45 +251,13 @@ function MainApp() {
         )}
       </main>
 
-      {selectedSlideIds.length > 0 && (
-        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[80] animate-in slide-in-from-bottom-10 duration-500">
-          <button
-            onClick={handleBatchAnalyze}
-            className="flex items-center gap-4 px-10 py-5 bg-indigo-600 rounded-full shadow-[0_0_50px_rgba(99,102,241,0.4)] border border-white/20 hover:bg-indigo-500 hover:scale-105 transition-all group"
-          >
-            <div className="flex -space-x-3">
-              {slides.filter(s => selectedSlideIds.includes(s.id)).map((s) => (
-                <div key={s.id} className="w-8 h-8 rounded-full bg-slate-800 border-2 border-indigo-600 overflow-hidden flex items-center justify-center text-[10px] font-black z-[10]">
-                  {s.thumbnail ? <img src={s.thumbnail} className="w-full h-full object-cover" /> : s.number}
-                </div>
-              ))}
-            </div>
-            <div className="flex flex-col text-left">
-              <span className="text-white font-black text-lg leading-none uppercase tracking-tighter">Analyze {selectedSlideIds.length} Slides</span>
-              <span className="text-indigo-200 text-[10px] font-bold uppercase tracking-[0.2em]">Cross-Slide Synthesis</span>
-            </div>
-            <div className="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center group-hover:bg-white/20 transition-colors">
-              <svg className="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-              </svg>
-            </div>
-          </button>
-        </div>
-      )}
-
       {selectedSlide && (
         <>
           <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90]" onClick={() => setSelectedSlide(null)} />
           <ExplanationPane
-            slideIds={selectedSlide.id === 'batch-mode'
-              ? selectedSlideIds
-              : [selectedSlide.id]}
-            slideNumbers={selectedSlide.id === 'batch-mode'
-              ? slides.filter(s => selectedSlideIds.includes(s.id)).map(s => s.number)
-              : [selectedSlide.number]}
-            textContentArray={selectedSlide.id === 'batch-mode'
-              ? slides.filter(s => selectedSlideIds.includes(s.id)).map(s => s.textContent || "")
-              : [selectedSlide.textContent || ""]}
+            slideIds={[selectedSlide.id]}
+            slideNumbers={[selectedSlide.number]}
+            textContentArray={[selectedSlide.textContent || ""]}
             allSlidesTexts={slides.map(s => s.textContent || "")}
             thumbnail={selectedSlide.thumbnail}
             onClose={() => setSelectedSlide(null)}
