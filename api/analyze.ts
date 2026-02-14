@@ -223,16 +223,26 @@ REMINDER:
 - Return EXACTLY ${requiredQuizCount(resolvedMode)} MCQs.
 `;
 
-        if (resolvedMode !== 'exam') {
+        if (resolvedMode === 'simple') {
             userPrompt += `
-- explanation must cover 100% of slide content
-- Each bullet/section must have detailed Arabic explanation
-- DO NOT generate a quiz array (return empty array "quiz": [])
+- SIMPLE MODE: Focus 100% on the BIG PICTURE and KEY TAKEAWAYS.
+- Use only 3-4 sections in total.
+- Group minor points together to keep it fast and punchy.
+- DO NOT generate a quiz array (return empty array "quiz": []).
+`;
+        } else if (resolvedMode === 'deep') {
+            userPrompt += `
+- DEEP MODE: This is an EXHAUSTIVE technical breakdown.
+- Every single bullet and detail MUST have its own detailed sub-explanation.
+- Use 6-8 sections to ensure everything is covered.
+- Explain the "Why" and "How" behind every concept.
+- DO NOT generate a quiz array (return empty array "quiz": []).
 `;
         } else {
             userPrompt += `
-- DO NOT generate explanation (return empty object "explanation": {})
-- Output ONLY the quiz array with ${requiredQuizCount(resolvedMode)} questions
+- EXAM MODE: Focus ONLY on finding the hardest exam points.
+- DO NOT generate explanation (return empty object "explanation": {}).
+- Output ONLY the quiz array with ${requiredQuizCount(resolvedMode)} questions.
 `;
         }
 
