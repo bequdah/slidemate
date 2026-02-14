@@ -6,6 +6,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
+const CACHE_VERSION = 'v2_qudah_vision'; // Bump version to force re-analysis with new prompts
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -17,6 +18,7 @@ function getAnalysisCacheKey(
         ? crypto.createHash('sha256').update(thumbnail).digest('hex')
         : '';
     const payload = JSON.stringify({
+        v: CACHE_VERSION, // Added versioning
         n: slideNumbers,
         t: textContentArray || [],
         th: thumbHash,
@@ -108,32 +110,24 @@ function isVisionRequest(thumbnail?: string) {
     return !!thumbnail && typeof thumbnail === 'string' && thumbnail.startsWith('data:image');
 }
 
-const VISION_EXTRACT_PROMPT = `You are analyzing a lecture slide that may contain tables, charts, diagrams, and highlighted boxes (e.g. red box, black box with labels).
+const VISION_EXTRACT_PROMPT = `You are the "eyes" of an expert tutor called "The QudahWay Teacher". Your job is to analyze this slide image and extract the LOGIC, MEANING, and RELATIONSHIPS behind the visuals, not just the text.
 
-TASKS (do all that apply):
+YOUR ANALYSIS MUST BE "SMART":
+1. **Identify the Core Concept**: What is this slide trying to teach? (e.g., "This slide explains how the Inverted Index construction works step-by-step").
+2. **Decode the Visuals**:
+   - **Tables**: Don't just list rows. Explain the PATTERN. (e.g., "The rows represent Terms, the columns represent Documents. A '1' means the term exists in that document.").
+   - **Arrows/Flowcharts**: Describe the FLOW. (e.g., "The arrow moves from Raw Text -> Tokenization -> Indexing. It shows the processing pipeline.").
+   - **Highlighted Boxes (Red/Colors)**: These are CRITICAL. State exactly *what* is highlighted and *why*. (e.g., "The red box highlights the 'Term Frequency' formula, indicating it's the most important part.").
+3. **Extract Examples**: If the slide shows a specific example (e.g., "Brutus AND Caesar"), capture the inputs and the exact outputs shown.
 
-1. SLIDE TITLE
-   - Give the exact slide title or main heading.
+OUTPUT FORMAT (Structured English Description):
+- **TITLE**: [Exact Slide Title]
+- **VISUAL LOGIC**: [Deep explanation of how the diagram/table works. "The X axis determines Time, the Y axis determines Cost..."]
+- **HIGHLIGHTS/FOCUS**: [What is the student supposed to look at? "Notice the red circle around..."]
+- **CONTENT**: [All text, formulas, and labels, organized logically by section.]
+- **EXAMPLE WALKTHROUGH**: [If there's a step-by-step example, describe it clearly: "Step 1: ..., Step 2: ..."]
 
-2. TABLE(S)
-   - For each table: state clearly what the ROWS represent (e.g. terms/words) and what the COLUMNS represent (e.g. documents/plays).
-   - State what each CELL VALUE means (e.g. "1 = term appears in document, 0 = term does not appear").
-   - List the ROW HEADERS (e.g. Antony, Brutus, Caesar, ...) and COLUMN HEADERS (e.g. Antony and Cleopatra, Julius Caesar, ...).
-   - Include 1–2 example rows with their 0/1 values so the reader can see how the table works.
-
-3. HIGHLIGHTED BOXES / CALLOUTS
-   - For every distinct box (red, black, or any colored/highlighted area with text):
-     - Quote the EXACT text inside the box.
-     - State what the box is: e.g. "Legend explaining cell values", "Example search query", "Definition", "Formula".
-     - In one sentence, explain how it relates to the rest of the slide (e.g. "This query would find plays containing Brutus AND Caesar but NOT Calpurnia.").
-
-4. CHARTS / DIAGRAMS (if any)
-   - Describe axes, labels, and what the chart/diagram shows. For diagrams, describe steps or flow.
-
-5. BODY TEXT
-   - Any other headings or bullet points: extract verbatim, preserve order.
-
-OUTPUT: One structured block in English. Use clear section headers like "TITLE:", "TABLE:", "BOX (legend):", "BOX (query example):", "BODY:". No conversational filler. This text will be used to generate a student-facing explanation.`;
+Make your description so detailed that a blind tutor could teach this slide perfectly just by reading your text.`;
 
 async function extractSlideContentWithGroqVision(thumbnail: string): Promise<string> {
     const completion = await groq.chat.completions.create({
@@ -405,7 +399,7 @@ REMINDER:
                 console.log("Visual mode: Running Groq Llama 4 Vision for tables/charts/diagrams...");
                 const visionText = await extractSlideContentWithGroqVision(thumbnail);
                 console.log(`Groq Vision provided ${visionText.length} chars.`);
-                const visualPrefix = `[VISUAL SLIDE - The content below describes a slide with a table and/or highlighted boxes. Organize your explanation in this order, ONE section per point: (1) Title and main idea. (2) Definition/legend: what rows, columns, and cell values mean — bold the key phrase (e.g. "1 if play contains word, 0 otherwise") then explain in Arabic. (3) What the table gives us (e.g. one vector per term) with one example row. (4) How to use it: if there is a procedure, use numbered steps in Arabic. (5) Concrete example (e.g. query "Brutus AND Caesar BUT NOT Calpurnia" with vectors and result). Do not merge into one block.]\n\n`;
+                const visualPrefix = `[VISUAL SLIDE ANALYSIS - GUIDE FOR TUTOR]\n\nThe following is a structural breakdown of the visual slide content (tables, diagrams, flows) provided by your assistant.\nUSE THIS DETAILED LOGIC to explain the concepts to the student.\n\n${visionText}\n\n[END VISUAL ANALYSIS]\n\n`;
                 initialFinalText = [visualPrefix + visionText];
                 initialFinalThumbnail = undefined;
             } catch (err: any) {
