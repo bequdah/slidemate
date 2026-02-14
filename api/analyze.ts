@@ -207,16 +207,19 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - **SKIP META-DATA**: Ignore section numbers like "Sec. 1.1", "4.3", page numbers, or textbook references.
    - **NO CLOSING REMARKS**: Stop writing immediately after the last point is explained. 
    - Keep it short: Maximum 2 punchy sentences per point.
-2. **HANDLING LISTS & STEPS (CRITICAL)**:
+2. **LISTS, STEPS & PROCESSES (CRITICAL)**:
    - **NEVER SUMMARIZE A LIST**: If the slide has a numbered list (1, 2, 3...) or steps (First, Second...), you MUST extract each step as its own separate bullet point.
    - **FLATTEN NESTED LISTS**: If a bullet has a sub-list, extract the sub-list items as separate main bullets immediately following their parent.
-   - **Example**: If slide says "Step 1: X, Step 2: Y", your JSON MUST have two separate strings in the "bullets" array, one for each step.
-4. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
+   - **PROCESS STRUCTURE**: If the slide describes a process (e.g., "To find X:", "How it works:"):
+     - Make the **GOAL/TITLE** the \`heading\` (e.g., "To find matching documents").
+     - Make **EACH STEP** a separate \`bullet\` (e.g., "Locate BRUTUS", "Retrieve postings").
+     - **DO NOT** lump steps into one paragraph.
+3. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
    - Prohibited words: "هاد" (use "هاض"), "منيح" (use "مليح"), "متل" (use "مثل"), "كتير" (use "كثير"), "تانية" (use "ثانية").
    - This applies to EVERYTHING you write.
-5. **Math & Symbols (MOBILE OPTIMIZED)**: 
+4. **Math & Symbols (MOBILE OPTIMIZED)**: 
    - ALWAYS use Block LaTeX ($$ ... $$) for formulas with DOUBLE BACKSLASHES (\\\\).
-6. **Quiz Language (Exam mode only)**:
+5. **Quiz Language (Exam mode only)**:
    - The question ("q") and all 4 "options" MUST be in English.
    - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
 
@@ -224,8 +227,9 @@ EXAMPLE OF CORRECT HIERARCHY:
 Slide content:
 "Tokenization
  - Cut character sequence into word tokens
- Normalization
- - Map text and query term to same form"
+ To find X:
+ 1. Locate A
+ 2. Retrieve B"
 
 CORRECT JSON:
 {
@@ -233,18 +237,19 @@ CORRECT JSON:
     {
       "heading": "Tokenization",
       "bullets": [
-        "**Cut character sequence into word tokens**\\nالتجزئة هي عملية تقسيم النص إلى وحدات صغيرة..."
+        "**Cut character sequence into word tokens**\\nالتجزئة هي عملية تقسيم النص..."
       ]
     },
     {
-      "heading": "Normalization",
+      "heading": "To find X",
       "bullets": [
-        "**Map text and query term to same form**\\nالتوحيد هو عملية تحويل الكلمات لشكل موحد..."
+        "**Locate A**\\nالخطوة الأولى هي نحدد مكان A...",
+        "**Retrieve B**\\nبعد ما نحدد A، بنجيب B..."
       ]
     }
   ]
 }
-NOTE: Create SEPARATE objects in "sections" for each new Main Topic.
+NOTE: Create SEPARATE objects in "sections" for each new Main Topic or Process Goal.
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
