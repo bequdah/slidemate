@@ -214,7 +214,9 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - Prohibited words: "هاد" (use "هاض"), "منيح" (use "مليح"), "متل" (use "مثل"), "كتير" (use "كثير"), "تانية" (use "ثانية").
    - This applies to EVERYTHING you write.
 4. **Math & Symbols (MOBILE OPTIMIZED)**: 
-   - ALWAYS use Block LaTeX ($$ ... $$) for formulas with DOUBLE BACKSLASHES (\\\\).
+   - **DETECT FORMULAS**: If a line is a mathematical formula (contains =, <, >, sum, integral, etc.), you MUST wrap the ENTIRE line in Block LaTeX \`$$ ... $$\`.
+   - **COMPLEX SYMBOLS**: Ensure proper LaTeX for sums (\`\\\\sum\`), integrals (\`\\\\int\`), fractions (\`\\\\frac\`), and subscripts (\`_\`).
+   - **DOUBLE BACKSLASHES**: You MUST use \`\\\\\` for all LaTeX commands (e.g., \`\\\\sum\`, \`\\\\frac\`). This is non-negotiable for JSON safety.
 5. **Quiz Language (Exam mode only)**:
    - The question ("q") and all 4 "options" MUST be in English.
    - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
