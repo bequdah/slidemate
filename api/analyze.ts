@@ -227,9 +227,10 @@ REMINDER:
 
         if (resolvedMode === 'simple') {
             userPrompt += `
-- EXPLANATION MODE: Provide a comprehensive but concise explanation of all slide content.
-- Do not limit the number of sections; use as many as needed to cover the material (e.g., 4 to 8 sections).
-- IMPORTANT: Keep each explanation point short and punchy (maximum 2 sentences per bullet/point).
+- EXPLANATION MODE: Provide a DEEP DIVE and COMPREHENSIVE explanation of all slide content.
+- Every single bullet point, term, and detail from the slide MUST have a thorough, detailed Arabic explanation.
+- Do not limit the length; explain the "Why", "How", and "What it means" for every concept. 
+- IMPORTANT: Ensure each point is explained in sufficient detail to ensure full understanding.
 - DO NOT generate a quiz array (return empty array "quiz": []).
 `;
         } else {
