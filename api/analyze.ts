@@ -216,9 +216,31 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - The question ("q") and all 4 "options" MUST be in English.
    - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
 
-EXAMPLE:
-"**Skip Lists use multiple layers for faster search**
-ببساطة، الـ Skip List هي طريقة ذكية عشان نسرع البحث. تخيل إنك بطلعة درج طويل، وبدل ما تطلع درجة درجة (هاض البحث العادي)، بتقرر تنط كل 5 درجات مرة وحدة عشان توصل أسرع. هاض هو السر هون! بنعمل طبقات فوق بعض عشان نختصر الوقت."
+EXAMPLE OF CORRECT HIERARCHY:
+Slide content:
+"Tokenization
+ - Cut character sequence into word tokens
+ Normalization
+ - Map text and query term to same form"
+
+CORRECT JSON:
+{
+  "sections": [
+    {
+      "heading": "Tokenization",
+      "bullets": [
+        "**Cut character sequence into word tokens**\\nالتجزئة هي عملية تقسيم النص إلى وحدات صغيرة..."
+      ]
+    },
+    {
+      "heading": "Normalization",
+      "bullets": [
+        "**Map text and query term to same form**\\nالتوحيد هو عملية تحويل الكلمات لشكل موحد..."
+      ]
+    }
+  ]
+}
+NOTE: Create SEPARATE objects in "sections" for each new Main Topic.
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
