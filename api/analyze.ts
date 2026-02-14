@@ -49,6 +49,15 @@ JSON SCHEMA:
         "bullets" = Sub-points and examples (e.g., "Cut character sequence...") - displayed in YELLOW color
 - quiz: [{ "q": string, "options": [string (4)], "a": number (0-3), "reasoning": string }]
 
+EXPLANATION ORDER FOR SLIDES WITH TABLES / BOXES / DIAGRAMS:
+When the slide content describes a table, matrix, or highlighted boxes (e.g. legend, query example), order your "sections" like a clear lecture flow:
+1) Title and main idea (one short section).
+2) Definition / legend: what rows, columns, and cell values mean (e.g. "1 if play contains word, 0 otherwise") — one section with bold English key phrase then Arabic explanation.
+3) The table or "what we get": e.g. "one 0/1 vector per term", with one concrete example row (e.g. "Caesar's row is 110111") — one section.
+4) How to use it: if there is a procedure (e.g. answering a query with bitwise AND), use NUMBERED STEPS in Arabic (1. 2. 3.) in the bullets.
+5) Concrete example: if the slide has a query or formula (e.g. "Brutus AND Caesar BUT NOT Calpurnia"), add a section that states the example and the result (e.g. vectors used and final result) so the student sees the full application.
+Keep each section focused on ONE idea (like one yellow box per idea). Do not merge definition, procedure, and example into one long block.
+
 LaTeX: Use $$ ... $$ (BLOCK) for formulas.
 STRICT MATH RULE: Use DOUBLE BACKSLASHES (e.g., \\\\frac) to ensure backslashes are preserved in the JSON string. Formulas MUST be in English only.
 Every technical variable (P, R, f, n...) MUST be wrapped in LaTeX symbols.
@@ -72,7 +81,32 @@ function isVisionRequest(thumbnail?: string) {
     return !!thumbnail && typeof thumbnail === 'string' && thumbnail.startsWith('data:image');
 }
 
-const VISION_EXTRACT_PROMPT = `Extract ALL text from this slide exactly as shown. Then describe in detail every table, chart, diagram, and figure: list columns/rows for tables, explain what each chart shows and its trends, and describe diagrams step by step. Preserve structure (headings, bullets). Output only the extracted and described content in English. No conversational filler.`;
+const VISION_EXTRACT_PROMPT = `You are analyzing a lecture slide that may contain tables, charts, diagrams, and highlighted boxes (e.g. red box, black box with labels).
+
+TASKS (do all that apply):
+
+1. SLIDE TITLE
+   - Give the exact slide title or main heading.
+
+2. TABLE(S)
+   - For each table: state clearly what the ROWS represent (e.g. terms/words) and what the COLUMNS represent (e.g. documents/plays).
+   - State what each CELL VALUE means (e.g. "1 = term appears in document, 0 = term does not appear").
+   - List the ROW HEADERS (e.g. Antony, Brutus, Caesar, ...) and COLUMN HEADERS (e.g. Antony and Cleopatra, Julius Caesar, ...).
+   - Include 1–2 example rows with their 0/1 values so the reader can see how the table works.
+
+3. HIGHLIGHTED BOXES / CALLOUTS
+   - For every distinct box (red, black, or any colored/highlighted area with text):
+     - Quote the EXACT text inside the box.
+     - State what the box is: e.g. "Legend explaining cell values", "Example search query", "Definition", "Formula".
+     - In one sentence, explain how it relates to the rest of the slide (e.g. "This query would find plays containing Brutus AND Caesar but NOT Calpurnia.").
+
+4. CHARTS / DIAGRAMS (if any)
+   - Describe axes, labels, and what the chart/diagram shows. For diagrams, describe steps or flow.
+
+5. BODY TEXT
+   - Any other headings or bullet points: extract verbatim, preserve order.
+
+OUTPUT: One structured block in English. Use clear section headers like "TITLE:", "TABLE:", "BOX (legend):", "BOX (query example):", "BODY:". No conversational filler. This text will be used to generate a student-facing explanation.`;
 
 async function extractSlideContentWithGroqVision(thumbnail: string): Promise<string> {
     const completion = await groq.chat.completions.create({
@@ -350,7 +384,8 @@ REMINDER:
                 console.log("Visual mode: Running Groq Llama 4 Vision for tables/charts/diagrams...");
                 const visionText = await extractSlideContentWithGroqVision(thumbnail);
                 console.log(`Groq Vision provided ${visionText.length} chars.`);
-                initialFinalText = [visionText];
+                const visualPrefix = `[VISUAL SLIDE - The content below describes a slide with a table and/or highlighted boxes. Organize your explanation in this order, ONE section per point: (1) Title and main idea. (2) Definition/legend: what rows, columns, and cell values mean — bold the key phrase (e.g. "1 if play contains word, 0 otherwise") then explain in Arabic. (3) What the table gives us (e.g. one vector per term) with one example row. (4) How to use it: if there is a procedure, use numbered steps in Arabic. (5) Concrete example (e.g. query "Brutus AND Caesar BUT NOT Calpurnia" with vectors and result). Do not merge into one block.]\n\n`;
+                initialFinalText = [visualPrefix + visionText];
                 initialFinalThumbnail = undefined;
             } catch (err: any) {
                 console.warn("Groq Vision failed, falling back to text content:", err?.message);

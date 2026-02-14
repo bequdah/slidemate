@@ -196,8 +196,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     <div key={i} className="space-y-3">
 
                         {s.heading && (
-                            <h3 className="text-xl font-black text-indigo-400 uppercase tracking-widest mb-4 flex items-center gap-3">
-                                <span className="w-1.5 h-6 bg-indigo-500 rounded-full shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
+                            <h3 className="text-xl font-black text-red-400 uppercase tracking-widest mb-4 flex items-center gap-3">
+                                <span className="w-1.5 h-6 bg-red-500 rounded-full shadow-[0_0_15px_rgba(239,68,68,0.5)]" />
                                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                                     {cleanText(s.heading)}
                                 </ReactMarkdown>
@@ -465,7 +465,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             {lang === 'en' ? 'Explanation' : 'الشرح التفصيلي'}
                                         </h4>
                                         <div className="p-5 md:p-8 bg-white/[0.03] rounded-[1.5rem] md:rounded-[2.5rem] border border-white/5 shadow-inner">
-                                            <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-base md:prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-base md:prose-li:text-lg prose-li:font-medium prose-h3:!text-indigo-400 prose-h3:!uppercase prose-h3:!tracking-[0.1em] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 prose-hr:border-white/10 max-w-none">
+                                            <div className="prose prose-invert prose-p:text-slate-300 prose-p:text-base md:prose-p:text-lg prose-p:font-medium prose-p:leading-relaxed prose-li:text-slate-300 prose-li:text-base md:prose-li:text-lg prose-li:font-medium prose-h3:!text-red-400 prose-h3:!uppercase prose-h3:!tracking-[0.1em] prose-h3:!font-black prose-h3:!mb-4 prose-h3:!mt-8 first:prose-h3:!mt-0 prose-hr:border-white/10 max-w-none">
                                                 {(() => {
                                                     const structured = tryParseStructured(currentContent.explanation);
                                                     if (structured) return <StructuredRenderer data={structured} />;
@@ -564,9 +564,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .custom-scrollbar::-webkit-scrollbar { width: 5px; }
                 .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 20px; }
                 
-                /* Force h3 styling to match INSIGHTS label */
+                /* Force h3 styling – headers in red */
                 .prose h3 {
-                    color: #818cf8 !important;
+                    color: #f87171 !important;
                     text-transform: uppercase !important;
                     letter-spacing: 0.1em !important;
                     font-size: 1.25rem !important;
@@ -582,7 +582,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     content: '';
                     width: 4px;
                     height: 1.2em;
-                    background: #6366f1;
+                    background: #ef4444;
                     border-radius: 99px;
                     display: inline-block;
                 }
@@ -669,7 +669,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     font-variant-numeric: tabular-nums;
                 }
 
-                /* Slide Point Styling: Main Headings (h3) = Indigo, Sub-Points (strong) = Yellow */
+                /* Slide Point Styling: Main Headings (h3) = Red, Sub-Points (strong) = Yellow */
                 .prose strong {
                     color: #fbbf24 !important; /* Yellow for English sub-points and examples */
                     font-weight: 900 !important;
