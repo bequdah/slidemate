@@ -17,9 +17,9 @@ export const extractTextFromImage = async (imageData: string): Promise<string> =
 
         const result = await Tesseract.recognize(
             base64Image,
-            ['ara', 'eng'], // Arabic and English
+            'ara+eng', // Arabic and English
             {
-                logger: (m) => {
+                logger: (m: any) => {
                     if (m.status === 'recognizing') {
                         console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
                     }
