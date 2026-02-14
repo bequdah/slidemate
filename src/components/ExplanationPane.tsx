@@ -155,21 +155,34 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     };
 
     /* =======================
-       Renderers
+       Linguistic Guard
     ======================= */
+
+    const cleanText = (text: string | undefined): string => {
+        if (!text) return "";
+        return text
+            .replace(/هاد/g, 'هاض')
+            .replace(/منيح/g, 'مليح')
+            .replace(/كتير/g, 'كثير')
+            .replace(/تانية/g, 'ثانية')
+            .replace(/متل/g, 'مثل');
+    };
 
     const renderMarkdown = (content: any) => {
         if (!content) return "";
+        let text = "";
         if (typeof content === 'string') {
             if (content.trim().startsWith('{') && content.trim().endsWith('}')) {
                 return "Analysis formatting error. Please try again.";
             }
-            return content;
+            text = content;
+        } else if (typeof content === 'object') {
+            text = content.text || content.content || content.insight || "";
+        } else {
+            text = String(content);
         }
-        if (typeof content === 'object') {
-            return content.text || content.content || content.insight || "";
-        }
-        return String(content);
+
+        return cleanText(text);
     };
 
     const StructuredRenderer = ({ data }: { data: StructuredExplanation }) => {
@@ -185,7 +198,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                         {'text' in s && s.text && (
                             <div className="text-slate-300 text-base md:text-lg font-medium leading-relaxed">
                                 <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                    {s.text}
+                                    {cleanText(s.text)}
                                 </ReactMarkdown>
                             </div>
                         )}
@@ -195,7 +208,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 {s.bullets.map((b, idx) => (
                                     <li key={idx}>
                                         <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                            {b}
+                                            {cleanText(b)}
                                         </ReactMarkdown>
                                     </li>
                                 ))}
@@ -206,9 +219,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                             <div className="space-y-4">
                                 {s.definitions.map((d, idx) => (
                                     <div key={idx} className="text-slate-300 text-base md:text-lg font-medium">
-                                        <strong className="text-white block mb-1">{d.term}:</strong>
+                                        <strong className="text-white block mb-1">{cleanText(d.term)}:</strong>
                                         <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                            {d.def}
+                                            {cleanText(d.def)}
                                         </ReactMarkdown>
                                     </div>
                                 ))}

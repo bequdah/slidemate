@@ -310,8 +310,34 @@ REMINDER:
                     throw new Error('GEMMA_INVALID_SHAPE');
                 }
 
+                // --- PUNITIVE REVIEW SYSTEM (QUDAHWAY GUARD) ---
+                const punitiveReview = (obj: any): any => {
+                    if (!obj) return obj;
+                    if (typeof obj === 'string') {
+                        return obj
+                            .replace(/هاد/g, 'هاض')
+                            .replace(/منيح/g, 'مليح')
+                            .replace(/كتير/g, 'كثير')
+                            .replace(/تانية/g, 'ثانية')
+                            .replace(/متل/g, 'مثل');
+                    }
+                    if (Array.isArray(obj)) {
+                        return obj.map(punitiveReview);
+                    }
+                    if (typeof obj === 'object') {
+                        const newObj: any = {};
+                        for (const key in obj) {
+                            newObj[key] = punitiveReview(obj[key]);
+                        }
+                        return newObj;
+                    }
+                    return obj;
+                };
+
+                const polishedResult = punitiveReview(parsed);
+
                 await updateUsage(uid, today, (userRef as any));
-                res.status(200).json(parsed);
+                res.status(200).json(polishedResult);
                 return;
             } catch (err: any) {
                 console.warn(`[Gemma] Attempt ${attempt + 1} failed: ${err?.message}`);
