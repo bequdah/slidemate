@@ -175,16 +175,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const resolvedMode: Mode = mode || 'simple';
 
-        // Block analysis if no text content is provided (Vision is disabled)
         const combinedText = (textContentArray || []).join(' ').trim();
-        if (!combinedText) {
-            return res.status(200).json({
-                explanation: { title: "Image-only Slide", overview: "This slide contains only an image. Please use text-based slides for analysis.", sections: [] },
-                examInsight: { title: "Exam Insight", overview: "No text found to analyze.", sections: [] },
-                quiz: [],
-                note: "Image-only slides are currently not supported. Please upload slides with text content."
-            });
-        }
 
         const isMulti = Array.isArray(slideNumbers) && slideNumbers.length > 1;
         const slideContexts = isMulti
@@ -204,18 +195,17 @@ ${slideContexts || ''}
 
 CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
 
-1. **Impact-Focused Explanation (SHORT & PUNCHY)**: 
-   - Instead of translating every detail, explain the *core takeaway* of each section.
-   - Limit the TOTAL Arabic explanation for the entire slide to be as short as possible.
-   - Use direct, powerful Jordanian Arabic. **NEVER exceed 2 short sentences per point.**
+1. **Impact-Focused Content ONLY (NO FILLER)**: 
+   - Explain *only* what is on the slide. 
+   - **IMAGE UPLOAD**: If an image is provided, it is a SCREENSHOT OF A LECTURE SLIDE. Extract the text content and explain it. DO NOT describe the image visually. Treat it as a text slide.
+   - **ABSOLUTE BAN**: Never mention "فخ امتحان" (exam trap), "سؤال متوقع", or any exam advice in Simple/Deep modes. 
+   - **NO CLOSING REMARKS**: Stop writing immediately after the last point is explained. No "هاض كله مقدمة".
+   - Keep it short: Maximum 2 punchy sentences per point.
 2. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
-   - You are prohibited from using the word "هاد" (use "هاض") or "منيح" (use "مليح") in any context.
-   - This is non-negotiable. Use: "هاض", "مليح", "مثل", "كثير", "ثانية", "هسا".
-   - Use other QudahWay terms: "السر هون", "فخ امتحان", "المختصر المفيد".
+   - Prohibited words: "هاد" (use "هاض"), "منيح" (use "مليح"), "متل" (use "مثل"), "كتير" (use "كثير"), "تانية" (use "ثانية").
+   - This applies to EVERYTHING you write.
 3. **Math & Symbols (MOBILE OPTIMIZED)**: 
-   - ALWAYS use Block LaTeX ($$ ... $$) for formulas.
-   - USE DOUBLE BACKSLASHES (\\\\) for all LaTeX commands to prevent JSON escape errors.
-   - Example: $$ P = \\\\frac{\\\\text{Relevant}}{\\\\text{Total}} $$
+   - ALWAYS use Block LaTeX ($$ ... $$) for formulas with DOUBLE BACKSLASHES (\\\\).
 4. **Quiz Language (Exam mode only)**:
    - The question ("q") and all 4 "options" MUST be in English.
    - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
@@ -288,11 +278,26 @@ REMINDER:
                     throw new Error("GEMINI_API_KEY_MISSING");
                 }
 
-                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it`);
+                const isVision = isVisionRequest(thumbnail);
+                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it | Vision: ${isVision}`);
                 const prompt = systemPrompt + "\n\n" + userPrompt;
 
-                // Gemma-3 currently might not support strict JSON output mode via SDK config
-                const result = await model_gemma.generateContent(prompt);
+                let result;
+                if (isVision && thumbnail) {
+                    const base64Data = thumbnail.split(',')[1];
+                    result = await model_gemma.generateContent([
+                        prompt,
+                        {
+                            inlineData: {
+                                data: base64Data,
+                                mimeType: "image/jpeg"
+                            }
+                        }
+                    ]);
+                } else {
+                    result = await model_gemma.generateContent(prompt);
+                }
+
                 const response = await result.response;
                 const raw = response.text();
 
