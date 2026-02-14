@@ -203,6 +203,9 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
    - **ONE-TO-ONE MAPPING**: 
      - Input Line: "1. Locate BRUTUS in the dictionary"
      - Output Bullet: "**Locate BRUTUS in the dictionary**\\nشرح النقطة..."
+   - **MATH LINES EXCEPTION**: If the line is a Formula (e.g. "E = mc^2"), use Block LaTeX \`$$...$$\` INSTEAD of bold \`**...**\`.
+     - Input Line: "min G max D V(D, G)"
+     - Output Bullet: "\`$$ \\\\min_G \\\\max_D V(D, G) $$\`\\nشرح المعادلة..."
    - **NEVER COMBINE**: Do not merge multiple lines into one paragraph. Keep them separate.
    - **STRICT CONSTRAINTS**:
      - **IMAGE-TO-TEXT**: Treat images purely as text sources. Never say "In this image".
@@ -211,11 +214,12 @@ CRITICAL "QUDAH WAY" EXTRACTION & FORMATTING:
 1b. **HANDLING LISTS & PROCESSES**:
    - treated exactly like normal text. If a list has items A, B, C, you output three separate bullets: one for A, one for B, one for C.
 3. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
-   - Prohibited words: "هاد" (use "هاض"), "منيح" (use "مليح"), "متل" (use "مثل"), "كتير" (use "كثير"), "تانية" (use "ثانية").
+   - Prohibited words: "هاد" (use "هاض"), "منيح" (use "مليح"), "كتير" (use "كثير"), "تانية" (use "ثانية"), "متل" (use "مثل").
    - This applies to EVERYTHING you write.
 4. **Math & Symbols (MOBILE OPTIMIZED)**: 
    - **DETECT FORMULAS**: If a line is a mathematical formula (contains =, <, >, sum, integral, etc.), you MUST wrap the ENTIRE line in Block LaTeX \`$$ ... $$\`.
    - **NO BOLDING**: NEVER put bold markers (\`**\`) around formulas. Just use \`$$...$$\`. Bolding breaks the math rendering.
+   - **INLINE MATH**: For variables (x, y) or small expressions inside Arabic text, use Inline LaTeX \`$ ... $\`. Never write raw LaTeX commands like \`frac\` without delimiters.
    - **COMPLEX SYMBOLS**: Ensure proper LaTeX for sums (\`\\\\sum\`), integrals (\`\\\\int\`), fractions (\`\\\\frac\`), and subscripts (\`_\`).
    - **DOUBLE BACKSLASHES**: You MUST use \`\\\\\` for all LaTeX commands (e.g., \`\\\\sum\`, \`\\\\frac\`). This is non-negotiable for JSON safety.
 5. **Quiz Language (Exam mode only)**:
@@ -253,23 +257,24 @@ NOTE: Create SEPARATE objects in "sections" for each new Main Topic or Process G
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
 - Scan final response for banned words and replace them.
-- **MATH CHECK**: Ensure LaTeX $$...$$ with \\\\.
+- **MATH CHECK**: Ensure LaTeX \`$$...$$\` with \`\\\\\`.
+- **NO BOLD MATH**: Final check -> If you see \`**$$...$$**\`, change it to \`$$...$$\`.
 - Return between 2 and 8 MCQs (comprehensive to the slide).
 `;
 
         if (resolvedMode === 'simple') {
             userPrompt += `
-- EXPLANATION MODE: Provide a DEEP DIVE and COMPREHENSIVE explanation of all slide content.
+            - EXPLANATION MODE: Provide a DEEP DIVE and COMPREHENSIVE explanation of all slide content.
 - Every single bullet point, term, and detail from the slide MUST have a thorough, detailed Arabic explanation.
 - Do not limit the length; explain the "Why", "How", and "What it means" for every concept. 
 - IMPORTANT: Ensure each point is explained in sufficient detail to ensure full understanding.
-- DO NOT generate a quiz array (return empty array "quiz": []).
-`;
+- DO NOT generate a quiz array(return empty array "quiz": []).
+        `;
         } else {
             userPrompt += `
-- EXAM MODE: Focus ONLY on finding the hardest exam points.
-- DO NOT generate explanation (return empty object "explanation": {}).
-- Generate between 2 and 8 MCQs depending on the amount of content.
+            - EXAM MODE: Focus ONLY on finding the hardest exam points.
+- DO NOT generate explanation(return empty object "explanation": { }).
+        - Generate between 2 and 8 MCQs depending on the amount of content.
 `;
         }
 
