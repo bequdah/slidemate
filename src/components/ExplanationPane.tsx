@@ -670,9 +670,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     font-variant-numeric: tabular-nums;
                 }
 
-                /* Slide Point Styling: English (bold) = Red, Arabic (normal) = White */
+                /* Slide Point Styling: Main Headings (h3) = Indigo, Sub-Points (strong) = Yellow */
                 .prose strong {
-                    color: #ef4444 !important; /* Red for English slide points */
+                    color: #fbbf24 !important; /* Yellow for English sub-points and examples */
                     font-weight: 900 !important;
                     display: block !important;
                     margin-bottom: 0.75rem !important;

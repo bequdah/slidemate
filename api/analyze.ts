@@ -41,6 +41,8 @@ MODE RULES:
 
 JSON SCHEMA:
 - explanation: { "title": string, "overview": string, "sections": [{ "heading": string, "bullets": string[] } | { "heading": string, "text": string }] }
+  NOTE: "heading" = Main topic ONLY (e.g., "Tokenization") - displayed in INDIGO color
+        "bullets" = Sub-points and examples (e.g., "Cut character sequence...") - displayed in YELLOW color
 - quiz: [{ "q": string, "options": [string (4)], "a": number (0-3), "reasoning": string }]
 
 LaTeX: Use $$ ... $$ (BLOCK) for formulas.
