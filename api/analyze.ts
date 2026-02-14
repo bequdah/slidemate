@@ -56,8 +56,7 @@ EXPLAIN WHAT YOU SEE (do not copy-paste):
 
 STRICT RULES:
 1. Return ONLY a valid JSON object. No extra text.
-2. FIDELITY: Every important concept from the slide MUST be explained — but in your own words (interpret, don’t copy).
-3. STRUCTURE: Use clear headings and bullets. Each bullet can be: **Key phrase in English** then a natural Arabic explanation that interprets what the slide shows (not verbatim copy).
+2. 100% FIDELITY: Every single bullet, term, and concept from the slide MUST be extracted.’3. STRUCTURE: For EVERY point, start with the Original English Text (**Bold**), then follow with a detailed Arabic explanation.
 4. LANGUAGE: Informal Jordanian Arabic (Ammiya). 
 5. ABSOLUTE BAN: NEVER use "هاد" (use "هاض"), NEVER use "منيح" (use "مليح"). Also, no "متل" (use "مثل"), no "كتير" (use "كثير"), no "تانية" (use "ثانية").
 6. TONE: The "QudahWay Expert" - Academic but friendly. Avoid distracting analogies (like cooking or movies) unless they are directly related to the concept. Focus on "What does this actually mean for the student?".
@@ -298,42 +297,45 @@ ${contextInfo}
 SLIDE CONTENT TO ANALYZE:
 [[SLIDE_CONTENT]]
 
-CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (natural, not copy-paste):
+CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explanation):
 
-1. **INTERPRET, DON’T COPY**: Explain the slide like a tutor looking at it with the student. Use phrases like "هون السلايد بيوضح إن..." or "الفكرة هون إن..." — natural, flowing explanation (شرح فلفسجي). Do NOT list "Point 1: [exact text]. Point 2: [exact text]."
-2. **COVER EVERYTHING**: Every important concept, term, and step must appear in your explanation — but in your own words. Group related ideas into sections with clear headings; use bullets for sub-points when it helps clarity.
-3. **BULLET FORMAT**: Each bullet = **Short key phrase in English** (optional) + natural Arabic explanation that interprets what the slide shows. For formulas only, use Block LaTeX \`$$...$$\` instead of bold.
-4. **CONSTRAINTS**: Skip "Sec 1.1", page numbers, footers. Never say "In this image". Start with the first idea, end after the last. No opening/closing filler.
-5. **LISTS & PROCEDURES**: If the slide has steps (e.g. 1, 2, 3), explain them in order but as a coherent explanation, not a raw copy of each line.
-3. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
+1. **STRUCTURE**: For EVERY bullet point, you MUST strictly follow this format:
+   **"[FULL ENGLISH SENTENCE FROM SLIDE]"**
+   [Jordanian Arabic Explanation]
+   - **Do NOT** summarize the English text. Copy it exactly as it appears on the slide (or the full logic sentence).
+   - **Then** explain it as if you are talking to the student ("يعني هون قصده...", "لاحظ إنه...").
+
+2. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
    - Prohibited words: "هاد" (use "هاض"), "منيح" (use "مليح"), "كتير" (use "كثير"), "تانية" (use "ثانية"), "متل" (use "مثل").
    - This applies to EVERYTHING you write.
-4. **Math & Symbols (MOBILE OPTIMIZED)**: 
+
+3. **Math & Symbols (MOBILE OPTIMIZED)**: 
    - **DETECT FORMULAS**: If a line is a mathematical formula (contains =, <, >, sum, integral, etc.), you MUST wrap the ENTIRE line in Block LaTeX \`$$ ... $$\`.
    - **NO BOLDING**: NEVER put bold markers (\`**\`) around formulas. Just use \`$$...$$\`. Bolding breaks the math rendering.
    - **INLINE MATH**: For variables (x, y) or small expressions inside Arabic text, use Inline LaTeX \`$ ... $\`. Never write raw LaTeX commands like \`frac\` without delimiters.
    - **COMPLEX SYMBOLS**: Ensure proper LaTeX for sums (\`\\\\sum\`), integrals (\`\\\\int\`), fractions (\`\\\\frac\`), and subscripts (\`_\`).
    - **DOUBLE BACKSLASHES**: You MUST use \`\\\\\` for all LaTeX commands (e.g., \`\\\\sum\`, \`\\\\frac\`). This is non-negotiable for JSON safety.
-5. **Quiz Language (Exam mode only)**:
+
+4. **Quiz Language (Exam mode only)**:
    - The question ("q") and all 4 "options" MUST be in English.
    - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
 
-EXAMPLE (natural explanation style — explain what you see):
+EXAMPLE (The "Classic" Style):
 Slide content: "Inverted index. For each term t, store list of docs containing t. Identify each doc by docID."
 
-GOOD JSON (interpretive, not copy-paste):
+GOOD JSON:
 {
   "sections": [
     {
       "heading": "Inverted index",
       "bullets": [
-        "**Core idea**\\nهون السلايد بيوضح إن الفكرة الأساسية للـ inverted index إنه لكل كلمة (term) بنخزن قائمة بكل المستندات اللي بتحتوي عليها. يعني بدل ما ندور على الكلمة في كل مستند، بنربط الكلمة بالمستندات من أول.",
-        "**docID**\\nكل مستند له رقم تسلسلي اسمه docID عشان نحدده بسرعة. هاض الرقم هو اللي بنحطه في القائمة تبع كل كلمة."
+        "**Inverted index. For each term t, store list of docs containing t.**\\nيعني الفكرة هون إنه بالـ Inverted index، لكل كلمة (term) بنخزن قائمة بكل المستندات اللي موجودة فيها هاي الكلمة. بدل ما ندور بكل الملفات، بنكون عارفين وين كل كلمة موجودة.",
+        "**Identify each doc by docID.**\\nوهون بحكيلك إنه كل مستند بنعطيه رقم مميز (docID) عشان نميزه عن غيره ونقدر نوصله بسرعة."
       ]
     }
   ]
 }
-NOTE: Sections = main topics. Bullets = key idea in English (bold) + natural Arabic that explains what the slide shows. Do not copy the slide line-by-line.
+NOTE: STRICTLY use **Full English Text** then the Arabic explanation.
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
