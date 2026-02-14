@@ -45,7 +45,7 @@ export const FileUpload = ({ onUpload }: FileUploadProps) => {
                 type="file"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                 onChange={(e) => e.target.files?.[0] && onUpload(e.target.files[0])}
-                accept=".pdf,image/*"
+                accept="application/pdf,image/*"
             />
 
             {/* Animated Border/Ring */}
