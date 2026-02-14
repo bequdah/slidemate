@@ -31,13 +31,13 @@ STRICT RULES:
 6. TONE: The "QudahWay Expert" - Academic but friendly. Avoid distracting analogies (like cooking or movies) unless they are directly related to the concept. Focus on "What does this actually mean for the student?".
 
 STRICT OUTPUT KEYS:
-1) "explanation": { "title", "overview", "sections" }
-2) "quiz": Array of MCQs
+1) "explanation": { "title", "overview", "sections" }  (Used in simple/deep)
+2) "quiz": Array of MCQs (Used ONLY in exam mode)
 
 MODE RULES:
-- simple: Use simple analogies, very informal language. 3-4 sections. 2 easy MCQs.
-- deep: Detailed technical breakdown while maintaining the "Qudah Way" tone. 4-6 sections. 2 hard MCQs.
-- exam: Focused on "Exam strategy", common pitfalls, and "The Secret Here". 10 hard MCQs.
+- simple: Focus on explanation only. 3-4 sections. NO QUIZ.
+- deep: Detailed technical breakdown only. 4-6 sections. NO QUIZ.
+- exam: Focused on "Exam strategy" and generating MCQs. Return 10 hard MCQs. NO EXPLANATION TEXT.
 
 JSON SCHEMA:
 - explanation: { "title": string, "overview": string, "sections": [{ "heading": string, "bullets": string[] } | { "heading": string, "text": string }] }
@@ -51,7 +51,7 @@ QUIZ RULE: All quiz questions ("q") and "options" MUST be in English ONLY. No Ar
 }
 
 function requiredQuizCount(mode: Mode) {
-    return mode === 'exam' ? 10 : 2;
+    return mode === 'exam' ? 10 : 0;
 }
 
 function isVisionRequest(thumbnail?: string) {
@@ -78,28 +78,37 @@ function validateResultShape(result: any, mode: Mode) {
         return false;
     }
 
-    // quiz must exist and have correct count
-    if (!Array.isArray(result.quiz)) {
-        console.warn("Validation Failed: 'quiz' is not an array");
-        return false;
-    }
-
     const requiredCount = requiredQuizCount(mode);
-    if (result.quiz.length !== requiredCount) {
-        console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected ${requiredCount}`);
-        return false;
-    }
 
-    // Validate MCQ options strictness
-    for (let i = 0; i < result.quiz.length; i++) {
-        const q = result.quiz[i];
-        if (!Array.isArray(q.options) || q.options.length !== 4) {
-            console.warn(`Validation Failed: Question ${i} does not have exactly 4 options`);
+    // Validate quiz if required
+    if (requiredCount > 0) {
+        if (!Array.isArray(result.quiz)) {
+            console.warn("Validation Failed: 'quiz' is not an array");
             return false;
         }
-        if (typeof q.a !== 'number' || q.a < 0 || q.a > 3) {
-            console.warn(`Validation Failed: Question ${i} has invalid correct answer index (a): ${q.a}`);
+
+        if (result.quiz.length !== requiredCount) {
+            console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected ${requiredCount}`);
             return false;
+        }
+
+        // Validate MCQ options strictness
+        for (let i = 0; i < result.quiz.length; i++) {
+            const q = result.quiz[i];
+            if (!Array.isArray(q.options) || q.options.length !== 4) {
+                console.warn(`Validation Failed: Question ${i} does not have exactly 4 options`);
+                return false;
+            }
+            if (typeof q.a !== 'number' || q.a < 0 || q.a > 3) {
+                console.warn(`Validation Failed: Question ${i} has invalid correct answer index (a): ${q.a}`);
+                return false;
+            }
+        }
+    } else {
+        // Ensure quiz is either empty array or missing for non-quiz modes
+        if (result.quiz && Array.isArray(result.quiz) && result.quiz.length > 0) {
+            console.warn("Validation Warning: Expected NO quiz but found some.");
+            // We can allow it but ideally it should be empty
         }
     }
 
@@ -225,10 +234,11 @@ REMINDER:
             userPrompt += `
 - explanation must cover 100% of slide content
 - Each bullet/section must have detailed Arabic explanation
+- DO NOT generate a quiz array (return empty array "quiz": [])
 `;
         } else {
             userPrompt += `
-- DO NOT generate explanation
+- DO NOT generate explanation (return empty object "explanation": {})
 - Output ONLY the quiz array with ${requiredQuizCount(resolvedMode)} questions
 `;
         }
