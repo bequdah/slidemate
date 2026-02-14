@@ -52,8 +52,11 @@ QUIZ RULE: All quiz questions ("q") and "options" MUST be in English ONLY. No Ar
 `;
 }
 
-function requiredQuizCount(mode: Mode) {
-    return mode === 'exam' ? 10 : 0;
+const QUIZ_MIN = 2;
+const QUIZ_MAX = 8;
+
+function getQuizRange(mode: Mode): { min: number; max: number } | null {
+    return mode === 'exam' ? { min: QUIZ_MIN, max: QUIZ_MAX } : null;
 }
 
 function isVisionRequest(thumbnail?: string) {
@@ -80,17 +83,17 @@ function validateResultShape(result: any, mode: Mode) {
         return false;
     }
 
-    const requiredCount = requiredQuizCount(mode);
+    const quizRange = getQuizRange(mode);
 
     // Validate quiz if required
-    if (mode === 'exam') {
+    if (mode === 'exam' && quizRange) {
         if (!Array.isArray(result.quiz)) {
             console.warn("Validation Failed: 'quiz' is not an array");
             return false;
         }
 
-        if (result.quiz.length < 2 || result.quiz.length > 8) {
-            console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected 2-8`);
+        if (result.quiz.length < quizRange.min || result.quiz.length > quizRange.max) {
+            console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected ${quizRange.min}-${quizRange.max}`);
             return false;
         }
 
@@ -175,7 +178,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             previousTopics?: string[];
         };
 
-        const resolvedMode: Mode = mode || 'simple';
+        const resolvedMode: Mode = mode === 'exam' ? 'exam' : 'simple';
 
 
 
@@ -315,14 +318,17 @@ REMINDER:
                 let finalThumbnail = thumbnail;
 
                 if (isVisionRequest(thumbnail) && thumbnail) {
-                    console.log("Vision Request Detected: Running OCR with Gemma-3...");
+                    console.log("Vision Request Detected: Running OCR with Vision Model...");
                     const mimeType = thumbnail.split(';')[0].split(':')[1];
                     const base64Data = thumbnail.split(',')[1];
 
+                    // We need a VISION-capable model to read the image. Gemma-27b-it is text-only.
+                    // We use Flash purely as an OCR tool here.
+                    const visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+
                     for (let i = 0; i < 3; i++) {
                         try {
-                            // transform image to text using the SAME model (Gemma)
-                            const ocrResult = await model_gemma.generateContent([
+                            const ocrResult = await visionModel.generateContent([
                                 "OCR INSTRUCTION: Extract ALL text from this slide verbatim. Preserve structure (headings, bullets). Do not summarize or add conversational filler. Output ONLY the extracted text.",
                                 { inlineData: { data: base64Data, mimeType: mimeType } }
                             ]);

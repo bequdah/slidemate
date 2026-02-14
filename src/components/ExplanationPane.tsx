@@ -447,7 +447,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                                 </div>
                                                 <h3 className={`text-xl font-black ${textClass} mb-2 capitalize`}>{m}</h3>
                                                 <p className="text-sm text-slate-400 leading-relaxed">
-                                                    {m === 'simple' ? 'Easy language, intuitive examples.' : m === 'deep' ? 'Detailed reasoning and connections.' : 'Strict definitions and exam focus.'}
+                                                    {m === 'simple' ? 'Easy language, intuitive examples.' : 'Strict definitions and exam focus.'}
                                                 </p>
                                             </button>
                                         );

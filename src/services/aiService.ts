@@ -1,23 +1,33 @@
 import { auth } from "../firebase";
 
+/** Matches API response: explanation is an object (simple/exam), not a string. */
+export type ExplanationContent =
+    | { title?: string; overview?: string; sections?: Array<{ heading: string; bullets?: string[]; text?: string }> }
+    | string;
+
 export interface SlideExplanation {
-    explanation: string;
-    examInsight: string;
-    voiceScript: string;
+    /** From /api/analyze: object with title, overview, sections (or string on error). */
+    explanation: ExplanationContent;
+    /** Optional; not returned by analyze API, reserved for future use. */
+    examInsight?: string;
+    /** Filled by generateVoiceScript and merged into data after analyze. */
+    voiceScript?: string;
     quiz: {
         q: string;
         options: string[];
         a: number;
         reasoning: string;
     }[];
-    arabic: {
-        explanation: any;
-        examInsight: any;
-        voiceScript: string;
+    /** Only present in error fallback. */
+    arabic?: {
+        explanation: string;
+        examInsight?: string;
+        voiceScript?: string;
     };
 }
 
-export type ExplanationMode = 'simple' | 'deep' | 'exam';
+/** Must match API Mode: only 'simple' and 'exam' are supported. */
+export type ExplanationMode = 'simple' | 'exam';
 
 export const analyzeSlide = async (
     slideNumbers: number[],
@@ -43,6 +53,7 @@ export const analyzeSlide = async (
                 slideNumbers,
                 textContentArray,
                 mode,
+                thumbnail,
                 previousTopics
             })
         });
@@ -82,7 +93,7 @@ export const analyzeSlide = async (
             voiceScript: "",
             arabic: { explanation: "خطأ في الاتصال", examInsight: "N/A", voiceScript: "حدث خطأ، يرجى المحاولة مرة أخرى." },
             quiz: []
-        };
+        } as SlideExplanation;
     }
 };
 
