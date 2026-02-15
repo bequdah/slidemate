@@ -1,5 +1,22 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
+// Declare ResponsiveVoice global type
+declare global {
+    interface Window {
+        responsiveVoice?: {
+            speak: (text: string, voice: string, options?: {
+                onstart?: () => void;
+                onend?: () => void;
+                onerror?: () => void;
+                rate?: number;
+                pitch?: number;
+            }) => void;
+            cancel: () => void;
+            isPlaying: () => boolean;
+        };
+    }
+}
+
 export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar') => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
@@ -22,7 +39,9 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     }, [scriptText]);
 
     const stop = useCallback(() => {
-        window.speechSynthesis.cancel();
+        if (window.responsiveVoice) {
+            window.responsiveVoice.cancel();
+        }
         setIsPlaying(false);
         setIsPaused(false);
         setCurrentSentence('');
@@ -42,53 +61,82 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         setCurrentIndex(idx);
         setCurrentSentence(text);
 
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
+        // Check if ResponsiveVoice is available
+        if (window.responsiveVoice) {
+            // Select voice based on language
+            const voiceName = lang === 'ar' ? 'Arabic Male' : 'US English Male';
 
-        // Voice selection
-        const voices = window.speechSynthesis.getVoices();
-        const langCode = lang === 'ar' ? 'ar' : 'en';
-        const preferredVoice = voices.find(v =>
-            v.lang.startsWith(langCode) &&
-            (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
-        ) || voices.find(v => v.lang.startsWith(langCode));
+            window.responsiveVoice.speak(text, voiceName, {
+                rate: 0.95,
+                pitch: 1,
+                onstart: () => {
+                    setIsPlaying(true);
+                    setIsPaused(false);
+                    isPlayingRef.current = true;
+                },
+                onend: () => {
+                    if (isPlayingRef.current) {
+                        playSentence(idx + 1);
+                    }
+                },
+                onerror: () => {
+                    console.error("ResponsiveVoice Error at sentence index", idx);
+                    stop();
+                }
+            });
+        } else {
+            // Fallback to Web Speech API
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
 
-        if (preferredVoice) utterance.voice = preferredVoice;
-        utterance.rate = 0.95;
-        utterance.pitch = 1;
+            const voices = window.speechSynthesis.getVoices();
+            const langCode = lang === 'ar' ? 'ar' : 'en';
+            const preferredVoice = voices.find(v =>
+                v.lang.startsWith(langCode) &&
+                (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
+            ) || voices.find(v => v.lang.startsWith(langCode));
 
-        utterance.onstart = () => {
-            setIsPlaying(true);
-            setIsPaused(false);
-            isPlayingRef.current = true;
-        };
+            if (preferredVoice) utterance.voice = preferredVoice;
+            utterance.rate = 0.95;
+            utterance.pitch = 1;
 
-        utterance.onend = () => {
-            if (isPlayingRef.current) {
-                playSentence(idx + 1);
-            }
-        };
+            utterance.onstart = () => {
+                setIsPlaying(true);
+                setIsPaused(false);
+                isPlayingRef.current = true;
+            };
 
-        utterance.onerror = (e) => {
-            if (e.error === 'interrupted' || e.error === 'canceled') {
-                return; // Intentional stop/pause
-            }
-            console.error("TTS Error at sentence index", idx, e);
-            stop();
-        };
+            utterance.onend = () => {
+                if (isPlayingRef.current) {
+                    playSentence(idx + 1);
+                }
+            };
 
-        window.speechSynthesis.speak(utterance);
+            utterance.onerror = (e) => {
+                if (e.error === 'interrupted' || e.error === 'canceled') {
+                    return;
+                }
+                console.error("TTS Error at sentence index", idx, e);
+                stop();
+            };
+
+            window.speechSynthesis.speak(utterance);
+        }
     }, [lang, stop]);
 
     const play = useCallback(() => {
         if (sentencesRef.current.length === 0) return;
-        stop(); // Always start fresh for a clean queue
+        stop();
         playSentence(0);
     }, [playSentence, stop]);
 
     const pause = useCallback(() => {
-        isPlayingRef.current = false; // Prevent onend from triggering next sentence
-        window.speechSynthesis.cancel();
+        isPlayingRef.current = false;
+        if (window.responsiveVoice) {
+            window.responsiveVoice.cancel();
+        } else {
+            window.speechSynthesis.cancel();
+        }
         setIsPaused(true);
     }, []);
 
@@ -98,10 +146,15 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         playSentence(indexRef.current);
     }, [playSentence]);
 
-
     // Cleanup on unmount
     useEffect(() => {
-        return () => window.speechSynthesis.cancel();
+        return () => {
+            if (window.responsiveVoice) {
+                window.responsiveVoice.cancel();
+            } else {
+                window.speechSynthesis.cancel();
+            }
+        };
     }, []);
 
     return {
