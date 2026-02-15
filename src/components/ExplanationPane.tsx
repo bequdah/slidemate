@@ -47,6 +47,7 @@ interface ExplanationPaneProps {
 export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts, thumbnail, onClose }: ExplanationPaneProps) => {
     const [data, setData] = useState<SlideExplanation | null>(null);
     const [loading, setLoading] = useState(false);
+    const [showGame, setShowGame] = useState(false);
     const [voiceLoading, setVoiceLoading] = useState(false);
     const [mode, setMode] = useState<ExplanationMode | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({});
@@ -92,6 +93,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const handleModeSelect = (selectedMode: ExplanationMode) => {
         setMode(selectedMode);
         setLoading(true);
+        setShowGame(false);
         setData(null);
         setVoiceLoading(false);
         setSelectedOptions({});
@@ -484,20 +486,45 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 </div>
                             </div>
                         ) : loading ? (
-                            <div className="absolute inset-0 w-full h-full animate-in fade-in duration-700 overflow-hidden">
-                                {randomGame}
-                                <div className="absolute top-8 left-0 right-0 text-center z-10 pointer-events-none">
-                                    <div className="inline-flex items-center gap-3 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
-                                        <div className="flex gap-1.5">
-                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
-                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse [animation-delay:0.2s]" />
-                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse [animation-delay:0.4s]" />
+                            <div className="absolute inset-0 w-full h-full animate-in fade-in duration-700 overflow-hidden flex flex-col items-center justify-center">
+                                {showGame ? (
+                                    <>
+                                        {randomGame}
+                                        <div className="absolute top-8 left-0 right-0 text-center z-10 pointer-events-none">
+                                            <div className="inline-flex items-center gap-3 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
+                                                <p className="text-xs font-bold text-white tracking-[0.1em] uppercase">
+                                                    {lang === 'ar' ? 'استمتع باللعب! الشرح رح يجهز ثواني...' : 'Enjoy! Explanation will be ready in seconds...'}
+                                                </p>
+                                            </div>
                                         </div>
-                                        <p className="text-xs font-bold text-white tracking-[0.1em] uppercase">
-                                            {lang === 'ar' ? 'جاري تجهيز الشرح... استمتع باللعب!' : 'Preparing your explanation... Enjoy the game!'}
-                                        </p>
+                                    </>
+                                ) : (
+                                    <div className="flex flex-col items-center space-y-10 animate-in zoom-in duration-500 p-6 md:p-0">
+                                        <div className="relative">
+                                            <div className="w-24 h-24 border-4 border-white/5 rounded-full animate-[spin_3s_linear_infinite]" />
+                                            <div className="absolute inset-0 w-24 h-24 border-4 border-t-indigo-500 rounded-full animate-spin" />
+                                            <div className="absolute inset-4 bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 rounded-full blur-xl animate-pulse" />
+                                        </div>
+
+                                        <div className="text-center space-y-3">
+                                            <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-[0.2em]">Analyzing slides...</h3>
+                                            <p className="text-slate-500 font-medium max-w-xs mx-auto text-sm md:text-base">
+                                                {lang === 'ar' ? 'الذكاء الاصطناعي عم بجهزلك شرح مرتب حسب طريقتك.' : 'AI is tailoring the explanation to your chosen style.'}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            onClick={() => setShowGame(true)}
+                                            className="group flex items-center gap-4 px-8 py-5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-3xl transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/5"
+                                        >
+                                            <span className="text-3xl group-hover:rotate-12 transition-transform">🎮</span>
+                                            <div className="text-left">
+                                                <p className="text-xs font-black text-indigo-400 uppercase tracking-widest leading-none mb-1">Bored waiting?</p>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Launch Slide-Mate Arcade</p>
+                                            </div>
+                                        </button>
                                     </div>
-                                </div>
+                                )}
                             </div>
                         ) : data ? (
                             <>
