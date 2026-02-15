@@ -1,3 +1,4 @@
+// Version: Parallel Optimization Stable (Commit 901a690)
 import { useState, useEffect } from 'react';
 import { useVoicePlayer } from '../hooks/useVoicePlayer';
 import { analyzeSlide, generateVoiceScript, type SlideExplanation, type ExplanationMode } from '../services/aiService';
