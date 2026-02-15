@@ -67,7 +67,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             const voiceName = lang === 'ar' ? 'Arabic Male' : 'US English Male';
 
             window.responsiveVoice.speak(text, voiceName, {
-                rate: 0.95,
+                rate: 1,
                 pitch: 1,
                 onstart: () => {
                     setIsPlaying(true);
@@ -97,7 +97,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             ) || voices.find(v => v.lang.startsWith(langCode));
 
             if (preferredVoice) utterance.voice = preferredVoice;
-            utterance.rate = 0.95;
+            utterance.rate = 1;
             utterance.pitch = 1;
 
             utterance.onstart = () => {
