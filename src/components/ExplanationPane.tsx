@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import WaitingGame from './WaitingGame';
 
 /* =======================
    Structured Types
@@ -466,14 +467,16 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 </div>
                             </div>
                         ) : loading ? (
-                            <div className="flex flex-col items-center justify-center h-full space-y-6">
-                                <div className="relative w-16 h-16">
-                                    <div className="absolute inset-0 border-4 border-indigo-500/10 rounded-full" />
-                                    <div className="absolute inset-0 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                                </div>
-                                <div className="text-center">
-                                    <p className="text-[11px] text-indigo-400 font-black tracking-[0.5em] uppercase mb-2">Generating {mode} Analysis</p>
-                                    <p className="text-[10px] text-slate-500 font-medium">Consulting Expert AI...</p>
+                            <div className="flex flex-col items-center justify-center h-full animate-in fade-in zoom-in duration-500">
+                                <WaitingGame />
+                                <div className="mt-8 text-center">
+                                    <div className="flex items-center gap-2 justify-center mb-2">
+                                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" />
+                                    </div>
+                                    <p className="text-[11px] text-indigo-400 font-black tracking-[0.5em] uppercase">Generating {mode} Analysis</p>
+                                    <p className="text-[10px] text-slate-500 font-medium mt-1">Kill the bugs to speed up the AI (just kidding!)</p>
                                 </div>
                             </div>
                         ) : data ? (
