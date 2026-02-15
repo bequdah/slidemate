@@ -26,8 +26,46 @@ const NeuralSnake: React.FC = () => {
                 case 'ArrowRight': if (directionRef.current.x !== -1) directionRef.current = { x: 1, y: 0 }; break;
             }
         };
+
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        const handleTouchStart = (e: TouchEvent) => {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        };
+
+        const handleTouchEnd = (e: TouchEvent) => {
+            const touchEndX = e.changedTouches[0].clientX;
+            const touchEndY = e.changedTouches[0].clientY;
+
+            const dx = touchEndX - touchStartX;
+            const dy = touchEndY - touchStartY;
+
+            if (Math.abs(dx) > Math.abs(dy)) {
+                // Horizontal swipe
+                if (Math.abs(dx) > 30) {
+                    if (dx > 0 && directionRef.current.x !== -1) directionRef.current = { x: 1, y: 0 };
+                    else if (dx < 0 && directionRef.current.x !== 1) directionRef.current = { x: -1, y: 0 };
+                }
+            } else {
+                // Vertical swipe
+                if (Math.abs(dy) > 30) {
+                    if (dy > 0 && directionRef.current.y !== -1) directionRef.current = { x: 0, y: 1 };
+                    else if (dy < 0 && directionRef.current.y !== 1) directionRef.current = { x: 0, y: -1 };
+                }
+            }
+        };
+
         window.addEventListener('keydown', handleKeyDown);
-        return () => window.removeEventListener('keydown', handleKeyDown);
+        window.addEventListener('touchstart', handleTouchStart);
+        window.addEventListener('touchend', handleTouchEnd);
+
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('touchstart', handleTouchStart);
+            window.removeEventListener('touchend', handleTouchEnd);
+        };
     }, []);
 
     useEffect(() => {
