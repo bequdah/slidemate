@@ -10,9 +10,12 @@ declare global {
                 onerror?: () => void;
                 rate?: number;
                 pitch?: number;
+                volume?: number;
             }) => void;
             cancel: () => void;
             isPlaying: () => boolean;
+            pause: () => void;
+            resume: () => void;
         };
     }
 }
@@ -26,6 +29,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     const sentencesRef = useRef<string[]>([]);
     const indexRef = useRef(-1);
     const isPlayingRef = useRef(false);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Initial setup: split script into sentences
     useEffect(() => {
@@ -39,6 +43,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     }, [scriptText]);
 
     const stop = useCallback(() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
         if (window.responsiveVoice) {
             window.responsiveVoice.cancel();
         }
@@ -51,6 +56,8 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     }, []);
 
     const playSentence = useCallback((idx: number) => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
+
         if (!sentencesRef.current[idx]) {
             stop();
             return;
@@ -61,26 +68,40 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         setCurrentIndex(idx);
         setCurrentSentence(text);
 
+        const next = () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+            if (isPlayingRef.current) {
+                playSentence(idx + 1);
+            }
+        };
+
         // Check if ResponsiveVoice is available
         if (window.responsiveVoice) {
-            // Select voice based on language
             const voiceName = lang === 'ar' ? 'Arabic Male' : 'US English Male';
+
+            // Estimated duration fallback (Safety Timeout)
+            // Approx 150 words per minute at rate 1
+            const wordCount = text.split(/\s+/).length;
+            const estimatedDurationMs = (wordCount * 600) + 2000; // 600ms per word + 2s buffer
 
             window.responsiveVoice.speak(text, voiceName, {
                 rate: 1,
                 pitch: 1,
+                volume: 1,
                 onstart: () => {
                     setIsPlaying(true);
                     setIsPaused(false);
                     isPlayingRef.current = true;
+
+                    // Start safety timer
+                    timeoutRef.current = setTimeout(() => {
+                        console.warn("ResponsiveVoice hang detected, moving next.");
+                        next();
+                    }, estimatedDurationMs);
                 },
-                onend: () => {
-                    if (isPlayingRef.current) {
-                        playSentence(idx + 1);
-                    }
-                },
+                onend: next,
                 onerror: () => {
-                    console.error("ResponsiveVoice Error at sentence index", idx);
+                    console.error("ResponsiveVoice Error");
                     stop();
                 }
             });
@@ -88,17 +109,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             // Fallback to Web Speech API
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
-
-            const voices = window.speechSynthesis.getVoices();
-            const langCode = lang === 'ar' ? 'ar' : 'en';
-            const preferredVoice = voices.find(v =>
-                v.lang.startsWith(langCode) &&
-                (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Premium'))
-            ) || voices.find(v => v.lang.startsWith(langCode));
-
-            if (preferredVoice) utterance.voice = preferredVoice;
             utterance.rate = 1;
-            utterance.pitch = 1;
 
             utterance.onstart = () => {
                 setIsPlaying(true);
@@ -106,19 +117,8 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
                 isPlayingRef.current = true;
             };
 
-            utterance.onend = () => {
-                if (isPlayingRef.current) {
-                    playSentence(idx + 1);
-                }
-            };
-
-            utterance.onerror = (e) => {
-                if (e.error === 'interrupted' || e.error === 'canceled') {
-                    return;
-                }
-                console.error("TTS Error at sentence index", idx, e);
-                stop();
-            };
+            utterance.onend = next;
+            utterance.onerror = stop;
 
             window.speechSynthesis.speak(utterance);
         }
@@ -131,9 +131,10 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     }, [playSentence, stop]);
 
     const pause = useCallback(() => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current);
         isPlayingRef.current = false;
         if (window.responsiveVoice) {
-            window.responsiveVoice.cancel();
+            window.responsiveVoice.cancel(); // ResponsiveVoice pause/resume is glitchy, better use cancel/restart
         } else {
             window.speechSynthesis.cancel();
         }
@@ -149,6 +150,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     // Cleanup on unmount
     useEffect(() => {
         return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
             if (window.responsiveVoice) {
                 window.responsiveVoice.cancel();
             } else {
