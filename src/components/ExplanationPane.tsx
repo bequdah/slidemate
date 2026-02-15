@@ -8,6 +8,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import WaitingGame from './WaitingGame';
 import NeuralSnake from './NeuralSnake';
+import AstroJump from './AstroJump';
 
 /* =======================
    Structured Types
@@ -66,7 +67,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
     const randomGame = useMemo(() => {
         if (!loading) return null;
-        const games = [<WaitingGame key="bugs" />, <NeuralSnake key="snake" />];
+        const games = [
+            <WaitingGame key="bugs" />,
+            <NeuralSnake key="snake" />,
+            <AstroJump key="jump" />
+        ];
         return games[Math.floor(Math.random() * games.length)];
     }, [loading]);
 
