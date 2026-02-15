@@ -72,29 +72,41 @@ const WaitingGame: React.FC = () => {
             // Move enemies
             enemies.forEach(e => e.y += ENEMY_SPEED);
 
+            // Track hits to remove after checking all collisions
+            const bulletsToKeep: boolean[] = new Array(bullets.length).fill(true);
+            const enemiesToKeep: boolean[] = new Array(enemies.length).fill(true);
+
             // Check collisions
             enemies.forEach((enemy, eIdx) => {
                 bullets.forEach((bullet, bIdx) => {
+                    if (!bulletsToKeep[bIdx] || !enemiesToKeep[eIdx]) return;
+
                     const dist = Math.hypot(enemy.x + 15 - bullet.x, enemy.y + 15 - bullet.y);
-                    if (dist < 30) {
-                        enemies.splice(eIdx, 1);
-                        bullets.splice(bIdx, 1);
+                    if (dist < 35) {
+                        enemiesToKeep[eIdx] = false;
+                        bulletsToKeep[bIdx] = false;
                         setScore(s => s + 10);
                     }
                 });
 
                 // Ship collision logic (more forgiving)
-                const shipCenterX = ship.x + SHIP_SIZE / 2;
-                const shipCenterY = ship.y + SHIP_SIZE / 2;
-                if (Math.hypot(enemy.x + 15 - shipCenterX, enemy.y + 15 - shipCenterY) < 35) {
-                    setGameState('gameover');
-                }
+                if (enemiesToKeep[eIdx]) {
+                    const shipCenterX = ship.x + SHIP_SIZE / 2;
+                    const shipCenterY = ship.y + SHIP_SIZE / 2;
+                    if (Math.hypot(enemy.x + 15 - shipCenterX, enemy.y + 15 - shipCenterY) < 35) {
+                        setGameState('gameover');
+                    }
 
-                // Reach bottom
-                if (enemy.y > canvas.height + 40) {
-                    enemies.splice(eIdx, 1);
+                    // Reach bottom
+                    if (enemy.y > canvas.height + 40) {
+                        enemiesToKeep[eIdx] = false;
+                    }
                 }
             });
+
+            // Apply removals
+            bullets = bullets.filter((_, i) => bulletsToKeep[i]);
+            enemies = enemies.filter((_, i) => enemiesToKeep[i]);
         };
 
         const draw = () => {
