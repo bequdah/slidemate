@@ -91,22 +91,42 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .filter(t => t.length > 5); // Filter out empty or too short slides
         }
 
-        analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail, previousTopics).then(res => {
-            setData(res);
-            setLoading(false);
+        // 1. Parallel Execution: Start BOTH requests immediately
+        const analysisPromise = analyzeSlide(slideNumbers, textContentArray, selectedMode, thumbnail, previousTopics);
 
-            // Fetch voice script in background (Llama 3.3)
-            if (selectedMode !== 'exam') {
-                setVoiceLoading(true);
-                generateVoiceScript(slideNumbers, textContentArray).then(voiceRes => {
-                    setData(prev => prev ? { ...prev, voiceScript: voiceRes.voiceScript } : prev);
-                    setVoiceLoading(false);
-                }).catch(() => setVoiceLoading(false));
-            }
+        // Only run voice if not in exam mode
+        let voicePromise = null;
+        if (selectedMode !== 'exam') {
+            setVoiceLoading(true);
+            voicePromise = generateVoiceScript(slideNumbers, textContentArray);
+        }
+
+        // Handle Analysis Result
+        analysisPromise.then(res => {
+            setData(prev => prev ? { ...prev, ...res } : res);
+            setLoading(false);
         }).catch(err => {
             console.error("Analysis Error:", err);
             setLoading(false);
         });
+
+        // Handle Voice Result
+        if (voicePromise) {
+            voicePromise.then(voiceRes => {
+                setData(prev => {
+                    // If analysis hasn't finished yet, create a partial object
+                    if (!prev) {
+                        return {
+                            voiceScript: voiceRes.voiceScript,
+                            explanation: undefined, // Will be filled by analysis
+                            quiz: []
+                        } as any;
+                    }
+                    return { ...prev, voiceScript: voiceRes.voiceScript };
+                });
+                setVoiceLoading(false);
+            }).catch(() => setVoiceLoading(false));
+        }
     };
 
 
