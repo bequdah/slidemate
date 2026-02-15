@@ -20,6 +20,7 @@ const AstroJump: React.FC = () => {
 
     useEffect(() => {
         const handleJump = (e: any) => {
+            if (e.cancelable) e.preventDefault();
             if (gameState === 'playing') {
                 birdRef.current.velocity = JUMP_STRENGTH;
             } else if (gameState === 'gameover') {
@@ -27,14 +28,21 @@ const AstroJump: React.FC = () => {
             }
         };
 
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                handleJump(e);
+            }
+        };
+
         window.addEventListener('mousedown', handleJump);
-        window.addEventListener('touchstart', handleJump);
-        window.addEventListener('keydown', (e) => e.code === 'Space' && handleJump(e));
+        window.addEventListener('touchstart', handleJump, { passive: false });
+        window.addEventListener('keydown', handleKeyDown);
 
         return () => {
             window.removeEventListener('mousedown', handleJump);
             window.removeEventListener('touchstart', handleJump);
-            window.removeEventListener('keydown', handleJump);
+            window.removeEventListener('keydown', handleKeyDown);
         };
     }, [gameState]);
 

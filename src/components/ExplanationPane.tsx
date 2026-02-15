@@ -76,9 +76,14 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     }, [loading]);
 
     useEffect(() => {
+        // Lock body scroll when explanation is open
+        document.body.style.overflow = 'hidden';
+
         const timer = setTimeout(() => setShowIntro(false), 4500);
 
         return () => {
+            // Restore body scroll when closed
+            document.body.style.overflow = 'unset';
             clearTimeout(timer);
             window.speechSynthesis.cancel();
         };
