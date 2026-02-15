@@ -64,6 +64,12 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         play, pause, resume, stop
     } = useVoicePlayer(currentContent?.voiceScript, lang);
 
+    const randomGame = useMemo(() => {
+        if (!loading) return null;
+        const games = [<WaitingGame key="bugs" />, <NeuralSnake key="snake" />];
+        return games[Math.floor(Math.random() * games.length)];
+    }, [loading]);
+
     useEffect(() => {
         const timer = setTimeout(() => setShowIntro(false), 4500);
 
@@ -469,10 +475,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                             </div>
                         ) : loading ? (
                             <div className="absolute inset-0 w-full h-full animate-in fade-in duration-700 overflow-hidden">
-                                {useMemo(() => {
-                                    const games = [<WaitingGame key="bugs" />, <NeuralSnake key="snake" />];
-                                    return games[Math.floor(Math.random() * games.length)];
-                                }, [loading])}
+                                {randomGame}
                                 <div className="absolute bottom-10 left-0 right-0 text-center z-10 pointer-events-none">
                                     <div className="flex items-center gap-2 justify-center mb-3">
                                         <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s] shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
