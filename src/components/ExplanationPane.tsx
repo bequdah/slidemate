@@ -488,16 +488,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                         ) : loading ? (
                             <div className="absolute inset-0 w-full h-full animate-in fade-in duration-700 overflow-hidden flex flex-col items-center justify-center">
                                 {showGame ? (
-                                    <>
-                                        {randomGame}
-                                        <div className="absolute top-8 left-0 right-0 text-center z-10 pointer-events-none">
-                                            <div className="inline-flex items-center gap-3 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
-                                                <p className="text-xs font-bold text-white tracking-[0.1em] uppercase">
-                                                    {lang === 'ar' ? 'استمتع باللعب! الشرح رح يجهز ثواني...' : 'Enjoy! Explanation will be ready in seconds...'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </>
+                                    randomGame
                                 ) : (
                                     <div className="flex flex-col items-center space-y-10 animate-in zoom-in duration-500 p-6 md:p-0">
                                         <div className="relative">
