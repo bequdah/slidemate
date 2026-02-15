@@ -2,26 +2,36 @@ import React, { useState, useEffect, useRef } from 'react';
 
 const WaitingGame: React.FC = () => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [score, setScore] = useState(0);
     const [gameState, setGameState] = useState<'playing' | 'gameover'>('playing');
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        const container = containerRef.current;
+        if (!canvas || !container) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
+        // Set initial size and handle resize
+        const resize = () => {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        };
+        resize();
+        window.addEventListener('resize', resize);
+
         // Game Constants
         const SHIP_SIZE = 40;
-        const BULLET_SPEED = 7;
-        const ENEMY_SPEED = 2.5;
-        const ENEMY_SPAWN_RATE = 0.02;
+        const BULLET_SPEED = 8;
+        const ENEMY_SPEED = 2.8;
+        const ENEMY_SPAWN_RATE = 0.04;
 
         let animationFrameId: number;
-        let ship = { x: canvas.width / 2, y: canvas.height - 60 };
+        let ship = { x: canvas.width / 2, y: canvas.height - 100 };
         let bullets: { x: number, y: number }[] = [];
         let enemies: { x: number, y: number, type: string }[] = [];
-        const enemyTypes = ['👾', '🕷️', 'شرات', '🕸️'];
+        const enemyTypes = ['👾', '🕷️', '🕸️', '🦂', '🛸'];
 
         const handleMouseMove = (e: MouseEvent) => {
             const rect = canvas.getBoundingClientRect();
@@ -44,19 +54,19 @@ const WaitingGame: React.FC = () => {
             // Spawn enemies
             if (Math.random() < ENEMY_SPAWN_RATE) {
                 enemies.push({
-                    x: Math.random() * (canvas.width - 30),
-                    y: -30,
+                    x: Math.random() * (canvas.width - 40),
+                    y: -40,
                     type: enemyTypes[Math.floor(Math.random() * enemyTypes.length)]
                 });
             }
 
-            // Auto-shoot
-            if (Date.now() % 200 < 20) {
+            // Auto-shoot frequency
+            if (Date.now() % 150 < 20) {
                 bullets.push({ x: ship.x + SHIP_SIZE / 2, y: ship.y });
             }
 
             // Move bullets
-            bullets = bullets.filter(b => b.y > 0);
+            bullets = bullets.filter(b => b.y > -20);
             bullets.forEach(b => b.y -= BULLET_SPEED);
 
             // Move enemies
@@ -65,21 +75,23 @@ const WaitingGame: React.FC = () => {
             // Check collisions
             enemies.forEach((enemy, eIdx) => {
                 bullets.forEach((bullet, bIdx) => {
-                    const dist = Math.hypot(enemy.x - bullet.x, enemy.y - bullet.y);
-                    if (dist < 25) {
+                    const dist = Math.hypot(enemy.x + 15 - bullet.x, enemy.y + 15 - bullet.y);
+                    if (dist < 30) {
                         enemies.splice(eIdx, 1);
                         bullets.splice(bIdx, 1);
                         setScore(s => s + 10);
                     }
                 });
 
-                // Ship collision
-                if (Math.hypot(enemy.x - ship.x, enemy.y - ship.y) < 30) {
+                // Ship collision logic (more forgiving)
+                const shipCenterX = ship.x + SHIP_SIZE / 2;
+                const shipCenterY = ship.y + SHIP_SIZE / 2;
+                if (Math.hypot(enemy.x + 15 - shipCenterX, enemy.y + 15 - shipCenterY) < 35) {
                     setGameState('gameover');
                 }
 
                 // Reach bottom
-                if (enemy.y > canvas.height) {
+                if (enemy.y > canvas.height + 40) {
                     enemies.splice(eIdx, 1);
                 }
             });
@@ -88,16 +100,22 @@ const WaitingGame: React.FC = () => {
         const draw = () => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Stars Background
-            ctx.fillStyle = '#1e293b';
-            for (let i = 0; i < 20; i++) {
+            // Deep Space Background
+            ctx.fillStyle = '#0c111d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Stars field
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+            for (let i = 0; i < 40; i++) {
+                const x = (Math.sin(i * 123.4) * 0.5 + 0.5) * canvas.width;
+                const y = (Date.now() / (20 + (i % 5) * 10) + i * 50) % canvas.height;
                 ctx.beginPath();
-                ctx.arc(Math.random() * canvas.width, (Date.now() / 50 + i * 50) % canvas.height, 1, 0, Math.PI * 2);
+                ctx.arc(x, y, i % 3 === 0 ? 1.5 : 0.8, 0, Math.PI * 2);
                 ctx.fill();
             }
 
-            // Draw Ship (Simple Neon Triangle)
-            ctx.shadowBlur = 15;
+            // Ship
+            ctx.shadowBlur = 20;
             ctx.shadowColor = '#6366f1';
             ctx.fillStyle = '#6366f1';
             ctx.beginPath();
@@ -107,25 +125,38 @@ const WaitingGame: React.FC = () => {
             ctx.closePath();
             ctx.fill();
 
-            // Draw Bullets
-            ctx.shadowBlur = 10;
+            // Cockpit
+            ctx.fillStyle = '#fff';
+            ctx.beginPath();
+            ctx.arc(ship.x + SHIP_SIZE / 2, ship.y + SHIP_SIZE * 0.7, 3, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Bullets
+            ctx.shadowBlur = 12;
             ctx.shadowColor = '#818cf8';
-            ctx.fillStyle = '#818cf8';
+            ctx.fillStyle = '#a5b4fc';
             bullets.forEach(b => {
-                ctx.fillRect(b.x - 1, b.y, 2, 10);
+                ctx.fillRect(b.x - 1.5, b.y, 3, 15);
             });
 
-            // Draw Enemies
+            // Enemies
             ctx.shadowBlur = 0;
-            ctx.font = '24px Arial';
+            ctx.font = '32px Arial';
             enemies.forEach(e => {
                 ctx.fillText(e.type, e.x, e.y);
             });
 
-            // Score
+            // UI Label
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.4)';
+            ctx.font = 'bold 11px Inter';
+            ctx.fillText("SLIDE-MATE ARCADE V1.0 - NEUTRALIZE THE BUGS", 24, canvas.height - 24);
+
+            // Live Score
             ctx.fillStyle = '#fff';
-            ctx.font = 'black 14px Inter';
-            ctx.fillText(`SCORE: ${score}`, 20, 30);
+            ctx.font = '900 24px Inter';
+            ctx.textAlign = 'right';
+            ctx.fillText(score.toString().padStart(5, '0'), canvas.width - 24, 44);
+            ctx.textAlign = 'left';
         };
 
         const loop = () => {
@@ -138,6 +169,7 @@ const WaitingGame: React.FC = () => {
 
         return () => {
             cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', resize);
             canvas.removeEventListener('mousemove', handleMouseMove);
             canvas.removeEventListener('touchmove', handleTouchMove);
         };
@@ -149,29 +181,25 @@ const WaitingGame: React.FC = () => {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center p-4 bg-indigo-500/5 rounded-3xl border border-indigo-500/10 shadow-2xl overflow-hidden relative group">
-            <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 text-center pointer-events-none">
-                <p className="text-[10px] text-indigo-400 font-black tracking-[0.3em] uppercase mb-1">Slide-Mate Arcade</p>
-                <p className="text-[9px] text-slate-500 font-medium">Kill the bugs while we analyze!</p>
-            </div>
-
+        <div ref={containerRef} className="absolute inset-0 w-full h-full bg-[#0c111d] overflow-hidden">
             <canvas
                 ref={canvasRef}
-                width={350}
-                height={400}
-                className="cursor-none rounded-2xl md:w-[450px] md:h-[300px]"
+                className="w-full h-full cursor-none block"
             />
 
             {gameState === 'gameover' && (
-                <div className="absolute inset-0 bg-slate-900/80 backdrop-blur-sm flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
-                    <h4 className="text-2xl font-black text-white mb-2 uppercase italic">Game Over</h4>
-                    <p className="text-slate-400 text-sm mb-6 font-bold">Your score: <span className="text-indigo-400">{score}</span></p>
-                    <button
-                        onClick={resetGame}
-                        className="px-6 py-2 bg-indigo-500 text-white rounded-full font-black text-xs uppercase tracking-widest hover:bg-indigo-400 transition-all active:scale-95 shadow-lg shadow-indigo-500/20"
-                    >
-                        Try Again
-                    </button>
+                <div className="absolute inset-0 bg-[#0c111d]/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500 z-[100]">
+                    <div className="bg-indigo-500/5 border border-white/10 p-12 rounded-[3.5rem] shadow-2xl relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-indigo-500/10 opacity-0 group-hover:opacity-100 transition-opacity animate-pulse" />
+                        <h4 className="text-4xl md:text-5xl font-black text-white mb-4 uppercase italic tracking-tighter relative z-10">Mission Failed</h4>
+                        <p className="text-slate-400 text-lg mb-8 font-bold relative z-10">Bugs neutralized: <span className="text-indigo-400 font-black">{score / 10}</span></p>
+                        <button
+                            onClick={resetGame}
+                            className="relative z-10 px-12 py-4 bg-indigo-500 text-white rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-400 hover:scale-110 active:scale-95 transition-all shadow-[0_0_40px_rgba(99,102,241,0.5)]"
+                        >
+                            Restart Mission
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

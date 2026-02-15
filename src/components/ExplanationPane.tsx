@@ -467,16 +467,16 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 </div>
                             </div>
                         ) : loading ? (
-                            <div className="flex flex-col items-center justify-center h-full animate-in fade-in zoom-in duration-500">
+                            <div className="absolute inset-0 w-full h-full animate-in fade-in duration-700 overflow-hidden">
                                 <WaitingGame />
-                                <div className="mt-8 text-center">
-                                    <div className="flex items-center gap-2 justify-center mb-2">
-                                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s]" />
-                                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s]" />
-                                        <div className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce" />
+                                <div className="absolute bottom-10 left-0 right-0 text-center z-10 pointer-events-none">
+                                    <div className="flex items-center gap-2 justify-center mb-3">
+                                        <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s] shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+                                        <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s] shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+                                        <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
                                     </div>
-                                    <p className="text-[11px] text-indigo-400 font-black tracking-[0.5em] uppercase">Generating {mode} Analysis</p>
-                                    <p className="text-[10px] text-slate-500 font-medium mt-1">Kill the bugs to speed up the AI (just kidding!)</p>
+                                    <p className="text-[12px] text-white font-black tracking-[0.6em] uppercase drop-shadow-lg">Analyzing Your Slides</p>
+                                    <p className="text-[10px] text-slate-400 font-medium mt-1">Neutralize the bugs to protect your data!</p>
                                 </div>
                             </div>
                         ) : data ? (
