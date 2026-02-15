@@ -476,14 +476,17 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                         ) : loading ? (
                             <div className="absolute inset-0 w-full h-full animate-in fade-in duration-700 overflow-hidden">
                                 {randomGame}
-                                <div className="absolute bottom-10 left-0 right-0 text-center z-10 pointer-events-none">
-                                    <div className="flex items-center gap-2 justify-center mb-3">
-                                        <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s] shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-                                        <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.15s] shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-                                        <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+                                <div className="absolute top-8 left-0 right-0 text-center z-10 pointer-events-none">
+                                    <div className="inline-flex items-center gap-3 px-6 py-2 bg-black/40 backdrop-blur-md rounded-full border border-white/10 shadow-2xl">
+                                        <div className="flex gap-1.5">
+                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse" />
+                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse [animation-delay:0.2s]" />
+                                            <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-pulse [animation-delay:0.4s]" />
+                                        </div>
+                                        <p className="text-xs font-bold text-white tracking-[0.1em] uppercase">
+                                            {lang === 'ar' ? 'جاري تجهيز الشرح... استمتع باللعب!' : 'Preparing your explanation... Enjoy the game!'}
+                                        </p>
                                     </div>
-                                    <p className="text-[12px] text-white font-black tracking-[0.6em] uppercase drop-shadow-lg">Analyzing Your Slides</p>
-                                    <p className="text-[10px] text-slate-400 font-medium mt-1">Enjoy our Slide-Mate Arcade while we prepare your guide!</p>
                                 </div>
                             </div>
                         ) : data ? (
