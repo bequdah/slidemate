@@ -1,5 +1,5 @@
 // Version: Parallel Optimization Stable (Commit 901a690)
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useVoicePlayer } from '../hooks/useVoicePlayer';
 import { analyzeSlide, generateVoiceScript, type SlideExplanation, type ExplanationMode } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
@@ -7,6 +7,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 import WaitingGame from './WaitingGame';
+import NeuralSnake from './NeuralSnake';
 
 /* =======================
    Structured Types
@@ -468,7 +469,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                             </div>
                         ) : loading ? (
                             <div className="absolute inset-0 w-full h-full animate-in fade-in duration-700 overflow-hidden">
-                                <WaitingGame />
+                                {useMemo(() => {
+                                    const games = [<WaitingGame key="bugs" />, <NeuralSnake key="snake" />];
+                                    return games[Math.floor(Math.random() * games.length)];
+                                }, [loading])}
                                 <div className="absolute bottom-10 left-0 right-0 text-center z-10 pointer-events-none">
                                     <div className="flex items-center gap-2 justify-center mb-3">
                                         <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce [animation-delay:-0.3s] shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
@@ -476,7 +480,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                         <div className="w-2.5 h-2.5 bg-indigo-500 rounded-full animate-bounce shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
                                     </div>
                                     <p className="text-[12px] text-white font-black tracking-[0.6em] uppercase drop-shadow-lg">Analyzing Your Slides</p>
-                                    <p className="text-[10px] text-slate-400 font-medium mt-1">Neutralize the bugs to protect your data!</p>
+                                    <p className="text-[10px] text-slate-400 font-medium mt-1">Enjoy our Slide-Mate Arcade while we prepare your guide!</p>
                                 </div>
                             </div>
                         ) : data ? (
