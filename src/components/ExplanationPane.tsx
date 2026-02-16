@@ -500,18 +500,21 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                         <div className="text-center space-y-3">
                                             <h3 className="text-xl md:text-2xl font-black text-white uppercase tracking-[0.2em]">Analyzing slides...</h3>
                                             <p className="text-slate-500 font-medium max-w-xs mx-auto text-sm md:text-base">
-                                                {lang === 'ar' ? 'الذكاء الاصطناعي عم بجهزلك شرح مرتب حسب طريقتك.' : 'AI is tailoring the explanation to your chosen style.'}
+                                                {lang === 'ar' ? 'الشرح قاعد بجهز بس شوي' : 'AI is tailoring the explanation to your chosen style.'}
                                             </p>
                                         </div>
 
                                         <button
                                             onClick={() => setShowGame(true)}
-                                            className="group flex items-center gap-4 px-8 py-5 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/30 rounded-3xl transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-indigo-500/5"
+                                            className="group flex flex-col items-center gap-6 transition-all duration-500"
                                         >
-                                            <span className="text-3xl group-hover:rotate-12 transition-transform">🎮</span>
-                                            <div className="text-left">
-                                                <p className="text-xs font-black text-indigo-400 uppercase tracking-widest leading-none mb-1">Bored waiting?</p>
-                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Launch Slide-Mate Arcade</p>
+                                            <div className="w-24 h-24 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center text-5xl shadow-[0_20px_50px_rgba(79,70,229,0.4)] group-hover:scale-110 group-active:scale-95 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden">
+                                                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
+                                                🎮
+                                            </div>
+                                            <div className="text-center animate-bounce [animation-duration:3s]">
+                                                <p className="text-xl font-black text-white italic tracking-tight">زهقان تستنى؟</p>
+                                                <p className="text-[11px] text-indigo-400 font-black uppercase tracking-[0.2em] mt-1">اكبس علي واتسلى</p>
                                             </div>
                                         </button>
                                     </div>
