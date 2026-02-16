@@ -73,11 +73,13 @@ const AstroJump: React.FC = () => {
             birdRef.current.y += birdRef.current.velocity;
 
             // Spawn pipes
-            if (frameCountRef.current % PIPE_SPAWN_INTERVAL === 0) {
+            if (frameCountRef.current === 1 || frameCountRef.current % PIPE_SPAWN_INTERVAL === 0) {
                 const minHeight = 50;
                 const maxHeight = canvas.height - PIPE_GAP - 50;
                 const topHeight = Math.floor(Math.random() * (maxHeight - minHeight + 1)) + minHeight;
-                pipesRef.current.push({ x: canvas.width, topHeight });
+                // Move the very first pipe closer (60% of width) so the game starts faster
+                const spawnX = frameCountRef.current === 1 ? canvas.width * 0.7 : canvas.width;
+                pipesRef.current.push({ x: spawnX, topHeight });
             }
 
             // Move pipes

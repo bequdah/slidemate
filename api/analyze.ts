@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v7_perfect_integrated'; // Bumped to fix format and lint
+const CACHE_VERSION = 'v9_english_reasoning'; // Bumped for English reasoning in quizzes
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -294,11 +294,11 @@ SLIDE CONTENT TO ANALYZE:
 
 CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explanation):
 
-1. **STRUCTURE**: You MUST strictly use the "Bullet Point" format for all explanations. Every point MUST be a single integrated line:
+1. **STRUCTURE**: Use only the "Bullet Point" format. Every point MUST be an integrated line:
    **[FULL ENGLISH SENTENCE FROM SLIDE]:** [Detailed Arabic Explanation]
-   - NO NEWLINES: Never use newline characters inside the Arabic explanation or between the English and Arabic. They MUST be on the same line.
-   - NO SEPARATE HEADINGS: Do not put a short English phrase in "heading" and the explanation in "bullets". Put them TOGETHER in the bullet.
-   - Colon Logic: The colon (:) MUST be inside the bold tags.
+   - COLON RULE: The colon (:) MUST be placed INSIDE the bold tags (e.g., **English text:**).
+   - SINGLE LINE: No newlines between English and Arabic.
+   - NO SEPARATE HEADINGS: Keep everything in the bullet array.
 
 2. **THE "هاض" & "مليح" RULES**: 
    - Prohibited: "هاد", "منيح", "كتير", "تانية", "متل".
@@ -306,20 +306,21 @@ CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explana
 
 3. **Math & Symbols**: 
    - Formulas -> $$ ... $$. Variables -> $ ... $. 
-   - Use \\\\ for LaTeX commands. No bolding around math.
 
-EXAMPLE (The "Integrated" Style):
+EXAMPLE:
 {
   "sections": [
     {
-      "heading": "MAIN SLIDE TOPIC",
+      "heading": "MAIN TOPIC",
       "bullets": [
-        "**Pull Mode (search engines):** يعني طريقة السحب زي اللي بنستخدمها بمحركات البحث، هون أنت كمستخدم بتاخذ المبادرة وبتدور ع اللي بدك إياه بنفسك.",
-        "**Users take initiative:** وهون المعنى إنه المستخدم هو اللي ببدأ عملية البحث، هو اللي بقرر شو بدوره وبقوم بالبحث."
+        "**Pull Mode (search engines):** يعني طريقة السحب زي اللي بنستخدمها بمحركات البحث...",
+        "**Users take initiative:** وهون المعنى إنه المستخدم هو اللي ببدأ عملية البحث..."
       ]
     }
   ]
 }
+
+4. **Quiz Language**: The question (q), all 1-4 options, and the REASONING MUST be in English.
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
@@ -327,6 +328,7 @@ REMINDER:
 - **MATH CHECK**: Ensure LaTeX \`$$...$$\` with \`\\\\\`.
 - **NO BOLD MATH**: Final check -> If you see \`**$$...$$**\`, change it to \`$$...$$\`.
 - Return between 2 and 8 MCQs (comprehensive to the slide).
+- **CRITICAL**: The quiz "reasoning" MUST be in English.
 `;
 
         if (resolvedMode === 'simple') {
