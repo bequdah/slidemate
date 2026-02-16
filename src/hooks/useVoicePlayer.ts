@@ -37,8 +37,9 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             sentencesRef.current = [];
             return;
         }
-        // Split strictly by punctuations for natural logical units
-        const split = scriptText.split(/(?<=[.!?،؛؟])\s+/).filter(s => s.trim().length > 0);
+        // Split strictly by punctuations (including commas) or newlines
+        // This ensures the bubble is just one sentence/phrase at a time.
+        const split = scriptText.split(/(?<=[.!?،,؛؟])\s*|\n+/).filter(s => s.trim().length > 0);
         sentencesRef.current = split;
     }, [scriptText]);
 
@@ -79,10 +80,10 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         if (window.responsiveVoice) {
             const voiceName = lang === 'ar' ? 'UK English Female' : 'US English Female';
 
-            // High Safety Margin: 800ms per word + 5s buffer
-            // We only want this to trigger if the engine CRASHES, not during normal flow
+            // Very Tight Safety Margin: 400ms per word + 500ms total buffer
+            // This prevents the 5-second "dead air" issue.
             const wordCount = text.split(/\s+/).length;
-            const estimatedDurationMs = (wordCount * 800) + 5000;
+            const estimatedDurationMs = (wordCount * 400) + 500;
 
             window.responsiveVoice.speak(text, voiceName, {
                 rate: 1,
@@ -93,9 +94,8 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
                     setIsPaused(false);
                     isPlayingRef.current = true;
 
-                    // Start non-aggressive safety timer
+                    // Start tight trigger to move to next if voice engine hangs
                     timeoutRef.current = setTimeout(() => {
-                        console.warn("Safety trigger: Moving next.");
                         next();
                     }, estimatedDurationMs);
                 },
