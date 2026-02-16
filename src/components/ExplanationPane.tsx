@@ -666,6 +666,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .prose li {
                     color: #f8fafc !important; /* White-ish SLATE-50 */
                     font-weight: 500 !important;
+                    font-size: 1rem !important; /* Reset to base size */
+                    line-height: 1.7 !important;
+                    margin-bottom: 0.75rem !important;
                 }
                 .prose li::marker {
                     color: #6366f1 !important; /* Indigo-500 */
@@ -673,6 +676,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .prose li strong {
                     color: #fbbf24 !important; /* Yellow-400 */
                     font-weight: 900 !important;
+                    font-size: 1rem !important; /* Match the rest of the text */
+                    display: inline !important;
                 }
                 .prose h1:first-of-type, .prose h2:first-of-type, .prose h3:first-of-type {
                     margin-top: 0 !important;

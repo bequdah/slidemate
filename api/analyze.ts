@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v5_perfected_golden'; // Final Polish for the new layout
+const CACHE_VERSION = 'v7_perfect_integrated'; // Bumped to fix format and lint
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -294,34 +294,32 @@ SLIDE CONTENT TO ANALYZE:
 
 CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explanation):
 
-1. **STRUCTURE**: For EVERY bullet point, you MUST strictly follow this format:
-   **[FULL ENGLISH SENTENCE FROM SLIDE]:** [Arabic Explanation]
-   - All text for one bullet point MUST be on a SINGLE line (no newline characters).
-   - **Do NOT** summarize the English text. Copy it exactly as it appears on the slide.
-   - **Colon Logic**: Place the colon (:) INSIDE the bold tags after the English text.
+1. **STRUCTURE**: You MUST strictly use the "Bullet Point" format for all explanations. Every point MUST be a single integrated line:
+   **[FULL ENGLISH SENTENCE FROM SLIDE]:** [Detailed Arabic Explanation]
+   - NO NEWLINES: Never use newline characters inside the Arabic explanation or between the English and Arabic. They MUST be on the same line.
+   - NO SEPARATE HEADINGS: Do not put a short English phrase in "heading" and the explanation in "bullets". Put them TOGETHER in the bullet.
+   - Colon Logic: The colon (:) MUST be inside the bold tags.
 
-EXAMPLE:
+2. **THE "هاض" & "مليح" RULES**: 
+   - Prohibited: "هاد", "منيح", "كتير", "تانية", "متل".
+   - Use: "هاض", "مليح", "كثير", "ثانية", "مثل".
+
+3. **Math & Symbols**: 
+   - Formulas -> $$ ... $$. Variables -> $ ... $. 
+   - Use \\\\ for LaTeX commands. No bolding around math.
+
+EXAMPLE (The "Integrated" Style):
 {
   "sections": [
     {
-      "heading": "Inverted index",
+      "heading": "MAIN SLIDE TOPIC",
       "bullets": [
-        "**Inverted index. For each term t, store list of docs containing t:** الفكرة هون إنه بالـ Inverted index، لكل كلمة بنخزن قائمة بكل المستندات اللي موجودة فيها هاي الكلمة.",
-        "**Identify each doc by docID:** وهون بحكيلك إنه كل مستند بنعطيه رقم مميز (docID) عشان نميزه عن غيره."
+        "**Pull Mode (search engines):** يعني طريقة السحب زي اللي بنستخدمها بمحركات البحث، هون أنت كمستخدم بتاخذ المبادرة وبتدور ع اللي بدك إياه بنفسك.",
+        "**Users take initiative:** وهون المعنى إنه المستخدم هو اللي ببدأ عملية البحث، هو اللي بقرر شو بدوره وبقوم بالبحث."
       ]
     }
   ]
 }
-
-2. **THE "هاض" & "مليح" RULES**: 
-   - Prohibited: "هاد" (use "هاض"), "منيح" (use "مليح"), "كتير" (use "كثير"), "تانية" (use "ثانية"), "متل" (use "مثل").
-
-3. **Math & Symbols**: 
-   - Wrap formula lines in $$ ... $$ (BLOCK). No bolding around math.
-   - Use $ ... $ for inline variables (e.g., $x$, $y$).
-   - ALWAYS use double backslashes for LaTeX (e.g., \\\\frac).
-
-NOTE: STRICTLY use **Full English Text:** then the Arabic explanation.
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:
