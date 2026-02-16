@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v9_english_reasoning'; // Bumped for English reasoning in quizzes
+const CACHE_VERSION = 'v10_start_with_english'; // Forced English-start integrated layout
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -294,11 +294,11 @@ SLIDE CONTENT TO ANALYZE:
 
 CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explanation):
 
-1. **STRUCTURE**: Use only the "Bullet Point" format. Every point MUST be an integrated line:
+1. **STRUCTURE**: Every point MUST be a single integrated line.
    **[FULL ENGLISH SENTENCE FROM SLIDE]:** [Detailed Arabic Explanation]
-   - COLON RULE: The colon (:) MUST be placed INSIDE the bold tags (e.g., **English text:**).
-   - SINGLE LINE: No newlines between English and Arabic.
-   - NO SEPARATE HEADINGS: Keep everything in the bullet array.
+   - **START WITH ENGLISH**: You MUST start the bullet point with the bold English text. Do NOT write any Arabic words (like "يعني" or "هون") before the bold stars.
+   - **COLON RULE**: The colon (:) MUST be placed INSIDE the bold tags (e.g., **English text:**).
+   - **SINGLE LINE**: No newlines between English and Arabic. They must be one continuous block.
 
 2. **THE "هاض" & "مليح" RULES**: 
    - Prohibited: "هاد", "منيح", "كتير", "تانية", "متل".
@@ -313,8 +313,8 @@ EXAMPLE:
     {
       "heading": "MAIN TOPIC",
       "bullets": [
-        "**Pull Mode (search engines):** يعني طريقة السحب زي اللي بنستخدمها بمحركات البحث...",
-        "**Users take initiative:** وهون المعنى إنه المستخدم هو اللي ببدأ عملية البحث..."
+        "**Pull Mode (search engines):** يعني طريقة السحب زي اللي بنستخدمها بمحركات البحث وهو نظام ببدأ من المستخدم...",
+        "**Users take initiative:** ومعناها إنه المستخدم هو اللي ببدأ الحركة وببلش يدور على المعلومة اللي بده إياها."
       ]
     }
   ]
