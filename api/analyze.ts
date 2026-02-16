@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v10_start_with_english'; // Forced English-start integrated layout
+const CACHE_VERSION = 'v11_colon_alignment'; // Bumped for the new ':English' logic
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -297,7 +297,7 @@ CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explana
 1. **STRUCTURE**: Every point MUST be a single integrated line.
    **[FULL ENGLISH SENTENCE FROM SLIDE]:** [Detailed Arabic Explanation]
    - **START WITH ENGLISH**: You MUST start the bullet point with the bold English text. Do NOT write any Arabic words (like "يعني" or "هون") before the bold stars.
-   - **COLON RULE**: The colon (:) MUST be placed INSIDE the bold tags (e.g., **English text:**).
+   - **COLON RULE**: The colon (:) MUST be placed INSIDE the bold tags (e.g., **:English text**).
    - **SINGLE LINE**: No newlines between English and Arabic. They must be one continuous block.
 
 2. **THE "هاض" & "مليح" RULES**: 
