@@ -1,35 +1,18 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-// Declare ResponsiveVoice global type
-declare global {
-    interface Window {
-        responsiveVoice?: {
-            speak: (text: string, voice: string, options?: {
-                onstart?: () => void;
-                onend?: () => void;
-                onerror?: () => void;
-                rate?: number;
-                pitch?: number;
-                volume?: number;
-            }) => void;
-            cancel: () => void;
-            isPlaying: () => boolean;
-            pause: () => void;
-            resume: () => void;
-        };
-    }
-}
+export type VoiceProfile = 'auto' | 'en_male_strong' | 'en_female_strong' | 'ar_female';
 
-export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar') => {
+export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar', voiceProfile: VoiceProfile = 'auto') => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [currentSentence, setCurrentSentence] = useState('');
     const [currentIndex, setCurrentIndex] = useState(-1);
+    const [isLoadingAudio, setIsLoadingAudio] = useState(false);
 
     const sentencesRef = useRef<string[]>([]);
     const indexRef = useRef(-1);
     const isPlayingRef = useRef(false);
-    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const audioRef = useRef<HTMLAudioElement | null>(null);
 
     // Initial setup: split script into sentences
     useEffect(() => {
@@ -37,15 +20,21 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             sentencesRef.current = [];
             return;
         }
-        // Split strictly by major sentence enders as requested
+        // Split strictly by major sentence enders
         const split = scriptText.split(/(?<=[.!?؟])\s*|\n+/).filter(s => s.trim().length > 0);
         sentencesRef.current = split;
     }, [scriptText]);
 
+    const getGoogleTtsLang = useCallback(() => {
+        if (lang === 'ar') return 'ar';
+        if (voiceProfile === 'en_male_strong' || voiceProfile === 'en_female_strong') return 'en-GB';
+        return 'en-US';
+    }, [lang, voiceProfile]);
+
     const stop = useCallback(() => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        if (window.responsiveVoice) {
-            window.responsiveVoice.cancel();
+        if (audioRef.current) {
+            audioRef.current.pause();
+            audioRef.current.currentTime = 0;
         }
         setIsPlaying(false);
         setIsPaused(false);
@@ -53,13 +42,14 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         setCurrentIndex(-1);
         indexRef.current = -1;
         isPlayingRef.current = false;
+        setIsLoadingAudio(false);
     }, []);
 
-    const playSentence = useCallback((idx: number) => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-
-        if (!sentencesRef.current[idx]) {
-            stop();
+    const playSentence = useCallback(async (idx: number) => {
+        if (!sentencesRef.current[idx] || !isPlayingRef.current) {
+            if (idx >= sentencesRef.current.length) {
+                stop(); // End of script
+            }
             return;
         }
 
@@ -67,124 +57,105 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         indexRef.current = idx;
         setCurrentIndex(idx);
         setCurrentSentence(text);
+        setIsLoadingAudio(true);
 
-        const next = () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        try {
+            // Fetch audio from our new API
+            const ttsLang = getGoogleTtsLang();
+            const response = await fetch('/api/tts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ text, lang: ttsLang })
+            });
+
+            if (!response.ok) throw new Error('TTS Failed');
+
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+
+            if (audioRef.current) {
+                audioRef.current.src = url;
+                audioRef.current.onended = () => {
+                    URL.revokeObjectURL(url); // Cleanup memory
+                    if (isPlayingRef.current) {
+                        playSentence(idx + 1); // Next sentence
+                    }
+                };
+                audioRef.current.onerror = () => {
+                    console.error("Audio Error");
+                    URL.revokeObjectURL(url);
+                    if (isPlayingRef.current) playSentence(idx + 1); // Skip bad audio
+                };
+
+                await audioRef.current.play();
+                setIsLoadingAudio(false);
+                setIsPlaying(true);
+                setIsPaused(false);
+            }
+        } catch (err) {
+            console.error("Play Error:", err);
+            setIsLoadingAudio(false);
+            // Fallback: Skip to next sentence on error
             if (isPlayingRef.current) {
                 playSentence(idx + 1);
             }
-        };
-
-        // Check if ResponsiveVoice is available
-        if (window.responsiveVoice) {
-            const voiceName = lang === 'ar' ? 'Arabic Female' : 'US English Female';
-
-            // Very Tight Safety Margin: 400ms per word + 500ms total buffer
-            // This prevents the 5-second "dead air" issue.
-            const wordCount = text.split(/\s+/).length;
-            const estimatedDurationMs = (wordCount * 400) + 500;
-
-            window.responsiveVoice.speak(text, voiceName, {
-                rate: 1,
-                pitch: 1,
-                volume: 1,
-                onstart: () => {
-                    setIsPlaying(true);
-                    setIsPaused(false);
-                    isPlayingRef.current = true;
-
-                    // Start tight trigger to move to next if voice engine hangs
-                    timeoutRef.current = setTimeout(() => {
-                        next();
-                    }, estimatedDurationMs);
-                },
-                onend: next,
-                onerror: () => {
-                    console.error("Voice Error");
-                    stop();
-                }
-            });
-        } else {
-            // Fallback to Web Speech API
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
-            utterance.rate = 1;
-
-            utterance.onstart = () => {
-                setIsPlaying(true);
-                setIsPaused(false);
-                isPlayingRef.current = true;
-            };
-
-            utterance.onend = next;
-            utterance.onerror = stop;
-
-            window.speechSynthesis.speak(utterance);
         }
-    }, [lang, stop]);
+    }, [lang, stop, getGoogleTtsLang]);
 
     const play = useCallback(() => {
         if (sentencesRef.current.length === 0) return;
-        
+
         // If already playing, don't restart
         if (isPlayingRef.current && !isPaused) return;
-        
+
+        // Ensure we have an audio object
+        if (!audioRef.current) {
+            audioRef.current = new Audio();
+        }
+
         // If paused, just resume
-        if (isPaused) {
+        if (isPaused && audioRef.current) {
             setIsPaused(false);
-            // Restart current sentence from beginning
             isPlayingRef.current = true;
-            playSentence(indexRef.current);
+            audioRef.current.play();
             return;
         }
-        
+
         // Fresh start
         stop();
+        // Re-initialize after stop cleared flags
+        isPlayingRef.current = true;
+        if (!audioRef.current) audioRef.current = new Audio();
+
         playSentence(0);
-    }, [playSentence, stop]);
+    }, [playSentence, stop, isPaused]);
 
     const pause = useCallback(() => {
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        
-        // Only pause if actually playing
         if (!isPlayingRef.current || isPaused) return;
-        
-        // Set this to false so 'next' doesn't advance to next sentence
-        isPlayingRef.current = false;
 
-        if (window.responsiveVoice) {
-            window.responsiveVoice.cancel();
-        } else {
-            window.speechSynthesis.cancel();
+        if (audioRef.current) {
+            audioRef.current.pause();
         }
         setIsPaused(true);
-        // Keep current sentence visible while paused
-    }, []);
+        // We do NOT set isPlayingRef to false here, because we want to resume later
+        // But we need to prevent 'onended' from triggering the next sentence instantly if it finished while pausing
+        // actually, pausing audio prevents 'onended', so we are safe.
+    }, [isPaused]);
 
     const resume = useCallback(() => {
-        console.log('Resume clicked:', { isPaused, currentIndex: indexRef.current });
-        
-        // Only resume if actually paused
-        if (!isPaused || indexRef.current === -1) {
-            console.log('Resume blocked:', { isPaused, currentIndex: indexRef.current });
-            return;
-        }
-        
-        console.log('Resuming playback...');
+        if (!isPaused || !audioRef.current) return;
+
         setIsPaused(false);
         isPlayingRef.current = true;
-        // Restart current sentence from beginning
-        playSentence(indexRef.current);
-    }, [playSentence, isPaused]);
+        audioRef.current.play();
+    }, [isPaused]);
 
     // Cleanup on unmount
     useEffect(() => {
         return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-            if (window.responsiveVoice) {
-                window.responsiveVoice.cancel();
-            } else {
-                window.speechSynthesis.cancel();
+            if (audioRef.current) {
+                audioRef.current.pause();
+                audioRef.current = null;
             }
         };
     }, []);
@@ -192,6 +163,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     return {
         isPlaying,
         isPaused,
+        isLoadingAudio,
         currentSentence,
         currentIndex,
         play,
@@ -201,3 +173,4 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         totalSentences: sentencesRef.current.length
     };
 };
+

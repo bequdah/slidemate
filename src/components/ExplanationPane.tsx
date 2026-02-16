@@ -1,11 +1,12 @@
 // Version: Parallel Optimization Stable (Commit 901a690)
 import { useState, useEffect, useMemo } from 'react';
-import { useVoicePlayer } from '../hooks/useVoicePlayer';
+import { useVoicePlayer, type VoiceProfile } from '../hooks/useVoicePlayer';
 import { analyzeSlide, generateVoiceScript, type SlideExplanation, type ExplanationMode } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+
 import WaitingGame from './WaitingGame';
 import NeuralSnake from './NeuralSnake';
 import AstroJump from './AstroJump';
@@ -51,7 +52,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const [voiceLoading, setVoiceLoading] = useState(false);
     const [mode, setMode] = useState<ExplanationMode | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({});
-    const [lang] = useState<'en' | 'ar'>('ar');
+    const [lang] = useState<'en' | 'ar'>('en');
+    const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>('auto');
     const [showIntro, setShowIntro] = useState(true);
 
     const currentContent = {
@@ -62,9 +64,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     };
 
     const {
-        isPlaying, isPaused, currentSentence,
+        isPlaying, isPaused, currentSentence, isLoadingAudio,
         play, pause, resume, stop
-    } = useVoicePlayer(currentContent?.voiceScript, lang);
+    } = useVoicePlayer(currentContent?.voiceScript, lang, voiceProfile);
 
     const randomGame = useMemo(() => {
         if (!loading) return null;
@@ -317,16 +319,36 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 )}
 
                                 {data && (
+                                    <select
+                                        value={voiceProfile}
+                                        onChange={(e) => setVoiceProfile(e.target.value as VoiceProfile)}
+                                        disabled={isPlaying}
+                                        className="h-9 px-3 rounded-xl bg-white/5 text-slate-200 border border-white/10 text-[10px] md:text-xs uppercase tracking-widest"
+                                        title="Voice"
+                                    >
+                                        <option value="auto">US English</option>
+                                        <option value="en_male_strong">UK English</option>
+                                    </select>
+                                )}
+
+                                {data && (
                                     <button
                                         onClick={isPlaying ? stop : play}
                                         disabled={loading || (voiceLoading && !isPlaying)}
                                         className={`h-9 px-4 md:px-5 rounded-xl flex items-center gap-3 transition-all active:scale-95 font-black text-[10px] md:text-xs uppercase tracking-widest ${isPlaying ? 'bg-indigo-500 text-white shadow-lg' : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'}`}
                                     >
                                         {isPlaying ? (
-                                            <>
-                                                <div className="w-2.5 h-2.5 bg-white rounded-sm animate-pulse" />
-                                                <span>Stop</span>
-                                            </>
+                                            isLoadingAudio ? (
+                                                <>
+                                                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping" />
+                                                    <span>Load</span>
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <div className="w-2.5 h-2.5 bg-white rounded-sm animate-pulse" />
+                                                    <span>Stop</span>
+                                                </>
+                                            )
                                         ) : voiceLoading ? (
                                             <>
                                                 <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />

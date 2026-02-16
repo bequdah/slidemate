@@ -14,6 +14,7 @@
     "@tailwindcss/postcss": "^4.1.18",
     "@types/pdfjs-dist": "^2.10.377",
     "@vercel/node": "^5.5.28",
+    "axios": "^1.13.5",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "firebase": "^12.8.0",
