@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v2_qudah_vision'; // Bump version to force re-analysis with new prompts
+const CACHE_VERSION = 'v3_arcade_ready'; // Bumped to v3 to clear memory/cache
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
