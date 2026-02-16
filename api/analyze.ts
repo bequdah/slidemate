@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v3_arcade_ready'; // Bumped to v3 to clear memory/cache
+const CACHE_VERSION = 'v5_perfected_golden'; // Final Polish for the new layout
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -295,42 +295,33 @@ SLIDE CONTENT TO ANALYZE:
 CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explanation):
 
 1. **STRUCTURE**: For EVERY bullet point, you MUST strictly follow this format:
-   **"[FULL ENGLISH SENTENCE FROM SLIDE]"**
-   [Jordanian Arabic Explanation]
-   - **Do NOT** summarize the English text. Copy it exactly as it appears on the slide (or the full logic sentence).
-   - **Then** explain it as if you are talking to the student ("يعني هون قصده...", "لاحظ إنه...").
+   **[FULL ENGLISH SENTENCE FROM SLIDE]:** [Arabic Explanation]
+   - All text for one bullet point MUST be on a SINGLE line (no newline characters).
+   - **Do NOT** summarize the English text. Copy it exactly as it appears on the slide.
+   - **Colon Logic**: Place the colon (:) INSIDE the bold tags after the English text.
 
-2. **THE "هاض" & "مليح" RULES (ABSOLUTE BANS)**: 
-   - Prohibited words: "هاد" (use "هاض"), "منيح" (use "مليح"), "كتير" (use "كثير"), "تانية" (use "ثانية"), "متل" (use "مثل").
-   - This applies to EVERYTHING you write.
-
-3. **Math & Symbols (MOBILE OPTIMIZED)**: 
-   - **DETECT FORMULAS**: If a line is a mathematical formula (contains =, <, >, sum, integral, etc.), you MUST wrap the ENTIRE line in Block LaTeX \`$$ ... $$\`.
-   - **NO BOLDING**: NEVER put bold markers (\`**\`) around formulas. Just use \`$$...$$\`. Bolding breaks the math rendering.
-   - **INLINE MATH**: For variables (x, y) or small expressions inside Arabic text, use Inline LaTeX \`$ ... $\`. Never write raw LaTeX commands like \`frac\` without delimiters.
-   - **COMPLEX SYMBOLS**: Ensure proper LaTeX for sums (\`\\\\sum\`), integrals (\`\\\\int\`), fractions (\`\\\\frac\`), and subscripts (\`_\`).
-   - **DOUBLE BACKSLASHES**: You MUST use \`\\\\\` for all LaTeX commands (e.g., \`\\\\sum\`, \`\\\\frac\`). This is non-negotiable for JSON safety.
-
-4. **Quiz Language (Exam mode only)**:
-   - The question ("q") and all 4 "options" MUST be in English.
-   - The "reasoning" MUST be in Jordanian Arabic (QudahWay style).
-
-EXAMPLE (The "Classic" Style):
-Slide content: "Inverted index. For each term t, store list of docs containing t. Identify each doc by docID."
-
-GOOD JSON:
+EXAMPLE:
 {
   "sections": [
     {
       "heading": "Inverted index",
       "bullets": [
-        "**Inverted index. For each term t, store list of docs containing t.**\\nيعني الفكرة هون إنه بالـ Inverted index، لكل كلمة (term) بنخزن قائمة بكل المستندات اللي موجودة فيها هاي الكلمة. بدل ما ندور بكل الملفات، بنكون عارفين وين كل كلمة موجودة.",
-        "**Identify each doc by docID.**\\nوهون بحكيلك إنه كل مستند بنعطيه رقم مميز (docID) عشان نميزه عن غيره ونقدر نوصله بسرعة."
+        "**Inverted index. For each term t, store list of docs containing t:** الفكرة هون إنه بالـ Inverted index، لكل كلمة بنخزن قائمة بكل المستندات اللي موجودة فيها هاي الكلمة.",
+        "**Identify each doc by docID:** وهون بحكيلك إنه كل مستند بنعطيه رقم مميز (docID) عشان نميزه عن غيره."
       ]
     }
   ]
 }
-NOTE: STRICTLY use **Full English Text** then the Arabic explanation.
+
+2. **THE "هاض" & "مليح" RULES**: 
+   - Prohibited: "هاد" (use "هاض"), "منيح" (use "مليح"), "كتير" (use "كثير"), "تانية" (use "ثانية"), "متل" (use "مثل").
+
+3. **Math & Symbols**: 
+   - Wrap formula lines in $$ ... $$ (BLOCK). No bolding around math.
+   - Use $ ... $ for inline variables (e.g., $x$, $y$).
+   - ALWAYS use double backslashes for LaTeX (e.g., \\\\frac).
+
+NOTE: STRICTLY use **Full English Text:** then the Arabic explanation.
 
 MODE: ${resolvedMode.toUpperCase()}
 REMINDER:

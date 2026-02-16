@@ -658,10 +658,21 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .prose h3::before {
                     content: '';
                     width: 4px;
-                    height: 1.2em;
+                    height: 1.5rem;
                     background: #ef4444;
                     border-radius: 99px;
-                    display: inline-block;
+                    box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+                }
+                .prose li {
+                    color: #f8fafc !important; /* White-ish SLATE-50 */
+                    font-weight: 500 !important;
+                }
+                .prose li::marker {
+                    color: #6366f1 !important; /* Indigo-500 */
+                }
+                .prose li strong {
+                    color: #fbbf24 !important; /* Yellow-400 */
+                    font-weight: 900 !important;
                 }
                 .prose h1:first-of-type, .prose h2:first-of-type, .prose h3:first-of-type {
                     margin-top: 0 !important;
