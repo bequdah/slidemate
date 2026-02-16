@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v11_colon_alignment'; // Bumped for the new ':English' logic
+const CACHE_VERSION = 'v16_colon_with_arabic'; // Colon moved outside stars to fix RTL alignment
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -295,10 +295,10 @@ SLIDE CONTENT TO ANALYZE:
 CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explanation):
 
 1. **STRUCTURE**: Every point MUST be a single integrated line.
-   **[FULL ENGLISH SENTENCE FROM SLIDE]:** [Detailed Arabic Explanation]
-   - **START WITH ENGLISH**: You MUST start the bullet point with the bold English text. Do NOT write any Arabic words (like "يعني" or "هون") before the bold stars.
-   - **COLON RULE**: The colon (:) MUST be placed INSIDE the bold tags (e.g., **:English text**).
-   - **SINGLE LINE**: No newlines between English and Arabic. They must be one continuous block.
+   **[FULL ENGLISH SENTENCE]** : [Concise Arabic Explanation]
+   - **START WITH ENGLISH**: You MUST start the bullet point with the English text in bold stars \`**\`.
+   - **COLON RULE**: The colon (:) MUST be placed OUTSIDE the bold tags, followed by a space (e.g., **English text** : الشرح).
+   - **COLOR LOGIC**: By putting the colon outside \`**\`, it will correctly align between the languages in RTL.
 
 2. **THE "هاض" & "مليح" RULES**: 
    - Prohibited: "هاد", "منيح", "كتير", "تانية", "متل".
@@ -313,8 +313,8 @@ EXAMPLE:
     {
       "heading": "MAIN TOPIC",
       "bullets": [
-        "**Pull Mode (search engines):** يعني طريقة السحب زي اللي بنستخدمها بمحركات البحث وهو نظام ببدأ من المستخدم...",
-        "**Users take initiative:** ومعناها إنه المستخدم هو اللي ببدأ الحركة وببلش يدور على المعلومة اللي بده إياها."
+        "**Pull Mode (search engines)** : يعني زي محركات البحث؛ إنت اللي بتطلب المعلومة وبتم سحبها بناءً على طلبك.",
+        "**Users take initiative** : وهون المعنى إنه المستخدم هو اللي ببلش العملية وبقرر شو بده يدور بالضبط."
       ]
     }
   ]
