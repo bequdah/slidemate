@@ -664,11 +664,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
                 }
                 .prose li {
-                    color: #f1f5f9 !important; /* Brighter Slate-100 */
-                    font-weight: 700 !important; /* Ultra-clear bold */
-                    font-size: 1.2rem !important; /* Larger text for comfort */
+                    color: #f1f5f9 !important; /* Slate-100 */
+                    font-weight: 600 !important; /* Clear but elegant weight */
+                    font-size: 1.1rem !important; /* The Golden Size */
                     line-height: 1.7 !important;
-                    margin-bottom: 1.25rem !important;
+                    margin-bottom: 0.8rem !important;
                     text-align: right;
                     direction: rtl;
                 }
@@ -678,12 +678,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .prose li strong {
                     color: #fbbf24 !important; /* Yellow-400 */
                     font-weight: 900 !important;
-                    font-size: 1.25rem !important; /* Pop out more */
+                    font-size: 1.1rem !important; /* PERFECT MATCH with Arabic size */
                     display: inline !important;
-                    margin-left: 0.6rem; /* Strategic gap after colonized English */
-                    text-shadow: 0 0 10px rgba(251, 191, 36, 0.15);
+                    text-shadow: none;
                 }
-                /* Ensure no CSS-added colons exist */
+                /* Clean separators */
                 .prose li strong::after {
                     content: none !important;
                 }
