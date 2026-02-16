@@ -665,19 +665,24 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 }
                 .prose li {
                     color: #f8fafc !important; /* White-ish SLATE-50 */
-                    font-weight: 500 !important;
-                    font-size: 1rem !important; /* Reset to base size */
-                    line-height: 1.7 !important;
-                    margin-bottom: 0.75rem !important;
+                    font-weight: 600 !important; /* Bolder for clarity */
+                    font-size: 1.1rem !important; /* Slightly larger */
+                    line-height: 1.8 !important;
+                    margin-bottom: 1.25rem !important;
+                    text-align: right;
+                    direction: rtl;
                 }
                 .prose li::marker {
                     color: #6366f1 !important; /* Indigo-500 */
+                    font-size: 1.2rem;
                 }
                 .prose li strong {
                     color: #fbbf24 !important; /* Yellow-400 */
                     font-weight: 900 !important;
-                    font-size: 1rem !important; /* Match the rest of the text */
-                    display: inline !important;
+                    font-size: 1.15rem !important; /* Slightly larger than the normal text */
+                    display: inline-block !important;
+                    margin-left: 0.5rem; /* Space after calculations/colon in RTL */
+                    text-shadow: 0 0 10px rgba(251, 191, 36, 0.1);
                 }
                 .prose h1:first-of-type, .prose h2:first-of-type, .prose h3:first-of-type {
                     margin-top: 0 !important;
