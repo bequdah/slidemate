@@ -52,6 +52,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const [mode, setMode] = useState<ExplanationMode | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({});
     const [lang] = useState<'en' | 'ar'>('ar');
+    const [showIntro, setShowIntro] = useState(true);
 
     const currentContent = {
         explanation: data?.explanation,
@@ -79,10 +80,12 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         // Lock body scroll when explanation is open
         document.body.style.overflow = 'hidden';
 
+        const timer = setTimeout(() => setShowIntro(false), 4500);
 
         return () => {
             // Restore body scroll when closed
             document.body.style.overflow = 'unset';
+            clearTimeout(timer);
             window.speechSynthesis.cancel();
         };
     }, []);
@@ -294,8 +297,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                         <div className="flex items-center justify-between w-full relative z-[70]">
                             {/* Left: Brand */}
                             <div className={`flex items-center gap-3 transition-opacity duration-300 ${isPlaying ? 'opacity-0 md:opacity-100 pointer-events-none' : 'opacity-100'}`}>
-                                <div className="w-8 h-8 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10">
+                                <div className="w-8 h-8 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10 relative">
                                     <img src="/logo_white_bg.jpg" alt="SlideMate AI" className="w-full h-full object-cover" />
+                                    {showIntro && (
+                                        <div className="absolute inset-0 bg-indigo-600/40 animate-pulse" />
+                                    )}
                                 </div>
                                 <h3 className="text-sm md:text-xl font-black text-white italic tracking-tight uppercase">
                                     SLIDE <span className="text-indigo-400">MΛTE</span>
@@ -359,7 +365,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                             <div className="hidden md:block w-32" />
                         </div>
 
-                        {/* Transcription Bubble */}
+                        {/* Transcription Bubble / Intro Animation Area */}
                         <div className="relative w-full h-10 mt-3 flex items-center justify-center z-[60]">
                             {isPlaying && currentSentence && (
                                 <div className="bg-indigo-600/10 border border-indigo-500/20 px-4 md:px-6 py-1.5 rounded-2xl backdrop-blur-md shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-95">
@@ -370,6 +376,28 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                     <p className="text-white text-[10px] md:text-sm font-bold italic line-clamp-1">
                                         "{currentSentence}"
                                     </p>
+                                </div>
+                            )}
+
+                            {showIntro && !isPlaying && (
+                                <div className="relative flex items-center scale-75 md:scale-100">
+                                    <h2 className="text-xl md:text-3xl font-black tracking-[0.3em] italic text-white/30 uppercase select-none flex items-center gap-2">
+                                        <span>SLIDE</span>
+                                        <span className="text-indigo-500/30">MΛTE</span>
+                                    </h2>
+                                    <div className="absolute inset-0 flex items-center gap-2 overflow-hidden animate-reveal-text">
+                                        <h2 className="text-xl md:text-3xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
+                                            <span>SLIDE</span>
+                                            <span className="text-indigo-500">MΛTE</span>
+                                        </h2>
+                                    </div>
+                                    <div className="absolute top-1/2 -translate-y-1/2 left-0 w-12 h-12 md:w-16 md:h-16 z-20 animate-robot-write">
+                                        <div className="relative overflow-visible">
+                                            <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
+                                            <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
+                                            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-indigo-400 rounded-full animate-ping" />
+                                        </div>
+                                    </div>
                                 </div>
                             )}
                         </div>
