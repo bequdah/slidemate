@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v18_no_robotic_filler'; // Banning "هون السلايد" and formal filler
+const CACHE_VERSION = 'v19_ui_sync_and_robot_intro'; // Fresh cache for sync fixes and robot intro
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
