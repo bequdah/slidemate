@@ -162,14 +162,20 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     }, []);
 
     const resume = useCallback(() => {
-        // Only resume if actually paused
-        if (!isPaused || indexRef.current === -1) return;
+        console.log('Resume clicked:', { isPaused, currentIndex: indexRef.current });
         
+        // Only resume if actually paused
+        if (!isPaused || indexRef.current === -1) {
+            console.log('Resume blocked:', { isPaused, currentIndex: indexRef.current });
+            return;
+        }
+        
+        console.log('Resuming playback...');
         setIsPaused(false);
-        // Restart current sentence from beginning
         isPlayingRef.current = true;
+        // Restart current sentence from beginning
         playSentence(indexRef.current);
-    }, [playSentence]);
+    }, [playSentence, isPaused]);
 
     // Cleanup on unmount
     useEffect(() => {
