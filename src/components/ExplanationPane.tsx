@@ -308,8 +308,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 </h3>
                             </div>
 
-                            {/* CENTER: The Master Control Bar (The single icon-style interface) */}
-                            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl scale-95 md:scale-110 whitespace-nowrap">
+                            {/* RIGHT: The Master Control Bar (Now positioned on the right) */}
+                            <div className="flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl scale-95 md:scale-110 whitespace-nowrap">
                                 {mode && (
                                     <button onClick={handleBack} className="w-9 h-9 rounded-xl hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95" title="Back">
                                         ←
@@ -360,9 +360,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                     ✕
                                 </button>
                             </div>
-
-                            {/* Right side spacer */}
-                            <div className="hidden md:block w-32" />
                         </div>
 
                         {/* Transcription Bubble / Intro Animation Area */}
