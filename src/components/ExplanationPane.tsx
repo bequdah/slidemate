@@ -506,15 +506,29 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
                                         <button
                                             onClick={() => setShowGame(true)}
-                                            className="group flex flex-col items-center gap-6 transition-all duration-500"
+                                            className="group relative flex flex-col items-center gap-4 transition-all duration-500 animate-in zoom-in slide-in-from-bottom-4 duration-1000"
                                         >
-                                            <div className="w-24 h-24 bg-indigo-600 rounded-[2.5rem] flex items-center justify-center text-5xl shadow-[0_20px_50px_rgba(79,70,229,0.4)] group-hover:scale-110 group-active:scale-95 group-hover:rotate-6 transition-all duration-500 relative overflow-hidden">
-                                                <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
-                                                🎮
+                                            <div className="bg-indigo-600/10 hover:bg-indigo-600/20 border-2 border-indigo-500/30 px-10 py-6 rounded-[2.5rem] shadow-[0_0_40px_rgba(79,70,229,0.15)] group-hover:shadow-[0_0_60px_rgba(79,70,229,0.3)] group-hover:scale-105 group-active:scale-95 transition-all duration-500 text-center relative overflow-hidden group-hover:border-indigo-400">
+                                                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none" />
+
+                                                <div className="relative z-10 space-y-1">
+                                                    <p className="text-2xl font-black text-white italic tracking-tight drop-shadow-md">
+                                                        زهقان تستنى؟
+                                                    </p>
+                                                    <div className="flex items-center justify-center gap-2">
+                                                        <span className="text-lg">🎮</span>
+                                                        <p className="text-xs font-black text-indigo-400 uppercase tracking-[0.2em]">
+                                                            اكبس علي واتسلى
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <div className="text-center animate-bounce [animation-duration:3s]">
-                                                <p className="text-xl font-black text-white italic tracking-tight">زهقان تستنى؟</p>
-                                                <p className="text-[11px] text-indigo-400 font-black uppercase tracking-[0.2em] mt-1">اكبس علي واتسلى</p>
+
+                                            {/* Decorative Animation */}
+                                            <div className="flex gap-1">
+                                                <div className="w-1 h-1 bg-indigo-500/40 rounded-full animate-bounce" />
+                                                <div className="w-1 h-1 bg-indigo-500/40 rounded-full animate-bounce [animation-delay:0.2s]" />
+                                                <div className="w-1 h-1 bg-indigo-500/40 rounded-full animate-bounce [animation-delay:0.4s]" />
                                             </div>
                                         </button>
                                     </div>
