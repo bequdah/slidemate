@@ -77,8 +77,68 @@ MODE RULES:
 - simple: Focus on a clear explanation. sentences must be short and punchy. NO QUIZ.
 - exam: Focused on "Exam strategy" and generating MCQs. Return 2-8 hard MCQs. NO EXPLANATION TEXT.
 
-LaTeX: Use $$ ... $$ (BLOCK) for formulas. DOUBLE BACKSLASHES (\\\\).
+EXAM QUIZ SCHEMA (STRICT):
+- Each quiz item MUST be exactly: { "q": string, "options": [string,string,string,string], "a": 0|1|2|3, "reasoning": string }
+
+LaTeX: Use $$ ... $$ (BLOCK) for formulas. DOUBLE BACKSLASHES (\\).
 `;
+}
+
+async function repairExamJsonShape(systemPrompt: string, slidePrompt: string, badJson: any): Promise<any> {
+    const repairPrompt = `Fix this JSON to match EXACTLY this schema (do not add extra keys):\n\n{\n  \"explanation\": {},\n  \"quiz\": [\n    {\n      \"q\": string,\n      \"options\": [string,string,string,string],\n      \"a\": 0|1|2|3,\n      \"reasoning\": string\n    }\n  ]\n}\n\nRules:\n- Return ONLY valid JSON.\n- Preserve the same questions/options as much as possible.\n- Ensure every quiz item has numeric \"a\" (0-3).\n\nJSON TO FIX:\n${JSON.stringify(badJson)}`;
+
+    const fixed = await model_gemma.generateContent([
+        systemPrompt,
+        slidePrompt,
+        repairPrompt
+    ].join('\n\n'));
+
+    const fixedRaw = (await fixed.response).text();
+    const jsonMatch = fixedRaw.match(/\{[\s\S]*\}/);
+    return JSON.parse(jsonMatch ? jsonMatch[0] : fixedRaw);
+}
+
+function normalizeExamQuiz(parsed: any): any {
+    if (!parsed || typeof parsed !== 'object') return parsed;
+    if (!Array.isArray((parsed as any).quiz)) return parsed;
+
+    const toIndex = (v: any): number | undefined => {
+        if (v === null || v === undefined) return undefined;
+        if (typeof v === 'number') return Number.isFinite(v) ? v : undefined;
+
+        const s = String(v).trim();
+        if (!s) return undefined;
+
+        if (/^[0-3]$/.test(s)) return Number(s);
+        if (/^[1-4]$/.test(s)) return Number(s) - 1;
+
+        const upper = s.toUpperCase();
+        if (upper === 'A') return 0;
+        if (upper === 'B') return 1;
+        if (upper === 'C') return 2;
+        if (upper === 'D') return 3;
+
+        return undefined;
+    };
+
+    (parsed as any).quiz = (parsed as any).quiz.map((q: any) => {
+        if (!q || typeof q !== 'object') return q;
+
+        if (q.a !== undefined) {
+            const idx = toIndex(q.a);
+            return idx === undefined ? q : { ...q, a: idx };
+        }
+
+        const candidates = [q.answer, q.correct, q.correctAnswer, q.correct_index, q.correctIndex];
+        for (const c of candidates) {
+            const idx = toIndex(c);
+            if (idx !== undefined) return { ...q, a: idx };
+        }
+
+        return q;
+    });
+
+    return parsed;
 }
 
 const QUIZ_MIN = 1;
@@ -326,6 +386,9 @@ REMINDER:
 - DO NOT generate explanation(return empty object "explanation": { }).
         - Generate between 2 and 8 MCQs depending on the amount of content.
         - **CRITICAL**: The quiz "reasoning" MUST be in English.
+        - **STRICT QUIZ SCHEMA**: Each quiz item MUST be exactly:
+          { "q": string, "options": [string,string,string,string], "a": 0|1|2|3, "reasoning": string }
+        - **CRITICAL**: The field "a" MUST always exist and MUST be a NUMBER 0-3 (index of correct option).
 `;
         }
 
@@ -459,8 +522,27 @@ REMINDER:
                     throw new Error(`GEMMA_JSON_PARSE_FAILED: ${e.message}`);
                 }
 
+                if (resolvedMode === 'exam') {
+                    parsed = normalizeExamQuiz(parsed);
+                }
 
-                const validation = validateResultShape(parsed, resolvedMode);
+
+                let validation = validateResultShape(parsed, resolvedMode);
+                if (!validation.ok && resolvedMode === 'exam') {
+                    // If Gemma returned the quiz but forgot/garbled the correct index, attempt a fast repair pass.
+                    const reason = String(validation.reason || '');
+                    if (reason.includes('correct answer index') || reason.includes('invalid correct answer')) {
+                        try {
+                            const slidePrompt = userPrompt.replace('[[SLIDE_CONTENT]]', slideContexts || '');
+                            const repaired = await repairExamJsonShape(systemPrompt, slidePrompt, parsed);
+                            parsed = normalizeExamQuiz(repaired);
+                            validation = validateResultShape(parsed, resolvedMode);
+                        } catch (e: any) {
+                            console.warn(`Exam JSON repair failed: ${e?.message || e}`);
+                        }
+                    }
+                }
+
                 if (!validation.ok) {
                     console.warn(`Validation Failed: ${validation.reason}`);
                     throw new Error(`GEMMA_INVALID_SHAPE: ${validation.reason}`);
