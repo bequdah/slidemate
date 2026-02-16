@@ -77,7 +77,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
 
         // Check if ResponsiveVoice is available
         if (window.responsiveVoice) {
-            const voiceName = lang === 'ar' ? 'UK English Female' : 'US English Female';
+            const voiceName = lang === 'ar' ? 'Arabic Female' : 'US English Female';
 
             // Very Tight Safety Margin: 400ms per word + 500ms total buffer
             // This prevents the 5-second "dead air" issue.
@@ -125,13 +125,31 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
 
     const play = useCallback(() => {
         if (sentencesRef.current.length === 0) return;
+        
+        // If already playing, don't restart
+        if (isPlayingRef.current && !isPaused) return;
+        
+        // If paused, just resume
+        if (isPaused) {
+            setIsPaused(false);
+            // Restart current sentence from beginning
+            isPlayingRef.current = true;
+            playSentence(indexRef.current);
+            return;
+        }
+        
+        // Fresh start
         stop();
         playSentence(0);
     }, [playSentence, stop]);
 
     const pause = useCallback(() => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        // Set this to false so 'next' doesn't advance to the next sentence
+        
+        // Only pause if actually playing
+        if (!isPlayingRef.current || isPaused) return;
+        
+        // Set this to false so 'next' doesn't advance to next sentence
         isPlayingRef.current = false;
 
         if (window.responsiveVoice) {
@@ -140,14 +158,16 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             window.speechSynthesis.cancel();
         }
         setIsPaused(true);
-        // IMPORTANT: We do NOT call setIsPlaying(false) here because we want 
-        // the transcription bubble to stay visible while paused.
+        // Keep current sentence visible while paused
     }, []);
 
     const resume = useCallback(() => {
-        if (indexRef.current === -1) return;
+        // Only resume if actually paused
+        if (!isPaused || indexRef.current === -1) return;
+        
         setIsPaused(false);
-        // Restart the current sentence from the beginning as requested
+        // Restart current sentence from beginning
+        isPlayingRef.current = true;
         playSentence(indexRef.current);
     }, [playSentence]);
 
