@@ -506,25 +506,25 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
                                         <button
                                             onClick={() => setShowGame(true)}
-                                            className="group relative flex flex-col items-center gap-4 transition-all duration-500 animate-in zoom-in slide-in-from-bottom-4 duration-1000"
+                                            className="group relative flex flex-col items-center gap-2 transition-all duration-500 animate-in zoom-in slide-in-from-bottom-4 duration-1000"
                                         >
-                                            <div className="bg-indigo-600/10 hover:bg-indigo-600/20 border-2 border-indigo-500/30 px-12 py-8 rounded-[3rem] shadow-[0_0_50px_rgba(79,70,229,0.2)] group-hover:shadow-[0_0_70_px_rgba(79,70,229,0.4)] group-hover:scale-105 group-active:scale-95 transition-all duration-500 text-center relative overflow-hidden group-hover:border-indigo-400">
+                                            <div className="bg-indigo-600/10 hover:bg-indigo-600/20 border-2 border-indigo-500/20 px-8 py-4 rounded-[2rem] shadow-[0_0_30px_rgba(79,70,229,0.1)] group-hover:shadow-[0_0_50px_rgba(79,70,229,0.3)] group-hover:scale-105 group-active:scale-95 transition-all duration-500 text-center relative overflow-hidden group-hover:border-indigo-400">
                                                 <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/10 to-transparent pointer-events-none" />
 
-                                                <div className="relative z-10 space-y-2">
-                                                    <p className="text-3xl font-black text-white italic tracking-tighter drop-shadow-lg leading-tight">
+                                                <div className="relative z-10 space-y-0.5">
+                                                    <p className="text-xl font-black text-white italic tracking-tight drop-shadow-md">
                                                         زهقان تستنى؟
                                                     </p>
-                                                    <p className="text-xl font-bold text-indigo-300">
-                                                        اكبس علي <span className="text-white underline underline-offset-4 decoration-indigo-500">واتسلى</span> 🎮
+                                                    <p className="text-sm font-bold text-indigo-300">
+                                                        اكبس علي <span className="text-white underline underline-offset-2 decoration-indigo-500">واتسلى</span> 🎮
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            <div className="flex gap-1.5 opacity-60">
-                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse" />
-                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse [animation-delay:0.2s]" />
-                                                <div className="w-1.5 h-1.5 bg-indigo-500 rounded-full animate-pulse [animation-delay:0.4s]" />
+                                            <div className="flex gap-1 opacity-40">
+                                                <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse" />
+                                                <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse [animation-delay:0.2s]" />
+                                                <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse [animation-delay:0.4s]" />
                                             </div>
                                         </button>
                                     </div>
