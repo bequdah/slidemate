@@ -81,7 +81,7 @@ LaTeX: Use $$ ... $$ (BLOCK) for formulas. DOUBLE BACKSLASHES (\\\\).
 `;
 }
 
-const QUIZ_MIN = 2;
+const QUIZ_MIN = 1;
 const QUIZ_MAX = 8;
 
 function getQuizRange(mode: Mode): { min: number; max: number } | null {
@@ -149,10 +149,9 @@ function isStructuredObject(x: any) {
     return x && typeof x === 'object' && !Array.isArray(x);
 }
 
-function validateResultShape(result: any, mode: Mode) {
+function validateResultShape(result: any, mode: Mode): { ok: true } | { ok: false; reason: string } {
     if (!result || typeof result !== 'object') {
-        console.warn("Validation Failed: Result is not an object");
-        return false;
+        return { ok: false, reason: 'Result is not an object' };
     }
 
     const quizRange = getQuizRange(mode);
@@ -160,25 +159,24 @@ function validateResultShape(result: any, mode: Mode) {
     // Validate quiz if required
     if (mode === 'exam' && quizRange) {
         if (!Array.isArray(result.quiz)) {
-            console.warn("Validation Failed: 'quiz' is not an array");
-            return false;
+            return { ok: false, reason: "'quiz' is not an array" };
         }
 
         if (result.quiz.length < quizRange.min || result.quiz.length > quizRange.max) {
-            console.warn(`Validation Failed: Quiz length is ${result.quiz.length}, expected ${quizRange.min}-${quizRange.max}`);
-            return false;
+            return {
+                ok: false,
+                reason: `Quiz length is ${result.quiz.length}, expected ${quizRange.min}-${quizRange.max}`
+            };
         }
 
         // Validate MCQ options strictness
         for (let i = 0; i < result.quiz.length; i++) {
             const q = result.quiz[i];
             if (!Array.isArray(q.options) || q.options.length !== 4) {
-                console.warn(`Validation Failed: Question ${i} does not have exactly 4 options`);
-                return false;
+                return { ok: false, reason: `Question ${i} does not have exactly 4 options` };
             }
             if (typeof q.a !== 'number' || q.a < 0 || q.a > 3) {
-                console.warn(`Validation Failed: Question ${i} has invalid correct answer index (a): ${q.a}`);
-                return false;
+                return { ok: false, reason: `Question ${i} has invalid correct answer index (a): ${q.a}` };
             }
         }
     } else {
@@ -191,12 +189,11 @@ function validateResultShape(result: any, mode: Mode) {
 
     if (mode !== 'exam') {
         if (!isStructuredObject(result.explanation)) {
-            console.warn("Validation Failed: 'explanation' is missing or not an object");
-            return false;
+            return { ok: false, reason: "'explanation' is missing or not an object" };
         }
     }
 
-    return true;
+    return { ok: true };
 }
 
 
@@ -463,8 +460,10 @@ REMINDER:
                 }
 
 
-                if (!validateResultShape(parsed, resolvedMode)) {
-                    throw new Error('GEMMA_INVALID_SHAPE');
+                const validation = validateResultShape(parsed, resolvedMode);
+                if (!validation.ok) {
+                    console.warn(`Validation Failed: ${validation.reason}`);
+                    throw new Error(`GEMMA_INVALID_SHAPE: ${validation.reason}`);
                 }
 
                 // --- PUNITIVE REVIEW SYSTEM (QUDAHWAY GUARD) ---
