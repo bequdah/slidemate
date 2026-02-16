@@ -52,7 +52,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const [mode, setMode] = useState<ExplanationMode | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({});
     const [lang] = useState<'en' | 'ar'>('ar');
-    const [showIntro, setShowIntro] = useState(true);
 
     const currentContent = {
         explanation: data?.explanation,
@@ -80,12 +79,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         // Lock body scroll when explanation is open
         document.body.style.overflow = 'hidden';
 
-        const timer = setTimeout(() => setShowIntro(false), 4500);
 
         return () => {
             // Restore body scroll when closed
             document.body.style.overflow = 'unset';
-            clearTimeout(timer);
             window.speechSynthesis.cancel();
         };
     }, []);
