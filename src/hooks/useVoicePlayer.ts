@@ -131,18 +131,23 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
 
     const pause = useCallback(() => {
         if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        // Set this to false so 'next' doesn't advance to the next sentence
         isPlayingRef.current = false;
+
         if (window.responsiveVoice) {
-            window.responsiveVoice.cancel(); // ResponsiveVoice pause/resume is glitchy, better use cancel/restart
+            window.responsiveVoice.cancel();
         } else {
             window.speechSynthesis.cancel();
         }
         setIsPaused(true);
+        // IMPORTANT: We do NOT call setIsPlaying(false) here because we want 
+        // the transcription bubble to stay visible while paused.
     }, []);
 
     const resume = useCallback(() => {
         if (indexRef.current === -1) return;
         setIsPaused(false);
+        // Restart the current sentence from the beginning as requested
         playSentence(indexRef.current);
     }, [playSentence]);
 
