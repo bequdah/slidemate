@@ -77,7 +77,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
 
         // Check if ResponsiveVoice is available
         if (window.responsiveVoice) {
-            const voiceName = lang === 'ar' ? 'Arabic Male' : 'US English Male';
+            const voiceName = lang === 'ar' ? 'UK English Female' : 'US English Female';
 
             // Estimated duration fallback (Safety Timeout)
             // Approx 150 words per minute at rate 1
