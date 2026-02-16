@@ -85,7 +85,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             const estimatedDurationMs = (wordCount * 600) + 2000; // 600ms per word + 2s buffer
 
             window.responsiveVoice.speak(text, voiceName, {
-                rate: 1.15,
+                rate: 1,
                 pitch: 1,
                 volume: 1,
                 onstart: () => {
@@ -109,7 +109,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             // Fallback to Web Speech API
             const utterance = new SpeechSynthesisUtterance(text);
             utterance.lang = lang === 'ar' ? 'ar-SA' : 'en-US';
-            utterance.rate = 1.15;
+            utterance.rate = 1;
 
             utterance.onstart = () => {
                 setIsPlaying(true);
