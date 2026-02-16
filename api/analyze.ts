@@ -81,8 +81,8 @@ LaTeX: Use $$ ... $$ (BLOCK) for formulas. DOUBLE BACKSLASHES (\\\\).
 `;
 }
 
-const QUIZ_MIN = 2;
-const QUIZ_MAX = 5;
+const QUIZ_MIN = 1;
+const QUIZ_MAX = 1;
 
 function getQuizRange(mode: Mode): { min: number; max: number } | null {
     return mode === 'exam' ? { min: QUIZ_MIN, max: QUIZ_MAX } : null;
