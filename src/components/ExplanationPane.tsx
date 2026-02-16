@@ -319,50 +319,76 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 )}
 
                                 {data && (
-                                    <select
-                                        value={voiceProfile}
-                                        onChange={(e) => setVoiceProfile(e.target.value as VoiceProfile)}
-                                        disabled={isPlaying}
-                                        className="h-9 px-3 rounded-xl bg-white/5 text-slate-200 border border-white/10 text-[10px] md:text-xs uppercase tracking-widest"
-                                        title="Voice"
-                                    >
-                                        <option value="auto">US English</option>
-                                        <option value="en_male_strong">UK English</option>
-                                    </select>
-                                )}
-
-                                {data && (
-                                    <button
-                                        onClick={isPlaying ? stop : play}
-                                        disabled={loading || (voiceLoading && !isPlaying)}
-                                        className={`h-9 px-4 md:px-5 rounded-xl flex items-center gap-3 transition-all active:scale-95 font-black text-[10px] md:text-xs uppercase tracking-widest ${isPlaying ? 'bg-indigo-500 text-white shadow-lg' : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'}`}
-                                    >
+                                    <div className="relative">
                                         {isPlaying ? (
-                                            isLoadingAudio ? (
-                                                <>
-                                                    <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping" />
-                                                    <span>Load</span>
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <div className="w-2.5 h-2.5 bg-white rounded-sm animate-pulse" />
-                                                    <span>Stop</span>
-                                                </>
-                                            )
-                                        ) : voiceLoading ? (
-                                            <>
-                                                <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                                                <span>...</span>
-                                            </>
+                                            <button
+                                                onClick={stop}
+                                                className="h-9 px-4 md:px-5 rounded-xl flex items-center gap-3 transition-all active:scale-95 font-black text-[10px] md:text-xs uppercase tracking-widest bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:bg-indigo-600"
+                                            >
+                                                {isLoadingAudio ? (
+                                                    <>
+                                                        <div className="w-2.5 h-2.5 bg-white rounded-full animate-ping" />
+                                                        <span>Load</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        <div className="w-2.5 h-2.5 bg-white rounded-sm animate-pulse" />
+                                                        <span>Stop</span>
+                                                    </>
+                                                )}
+                                            </button>
                                         ) : (
-                                            <>
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                                </svg>
-                                                <span className="hidden xs:inline">AI Voice</span>
-                                            </>
+                                            <div className="group relative">
+                                                <button
+                                                    disabled={loading || voiceLoading}
+                                                    className="h-9 px-4 md:px-5 rounded-xl flex items-center gap-2 transition-all active:scale-95 font-black text-[10px] md:text-xs uppercase tracking-widest bg-white/5 text-slate-300 hover:text-white border border-white/5 hover:bg-white/10"
+                                                >
+                                                    {voiceLoading ? (
+                                                        <>
+                                                            <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                                            <span>Loading...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <svg className="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
+                                                            </svg>
+                                                            <span className="hidden xs:inline">AI Voice</span>
+                                                            <svg className="w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                            </svg>
+                                                        </>
+                                                    )}
+                                                </button>
+
+                                                {/* Hover Dropdown Menu */}
+                                                {!voiceLoading && (
+                                                    <div className="absolute right-0 top-full mt-2 w-40 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[80] transform origin-top-right">
+                                                        <div className="p-1">
+                                                            <button
+                                                                onClick={() => {
+                                                                    setVoiceProfile('auto');
+                                                                    setTimeout(play, 0);
+                                                                }}
+                                                                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${voiceProfile === 'auto' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                                                            >
+                                                                <span className="text-base">🇺🇸</span> US English
+                                                            </button>
+                                                            <button
+                                                                onClick={() => {
+                                                                    setVoiceProfile('en_male_strong');
+                                                                    setTimeout(play, 0);
+                                                                }}
+                                                                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${voiceProfile === 'en_male_strong' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
+                                                            >
+                                                                <span className="text-base">🇬🇧</span> UK English
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
                                         )}
-                                    </button>
+                                    </div>
                                 )}
 
                                 {isPlaying && (
