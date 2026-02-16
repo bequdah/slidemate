@@ -37,8 +37,8 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             sentencesRef.current = [];
             return;
         }
-        // Split by sentence enders AND commas for better transcription sync
-        const split = scriptText.split(/(?<=[.!?،؛؟])\s+|(?<=\s)و(?=\s)/).filter(s => s.trim().length > 2);
+        // Split strictly by punctuations for natural logical units
+        const split = scriptText.split(/(?<=[.!?،؛؟])\s+/).filter(s => s.trim().length > 0);
         sentencesRef.current = split;
     }, [scriptText]);
 
@@ -71,8 +71,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         const next = () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             if (isPlayingRef.current) {
-                // Short break between segments for natural flow
-                timeoutRef.current = setTimeout(() => playSentence(idx + 1), 50);
+                playSentence(idx + 1);
             }
         };
 
@@ -80,9 +79,10 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         if (window.responsiveVoice) {
             const voiceName = lang === 'ar' ? 'UK English Female' : 'US English Female';
 
-            // Tighten Safety Timeout: 450ms per word + 800ms buffer
+            // High Safety Margin: 800ms per word + 5s buffer
+            // We only want this to trigger if the engine CRASHES, not during normal flow
             const wordCount = text.split(/\s+/).length;
-            const estimatedDurationMs = (wordCount * 450) + 800;
+            const estimatedDurationMs = (wordCount * 800) + 5000;
 
             window.responsiveVoice.speak(text, voiceName, {
                 rate: 1,
@@ -93,9 +93,9 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
                     setIsPaused(false);
                     isPlayingRef.current = true;
 
-                    // Start tight safety timer
+                    // Start non-aggressive safety timer
                     timeoutRef.current = setTimeout(() => {
-                        console.warn("Sync skip: Moving to next segment.");
+                        console.warn("Safety trigger: Moving next.");
                         next();
                     }, estimatedDurationMs);
                 },
