@@ -12,11 +12,11 @@ const AstroJump: React.FC = () => {
     const scoreRef = useRef(0);
     const frameCountRef = useRef(0);
 
-    const GRAVITY = 0.4;
+    const GRAVITY = 0.45;
     const JUMP_STRENGTH = -7;
-    const PIPE_SPEED = 3.5;
+    const PIPE_SPEED = 4.2;
     const PIPE_SPAWN_INTERVAL = 90;
-    const PIPE_GAP = 160;
+    const PIPE_GAP = 145;
 
     useEffect(() => {
         const handleJump = (e: any) => {

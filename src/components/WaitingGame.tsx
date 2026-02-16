@@ -80,11 +80,14 @@ const WaitingGame: React.FC = () => {
             const enemiesToKeep = new Array(enemiesRef.current.length).fill(true);
 
             enemiesRef.current.forEach((enemy, eIdx) => {
+                const enemyCenterX = enemy.x + 16;
+                const enemyCenterY = enemy.y - 12; // Adjust for emoji baseline
+
                 bulletsRef.current.forEach((bullet, bIdx) => {
                     if (!bulletsToKeep[bIdx] || !enemiesToKeep[eIdx]) return;
 
-                    const dist = Math.hypot(enemy.x + 15 - bullet.x, enemy.y + 15 - bullet.y);
-                    if (dist < 35) {
+                    const dist = Math.hypot(enemyCenterX - bullet.x, enemyCenterY - bullet.y);
+                    if (dist < 30) {
                         enemiesToKeep[eIdx] = false;
                         bulletsToKeep[bIdx] = false;
                         scoreRef.current += 10;
@@ -95,7 +98,9 @@ const WaitingGame: React.FC = () => {
                 if (enemiesToKeep[eIdx]) {
                     const shipCenterX = shipRef.current.x + SHIP_SIZE / 2;
                     const shipCenterY = shipRef.current.y + SHIP_SIZE / 2;
-                    if (Math.hypot(enemy.x + 15 - shipCenterX, enemy.y + 15 - shipCenterY) < 35) {
+                    const distToShip = Math.hypot(enemyCenterX - shipCenterX, enemyCenterY - shipCenterY);
+
+                    if (distToShip < 35) {
                         setGameState('gameover');
                     }
                     if (enemy.y > canvas.height + 40) {

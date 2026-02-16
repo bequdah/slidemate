@@ -12,7 +12,12 @@ const NeuralSnake: React.FC = () => {
         { x: 10, y: 12 }
     ]);
     const directionRef = useRef({ x: 0, y: -1 });
-    const foodRef = useRef({ x: 15, y: 15 });
+    const foodsRef = useRef<{ x: number, y: number }[]>([
+        { x: 5, y: 5 },
+        { x: 15, y: 15 },
+        { x: 10, y: 5 }
+    ]);
+    const heartRef = useRef<{ x: number, y: number, spawnTime: number } | null>(null);
     const gridCountRef = useRef({ x: 20, y: 20 });
     const lastUpdateRef = useRef(0);
     const scoreRef = useRef(0);
@@ -90,6 +95,7 @@ const NeuralSnake: React.FC = () => {
         window.addEventListener('resize', resize);
 
         let animationFrameId: number;
+        let growPending = 0;
 
         const update = (timestamp: number) => {
             if (gameState !== 'playing') return;
@@ -98,6 +104,21 @@ const NeuralSnake: React.FC = () => {
             const speed = Math.max(50, 100 - Math.floor(scoreRef.current / 50) * 5);
             if (timestamp - lastUpdateRef.current < speed) return;
             lastUpdateRef.current = timestamp;
+
+            // Heart Spawn Logic (every 5 seconds)
+            if (!heartRef.current && timestamp > 5000) {
+                if (!lastUpdateRef.current || (timestamp % 5000 < 100)) {
+                    heartRef.current = {
+                        x: Math.floor(Math.random() * gridCountRef.current.x),
+                        y: Math.floor(Math.random() * gridCountRef.current.y),
+                        spawnTime: timestamp
+                    };
+                }
+            }
+            // Hearts expire after 4 seconds if not eaten
+            if (heartRef.current && timestamp - heartRef.current.spawnTime > 4000) {
+                heartRef.current = null;
+            }
 
             const head = { ...snakeRef.current[0] };
             head.x += directionRef.current.x;
@@ -118,15 +139,28 @@ const NeuralSnake: React.FC = () => {
             snakeRef.current.unshift(head);
 
             // Food collision
-            if (head.x === foodRef.current.x && head.y === foodRef.current.y) {
+            const foodIndex = foodsRef.current.findIndex(f => f.x === head.x && f.y === head.y);
+            if (foodIndex !== -1) {
                 scoreRef.current += 10;
                 setScore(scoreRef.current);
-                foodRef.current = {
+                foodsRef.current[foodIndex] = {
                     x: Math.floor(Math.random() * gridCountRef.current.x),
                     y: Math.floor(Math.random() * gridCountRef.current.y)
                 };
-            } else {
-                snakeRef.current.pop();
+            }
+            // Heart collision
+            else if (heartRef.current && head.x === heartRef.current.x && head.y === heartRef.current.y) {
+                scoreRef.current += 50;
+                setScore(scoreRef.current);
+                growPending += 3; // Heart makes it grow by 3
+                heartRef.current = null;
+            }
+            else {
+                if (growPending > 0) {
+                    growPending--; // Don't pop if we are growing
+                } else {
+                    snakeRef.current.pop();
+                }
             }
         };
 
@@ -137,19 +171,29 @@ const NeuralSnake: React.FC = () => {
 
             const cellSize = 20;
 
-            // Draw Food (Data Node)
-            ctx.shadowBlur = 15;
-            ctx.shadowColor = '#fbbf24';
-            ctx.fillStyle = '#fbbf24';
-            ctx.beginPath();
-            ctx.arc(
-                foodRef.current.x * cellSize + cellSize / 2,
-                foodRef.current.y * cellSize + cellSize / 2,
-                cellSize / 3,
-                0,
-                Math.PI * 2
-            );
-            ctx.fill();
+            // Draw Foods (Data Nodes) - Now 3 of them
+            foodsRef.current.forEach(food => {
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = '#fbbf24';
+                ctx.fillStyle = '#fbbf24';
+                ctx.beginPath();
+                ctx.arc(
+                    food.x * cellSize + cellSize / 2,
+                    food.y * cellSize + cellSize / 2,
+                    cellSize / 3,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.fill();
+            });
+
+            // Draw Big Heart Powerup
+            if (heartRef.current) {
+                ctx.shadowBlur = 25;
+                ctx.shadowColor = '#ef4444';
+                ctx.font = '24px Arial';
+                ctx.fillText('❤️', heartRef.current.x * cellSize - 4, heartRef.current.y * cellSize + 18);
+            }
 
             // Draw Snake (Neural Chain)
             snakeRef.current.forEach((segment, i) => {
@@ -158,7 +202,7 @@ const NeuralSnake: React.FC = () => {
                 ctx.shadowColor = '#6366f1';
                 ctx.fillStyle = isHead ? '#818cf8' : 'rgba(99, 102, 241, ' + (1 - i / snakeRef.current.length * 0.8) + ')';
 
-                const padding = isHead ? 2 : 4;
+                const padding = isHead ? 1 : 3;
                 ctx.fillRect(
                     segment.x * cellSize + padding,
                     segment.y * cellSize + padding,
@@ -177,7 +221,7 @@ const NeuralSnake: React.FC = () => {
             ctx.shadowBlur = 0;
             ctx.fillStyle = 'rgba(99, 102, 241, 0.4)';
             ctx.font = 'bold 11px Inter';
-            ctx.fillText("NEURAL SNAKE V1.0 - COLLECT KNOWLEDGE NODES", 24, canvas.height - 24);
+            ctx.fillText("NEURAL SNAKE V1.2 - COLLECT NODES & HEARTS", 24, canvas.height - 24);
         };
 
         const loop = (timestamp: number) => {
@@ -203,6 +247,12 @@ const NeuralSnake: React.FC = () => {
             { x: 10, y: 12 }
         ];
         directionRef.current = { x: 0, y: -1 };
+        foodsRef.current = [
+            { x: 5, y: 5 },
+            { x: 15, y: 15 },
+            { x: 10, y: 5 }
+        ];
+        heartRef.current = null;
         setGameState('playing');
     };
 
