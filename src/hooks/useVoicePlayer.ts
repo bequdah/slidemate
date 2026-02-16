@@ -37,9 +37,8 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             sentencesRef.current = [];
             return;
         }
-        // Split strictly by punctuations (including commas) or newlines
-        // This ensures the bubble is just one sentence/phrase at a time.
-        const split = scriptText.split(/(?<=[.!?،,؛؟])\s*|\n+/).filter(s => s.trim().length > 0);
+        // Split strictly by major sentence enders as requested
+        const split = scriptText.split(/(?<=[.!?؟])\s*|\n+/).filter(s => s.trim().length > 0);
         sentencesRef.current = split;
     }, [scriptText]);
 

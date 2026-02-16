@@ -363,14 +363,14 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                         </div>
 
                         {/* Transcription Bubble / Intro Animation Area */}
-                        <div className="relative w-full h-10 mt-3 flex items-center justify-center z-[60]">
+                        <div className="relative w-full min-h-[2.5rem] mt-3 flex items-center justify-center z-[60]">
                             {isPlaying && currentSentence && (
                                 <div className="bg-indigo-600/10 border border-indigo-500/20 px-4 md:px-6 py-1.5 rounded-2xl backdrop-blur-md shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-95">
                                     <div className="flex gap-0.5 items-center">
                                         <div className="w-0.5 h-3 bg-indigo-400 animate-bounce" />
                                         <div className="w-0.5 h-4 bg-indigo-400 animate-bounce [animation-delay:-0.15s]" />
                                     </div>
-                                    <p className="text-white text-[10px] md:text-sm font-bold italic line-clamp-1">
+                                    <p className="text-white text-[10px] md:text-sm font-bold italic text-center max-w-[80vw]">
                                         "{currentSentence}"
                                     </p>
                                 </div>
