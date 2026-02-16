@@ -81,8 +81,8 @@ LaTeX: Use $$ ... $$ (BLOCK) for formulas. DOUBLE BACKSLASHES (\\\\).
 `;
 }
 
-const QUIZ_MIN = 1;
-const QUIZ_MAX = 1;
+const QUIZ_MIN = 2;
+const QUIZ_MAX = 8;
 
 function getQuizRange(mode: Mode): { min: number; max: number } | null {
     return mode === 'exam' ? { min: QUIZ_MIN, max: QUIZ_MAX } : null;
@@ -313,8 +313,6 @@ REMINDER:
 - Scan final response for banned words and replace them.
 - **MATH CHECK**: Ensure LaTeX \`$$...$$\` with \`\\\\\`.
 - **NO BOLD MATH**: Final check -> If you see \`**$$...$$**\`, change it to \`$$...$$\`.
-- Return between 2 and 8 MCQs (comprehensive to the slide).
-- **CRITICAL**: The quiz "reasoning" MUST be in English.
 `;
 
         if (resolvedMode === 'simple') {
@@ -330,6 +328,7 @@ REMINDER:
             - EXAM MODE: Focus ONLY on finding the hardest exam points.
 - DO NOT generate explanation(return empty object "explanation": { }).
         - Generate between 2 and 8 MCQs depending on the amount of content.
+        - **CRITICAL**: The quiz "reasoning" MUST be in English.
 `;
         }
 
