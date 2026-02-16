@@ -292,171 +292,89 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
             {/* Modal Content */}
             <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${lang === 'ar' ? 'font-arabic' : ''}`}>
                 <div className="flex flex-col h-full overflow-hidden">
-                    {/* Header */}
-                    <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl relative flex-shrink-0 min-h-[140px] md:min-h-[180px]">
-                        <div className="flex flex-col md:grid md:grid-cols-[200px_1fr_200px] gap-6 items-center w-full">
-
-                            {/* BRAND & INFO */}
-                            <div className="flex justify-between items-center w-full md:w-auto md:flex-col md:items-start gap-4 relative z-[60]">
-                                <div className="flex items-center md:flex-col gap-3">
-                                    <div className="relative w-10 h-10 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10 flex-shrink-0">
-                                        <img src="/logo_white_bg.jpg" alt="SlideMate AI" className="w-full h-full object-cover" />
-                                        {showIntro && (
-                                            <div className="absolute inset-0 bg-indigo-600/40 animate-pulse" />
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <h3 className="text-sm md:text-xl font-black tracking-tight text-white leading-tight uppercase italic flex items-center gap-1">
-                                            <span>SLIDE</span>
-                                            <span className="text-indigo-400">MΛTE</span>
-                                        </h3>
-                                    </div>
+                    {/* Header */}                    {/* Unified Header & Master Action Bar */}
+                    <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl relative flex-shrink-0">
+                        <div className="flex items-center justify-between w-full relative z-[70]">
+                            {/* Left: Brand */}
+                            <div className={`flex items-center gap-3 transition-opacity duration-300 ${isPlaying ? 'opacity-0 md:opacity-100 pointer-events-none' : 'opacity-100'}`}>
+                                <div className="w-8 h-8 md:w-16 md:h-16 rounded-xl md:rounded-2xl overflow-hidden shadow-lg border border-white/10">
+                                    <img src="/logo_white_bg.jpg" alt="SlideMate AI" className="w-full h-full object-cover" />
                                 </div>
-
-                                <div className="flex md:hidden items-center gap-2">
-                                    {data && (
-                                        <div className="flex items-center gap-2">
-                                            {isPlaying && (
-                                                <button
-                                                    onClick={isPaused ? resume : pause}
-                                                    className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center text-indigo-400 transition-all border border-white/10 active:scale-95"
-                                                    title={isPaused ? 'Resume' : 'Pause'}
-                                                >
-                                                    {isPaused ? (
-                                                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                                                    ) : (
-                                                        <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                                                    )}
-                                                </button>
-                                            )}
-                                            <button
-                                                onClick={isPlaying ? stop : play}
-                                                disabled={loading || (voiceLoading && !isPlaying)}
-                                                className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all active:scale-95 ${loading || (voiceLoading && !isPlaying) ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white shadow-lg border-none' : 'bg-white/5 text-slate-400 border border-white/10'}`}
-                                                title={isPlaying ? 'Stop Teaching' : voiceLoading ? 'Preparing Voice...' : 'AI Teacher Voice'}
-                                            >
-                                                {isPlaying ? (
-                                                    <div className="w-3 h-3 bg-white rounded-sm" />
-                                                ) : voiceLoading ? (
-                                                    <div className="w-4 h-4 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                                                ) : (
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                                    </svg>
-                                                )}
-                                            </button>
-                                        </div>
-                                    )}
-
-                                    {mode && (
-                                        <button onClick={handleBack} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">←</button>
-                                    )}
-                                    <button onClick={onClose} className="w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 text-lg">✕</button>
-                                </div>
+                                <h3 className="text-sm md:text-xl font-black text-white italic tracking-tight uppercase">
+                                    SLIDE <span className="text-indigo-400">MΛTE</span>
+                                </h3>
                             </div>
 
-                            {/* TRANSCRIPTION / ANIMATION AREA */}
-                            <div className="relative w-full h-20 md:h-full flex items-center justify-center z-[70]">
-                                {isPlaying && currentSentence && (
-                                    <div className="absolute inset-0 flex items-center justify-center px-4 animate-in fade-in zoom-in-95 duration-300">
-                                        <div className="bg-indigo-600/10 border border-indigo-500/20 px-6 py-3 rounded-2xl backdrop-blur-md shadow-xl flex items-center gap-4 max-w-xl">
-                                            <div className="flex-shrink-0 flex gap-1 items-center">
-                                                <div className={`w-1 h-3 bg-indigo-400 ${!isPaused ? 'animate-bounce [animation-delay:-0.3s]' : 'opacity-50'}`} />
-                                                <div className={`w-1 h-4 bg-indigo-400 ${!isPaused ? 'animate-bounce [animation-delay:-0.15s]' : 'opacity-50'}`} />
-                                                <div className={`w-1 h-2 bg-indigo-400 ${!isPaused ? 'animate-bounce' : 'opacity-50'}`} />
-                                            </div>
-                                            <p className="text-white text-sm md:text-base font-bold italic leading-tight text-center">
-                                                "{currentSentence}"
-                                            </p>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {showIntro && !isPlaying && (
-                                    <div className="relative flex items-center scale-75 md:scale-100 mt-4 md:mt-0">
-                                        <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white/30 uppercase select-none flex items-center gap-2">
-                                            <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
-                                            <span className="text-indigo-500/30">MΛTE</span>
-                                        </h2>
-                                        <div className="absolute inset-0 flex items-center gap-2 overflow-hidden animate-reveal-text">
-                                            <h2 className="text-3xl md:text-5xl font-black tracking-[0.3em] italic text-white uppercase flex items-center gap-2 whitespace-nowrap">
-                                                <span>{slideNumbers.length > 1 ? 'BATCH' : 'SLIDE'}</span>
-                                                <span className="text-indigo-500">MΛTE</span>
-                                            </h2>
-                                        </div>
-                                        <div className="absolute top-1/2 -translate-y-1/2 left-0 w-16 h-16 md:w-24 md:h-24 z-20 animate-robot-write">
-                                            <div className="relative overflow-visible">
-                                                <div className="absolute inset-0 bg-indigo-500/30 blur-3xl rounded-full" />
-                                                <img src="/ai_robot_final.png" className="w-full h-full object-contain relative z-10 drop-shadow-[0_0_15px_rgba(99,102,241,0.5)]" />
-                                                <div className="absolute -bottom-2 -right-2 w-6 h-6 bg-indigo-400 rounded-full animate-ping" />
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-
-                            {/* ACTIONS & CLOSE */}
-                            <div className="hidden md:flex flex-col items-end gap-4 relative z-[60]">
-                                {/* Row 1: Navigation Tools */}
-                                <div className="flex items-center gap-3">
-                                    {mode && (
-                                        <button
-                                            onClick={handleBack}
-                                            className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-xl"
-                                            title="Back to Selection"
-                                        >
-                                            ←
-                                        </button>
-                                    )}
-                                    <button
-                                        onClick={onClose}
-                                        className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95 text-xl"
-                                        title="Close"
-                                    >
-                                        ✕
+                            {/* CENTER: The Master Control Bar (The single icon-style interface) */}
+                            <div className="absolute left-1/2 -translate-x-1/2 flex items-center gap-2 p-1.5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl scale-95 md:scale-110 whitespace-nowrap">
+                                {mode && (
+                                    <button onClick={handleBack} className="w-9 h-9 rounded-xl hover:bg-white/5 flex items-center justify-center text-slate-400 hover:text-white transition-all active:scale-95" title="Back">
+                                        ←
                                     </button>
-                                </div>
+                                )}
 
-                                {/* Row 2: Content Tools */}
-                                <div className="flex items-center gap-3 w-full justify-end">
+                                {data && (
+                                    <button
+                                        onClick={isPlaying ? stop : play}
+                                        disabled={loading || (voiceLoading && !isPlaying)}
+                                        className={`h-9 px-4 md:px-5 rounded-xl flex items-center gap-3 transition-all active:scale-95 font-black text-[10px] md:text-xs uppercase tracking-widest ${isPlaying ? 'bg-indigo-500 text-white shadow-lg' : 'bg-white/5 text-slate-400 hover:text-white border border-white/5'}`}
+                                    >
+                                        {isPlaying ? (
+                                            <>
+                                                <div className="w-2.5 h-2.5 bg-white rounded-sm animate-pulse" />
+                                                <span>Stop</span>
+                                            </>
+                                        ) : voiceLoading ? (
+                                            <>
+                                                <div className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
+                                                <span>...</span>
+                                            </>
+                                        ) : (
+                                            <>
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                                                </svg>
+                                                <span className="hidden xs:inline">AI Voice</span>
+                                            </>
+                                        )}
+                                    </button>
+                                )}
 
+                                {isPlaying && (
+                                    <button
+                                        onClick={isPaused ? resume : pause}
+                                        className="w-9 h-9 rounded-xl hover:bg-white/5 flex items-center justify-center text-indigo-400 transition-all active:scale-95"
+                                    >
+                                        {isPaused ? (
+                                            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                        ) : (
+                                            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
+                                        )}
+                                    </button>
+                                )}
 
-                                    {data && (
-                                        <div className="flex items-center gap-2">
-                                            {isPlaying && (
-                                                <button
-                                                    onClick={isPaused ? resume : pause}
-                                                    className="w-12 h-12 rounded-xl bg-white/5 hover:bg-white/10 border border-white/5 flex items-center justify-center text-indigo-400 hover:text-white transition-all active:scale-95"
-                                                    title={isPaused ? 'Resume' : 'Pause'}
-                                                >
-                                                    {isPaused ? (
-                                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                                                    ) : (
-                                                        <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" /></svg>
-                                                    )}
-                                                </button>
-                                            )}
-
-                                            <button
-                                                onClick={isPlaying ? stop : play}
-                                                disabled={loading || (voiceLoading && !isPlaying)}
-                                                className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all border active:scale-95 ${loading || (voiceLoading && !isPlaying) ? 'opacity-50 cursor-not-allowed' : ''} ${isPlaying ? 'bg-indigo-500 text-white border-none shadow-lg shadow-indigo-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white border-white/5'}`}
-                                                title={isPlaying ? 'Stop Teaching' : voiceLoading ? 'Preparing Voice...' : 'AI Teacher Voice'}
-                                            >
-                                                {isPlaying ? (
-                                                    <div className="w-4 h-4 bg-white rounded-sm" />
-                                                ) : voiceLoading ? (
-                                                    <div className="w-5 h-5 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin" />
-                                                ) : (
-                                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
-                                                    </svg>
-                                                )}
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
+                                <button onClick={onClose} className="w-9 h-9 rounded-xl hover:bg-red-500/10 flex items-center justify-center text-slate-400 hover:text-red-400 transition-all active:scale-95" title="Close">
+                                    ✕
+                                </button>
                             </div>
+
+                            {/* Right side spacer */}
+                            <div className="hidden md:block w-32" />
+                        </div>
+
+                        {/* Transcription Bubble */}
+                        <div className="relative w-full h-10 mt-3 flex items-center justify-center z-[60]">
+                            {isPlaying && currentSentence && (
+                                <div className="bg-indigo-600/10 border border-indigo-500/20 px-4 md:px-6 py-1.5 rounded-2xl backdrop-blur-md shadow-xl flex items-center gap-3 animate-in fade-in zoom-in-95">
+                                    <div className="flex gap-0.5 items-center">
+                                        <div className="w-0.5 h-3 bg-indigo-400 animate-bounce" />
+                                        <div className="w-0.5 h-4 bg-indigo-400 animate-bounce [animation-delay:-0.15s]" />
+                                    </div>
+                                    <p className="text-white text-[10px] md:text-sm font-bold italic line-clamp-1">
+                                        "{currentSentence}"
+                                    </p>
+                                </div>
+                            )}
                         </div>
                     </div>
 
