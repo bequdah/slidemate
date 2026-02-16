@@ -37,8 +37,8 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             sentencesRef.current = [];
             return;
         }
-        // Robust split by common sentence enders
-        const split = scriptText.split(/(?<=[.!?])\s+|(?<=[،؛؟])\s+/).filter(s => s.trim().length > 0);
+        // Split by sentence enders AND commas for better transcription sync
+        const split = scriptText.split(/(?<=[.!?،؛؟])\s+|(?<=\s)و(?=\s)/).filter(s => s.trim().length > 2);
         sentencesRef.current = split;
     }, [scriptText]);
 
@@ -63,7 +63,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
             return;
         }
 
-        const text = sentencesRef.current[idx];
+        const text = sentencesRef.current[idx].trim();
         indexRef.current = idx;
         setCurrentIndex(idx);
         setCurrentSentence(text);
@@ -71,7 +71,8 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         const next = () => {
             if (timeoutRef.current) clearTimeout(timeoutRef.current);
             if (isPlayingRef.current) {
-                playSentence(idx + 1);
+                // Short break between segments for natural flow
+                timeoutRef.current = setTimeout(() => playSentence(idx + 1), 50);
             }
         };
 
@@ -79,10 +80,9 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         if (window.responsiveVoice) {
             const voiceName = lang === 'ar' ? 'UK English Female' : 'US English Female';
 
-            // Estimated duration fallback (Safety Timeout)
-            // Approx 150 words per minute at rate 1
+            // Tighten Safety Timeout: 450ms per word + 800ms buffer
             const wordCount = text.split(/\s+/).length;
-            const estimatedDurationMs = (wordCount * 600) + 2000; // 600ms per word + 2s buffer
+            const estimatedDurationMs = (wordCount * 450) + 800;
 
             window.responsiveVoice.speak(text, voiceName, {
                 rate: 1,
@@ -93,15 +93,15 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
                     setIsPaused(false);
                     isPlayingRef.current = true;
 
-                    // Start safety timer
+                    // Start tight safety timer
                     timeoutRef.current = setTimeout(() => {
-                        console.warn("ResponsiveVoice hang detected, moving next.");
+                        console.warn("Sync skip: Moving to next segment.");
                         next();
                     }, estimatedDurationMs);
                 },
                 onend: next,
                 onerror: () => {
-                    console.error("ResponsiveVoice Error");
+                    console.error("Voice Error");
                     stop();
                 }
             });
