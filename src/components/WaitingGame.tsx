@@ -80,14 +80,20 @@ const WaitingGame: React.FC = () => {
             const enemiesToKeep = new Array(enemiesRef.current.length).fill(true);
 
             enemiesRef.current.forEach((enemy, eIdx) => {
-                const enemyCenterX = enemy.x + 16;
-                const enemyCenterY = enemy.y - 12; // Adjust for emoji baseline
+                // Emoji Hitbox: 32x32 area with generous padding for "anywhere" touch
+                const hitBox = {
+                    left: enemy.x - 8,
+                    right: enemy.x + 40,
+                    top: enemy.y - 35, // Adjusting for baseline
+                    bottom: enemy.y + 5
+                };
 
                 bulletsRef.current.forEach((bullet, bIdx) => {
                     if (!bulletsToKeep[bIdx] || !enemiesToKeep[eIdx]) return;
 
-                    const dist = Math.hypot(enemyCenterX - bullet.x, enemyCenterY - bullet.y);
-                    if (dist < 30) {
+                    // AABB Collision: Direct touch detection
+                    if (bullet.x >= hitBox.left && bullet.x <= hitBox.right &&
+                        bullet.y >= hitBox.top && bullet.y <= hitBox.bottom) {
                         enemiesToKeep[eIdx] = false;
                         bulletsToKeep[bIdx] = false;
                         scoreRef.current += 10;
@@ -98,9 +104,12 @@ const WaitingGame: React.FC = () => {
                 if (enemiesToKeep[eIdx]) {
                     const shipCenterX = shipRef.current.x + SHIP_SIZE / 2;
                     const shipCenterY = shipRef.current.y + SHIP_SIZE / 2;
+                    // For ship collision, keep it slightly tighter to be fair
+                    const enemyCenterX = enemy.x + 16;
+                    const enemyCenterY = enemy.y - 16;
                     const distToShip = Math.hypot(enemyCenterX - shipCenterX, enemyCenterY - shipCenterY);
 
-                    if (distToShip < 35) {
+                    if (distToShip < 30) {
                         setGameState('gameover');
                     }
                     if (enemy.y > canvas.height + 40) {
