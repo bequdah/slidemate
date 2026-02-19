@@ -574,23 +574,25 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
                                                 {examView === 'flashcards' ? (
                                                     /* Flashcard Interface */
-                                                    <div className="flex flex-col items-center space-y-12 w-full py-4" dir="ltr">
-                                                        <div className="text-center space-y-2">
-                                                            <h4 className="text-white/40 font-black text-[11px] uppercase tracking-[0.4em]">Active Recall Mode</h4>
-                                                            <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">
-                                                                Card {currentCardIndex + 1} of {data.quiz.length}
-                                                            </p>
+                                                    <div className="flex flex-col items-center space-y-10 w-full pt-8 pb-4" dir="ltr">
+                                                        <div className="text-center space-y-3">
+                                                            <div className="px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 inline-block">
+                                                                <p className="text-[10px] text-amber-500 font-black uppercase tracking-[0.2em]">
+                                                                    Card {currentCardIndex + 1} of {data.quiz.length}
+                                                                </p>
+                                                            </div>
+                                                            <h4 className="text-white/20 font-black text-[9px] uppercase tracking-[0.5em]">Active Recall Mode</h4>
                                                         </div>
 
                                                         {/* 3D Flip Card */}
                                                         <div
-                                                            className="perspective-1000 w-full max-w-lg h-[350px] md:h-[400px] cursor-pointer group"
+                                                            className="perspective-1000 w-full max-w-lg h-[340px] md:h-[380px] cursor-pointer group"
                                                             onClick={() => setIsFlipped(!isFlipped)}
                                                         >
                                                             <div className={`relative w-full h-full transition-all duration-700 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
                                                                 {/* Front: Question */}
-                                                                <div className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-8 bg-white/[0.03] border border-white/10 rounded-[2.5rem] shadow-2xl backdrop-blur-xl">
-                                                                    <div className="absolute top-6 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                                <div className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-8 md:p-12 bg-white/[0.03] border border-white/10 rounded-[3rem] shadow-2xl backdrop-blur-2xl">
+                                                                    <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.3em] text-slate-500">
                                                                         Question
                                                                     </div>
                                                                     <div className="text-lg md:text-2xl font-black text-white text-center leading-tight">
@@ -598,28 +600,28 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                                                             {renderMarkdown(data.quiz[currentCardIndex].q)}
                                                                         </ReactMarkdown>
                                                                     </div>
-                                                                    <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                                    <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-30 group-hover:opacity-100 transition-opacity">
                                                                         <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
                                                                         <span className="text-[8px] font-bold uppercase tracking-widest">Tap to flip</span>
                                                                     </div>
                                                                 </div>
 
                                                                 {/* Back: Answer & Reasoning */}
-                                                                <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-center p-8 bg-indigo-500/10 border border-indigo-500/30 rounded-[2.5rem] shadow-2xl shadow-indigo-500/20 backdrop-blur-xl">
-                                                                    <div className="absolute top-6 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                                                                <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-center p-8 md:p-12 bg-indigo-500/10 border border-indigo-500/30 rounded-[3rem] shadow-2xl shadow-indigo-500/20 backdrop-blur-2xl">
+                                                                    <div className="absolute top-8 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.3em] text-indigo-400/60">
                                                                         Explanation
                                                                     </div>
-                                                                    <div className="w-full text-center space-y-6 overflow-y-auto custom-scrollbar pr-2 max-h-[70%]">
-                                                                        <div className="text-base md:text-lg font-black text-indigo-300">
-                                                                            Option: {String.fromCharCode(65 + data.quiz[currentCardIndex].a)}
+                                                                    <div className="w-full text-center space-y-6 overflow-y-auto custom-scrollbar pr-2 max-h-[75%]">
+                                                                        <div className="inline-block px-3 py-1 rounded-lg bg-indigo-500/20 text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-2">
+                                                                            Correct Option: {String.fromCharCode(65 + data.quiz[currentCardIndex].a)}
                                                                         </div>
-                                                                        <div className="text-xs md:text-base font-bold text-white leading-relaxed">
+                                                                        <div className="text-sm md:text-lg font-bold text-white leading-relaxed">
                                                                             <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
                                                                                 {renderMarkdown(data.quiz[currentCardIndex].reasoning)}
                                                                             </ReactMarkdown>
                                                                         </div>
                                                                     </div>
-                                                                    <div className="absolute bottom-10 text-[8px] font-bold uppercase tracking-widest text-indigo-400 opacity-40">
+                                                                    <div className="absolute bottom-10 text-[8px] font-bold uppercase tracking-widest text-indigo-400 opacity-30">
                                                                         Tap to flip back
                                                                     </div>
                                                                 </div>
