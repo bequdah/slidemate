@@ -56,6 +56,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>('auto');
     const [showIntro, setShowIntro] = useState(true);
 
+    // Flashcard States
+    const [currentCardIndex, setCurrentCardIndex] = useState(0);
+    const [isFlipped, setIsFlipped] = useState(false);
+    const [knownCards, setKnownCards] = useState<Set<number>>(new Set());
+
     const currentContent = {
         explanation: data?.explanation,
         examInsight: data?.examInsight,
@@ -545,43 +550,171 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 ) : null}
 
 
-                                {/* MCQs */}
+                                {/* MCQs / Flashcards */}
                                 {data.quiz && data.quiz.length > 0 && (
                                     <section className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-700 pb-10">
-                                        <div className="text-center">
-                                            <h4 className="text-white/40 font-black text-[11px] uppercase tracking-[0.4em] mb-2">Test Your Understanding</h4>
-                                            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Active Recall Questions</p>
-                                        </div>
-                                        {data.quiz.map((item: any, qIndex: number) => (
-                                            <div key={qIndex} className="space-y-6">
-                                                <div className="flex gap-3 md:gap-4">
-                                                    <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-400 flex-shrink-0">Q{qIndex + 1}</div>
-                                                    <div className="text-lg md:text-xl font-black text-slate-200 leading-tight">
-                                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                            {renderMarkdown(item.q)}
-                                                        </ReactMarkdown>
-                                                    </div>
+                                        {mode === 'exam' ? (
+                                            /* Flashcard Interface */
+                                            <div className="flex flex-col items-center space-y-12 py-10" dir="ltr">
+                                                <div className="text-center space-y-2">
+                                                    <h4 className="text-white/40 font-black text-[11px] uppercase tracking-[0.4em]">Active Recall Mode</h4>
+                                                    <p className="text-[10px] text-amber-500 font-bold uppercase tracking-widest">
+                                                        Card {currentCardIndex + 1} of {data.quiz.length}
+                                                    </p>
                                                 </div>
-                                                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 pl-0 md:pl-4">
-                                                    {item.options.map((option: string, oIndex: number) => (
-                                                        <button key={oIndex} onClick={() => handleOptionSelect(qIndex, oIndex)} disabled={selectedOptions[qIndex] !== undefined} className={`p-4 md:p-5 rounded-xl md:rounded-2xl border text-left text-sm md:text-base font-bold transition-all shadow-sm active:scale-98 ${selectedOptions[qIndex] !== undefined ? (item.a === oIndex ? 'bg-green-500/20 border-green-500/40 text-green-400' : selectedOptions[qIndex] === oIndex ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.01] border-white/5 opacity-30') : 'bg-white/[0.03] border-white/5 hover:bg-white/10 hover:border-white/20'}`}>
-                                                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                                {renderMarkdown(option)}
-                                                            </ReactMarkdown>
-                                                        </button>
-                                                    ))}
-                                                </div>
-                                                {selectedOptions[qIndex] !== undefined && (
-                                                    <div className="pl-4 animate-in zoom-in-95 duration-300">
-                                                        <div className={`p-6 rounded-3xl border ${selectedOptions[qIndex] === item.a ? 'bg-green-500/[0.03] border-green-500/20' : 'bg-red-500/[0.03] border-red-500/20'}`}>
-                                                            <div className="text-sm text-slate-400 font-bold leading-relaxed">
-                                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{renderMarkdown(item.reasoning)}</ReactMarkdown>
+
+                                                {/* 3D Flip Card */}
+                                                <div
+                                                    className="perspective-1000 w-full max-w-lg h-[400px] cursor-pointer group"
+                                                    onClick={() => setIsFlipped(!isFlipped)}
+                                                >
+                                                    <div className={`relative w-full h-full transition-all duration-700 preserve-3d ${isFlipped ? 'rotate-y-180' : ''}`}>
+                                                        {/* Front: Question */}
+                                                        <div className="absolute inset-0 w-full h-full backface-hidden flex flex-col items-center justify-center p-10 bg-white/[0.03] border border-white/10 rounded-[2.5rem] shadow-2xl backdrop-blur-xl">
+                                                            <div className="absolute top-6 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                                                Question
+                                                            </div>
+                                                            <div className="text-xl md:text-2xl font-black text-white text-center leading-tight">
+                                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                                                    {renderMarkdown(data.quiz[currentCardIndex].q)}
+                                                                </ReactMarkdown>
+                                                            </div>
+                                                            <div className="absolute bottom-10 flex flex-col items-center gap-2 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                                <div className="w-1 h-1 bg-white rounded-full animate-bounce" />
+                                                                <span className="text-[8px] font-bold uppercase tracking-widest">Tap to flip</span>
+                                                            </div>
+                                                        </div>
+
+                                                        {/* Back: Answer & Reasoning */}
+                                                        <div className="absolute inset-0 w-full h-full backface-hidden rotate-y-180 flex flex-col items-center justify-center p-10 bg-indigo-500/10 border border-indigo-500/30 rounded-[2.5rem] shadow-2xl shadow-indigo-500/20 backdrop-blur-xl">
+                                                            <div className="absolute top-6 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                                                                Explanation
+                                                            </div>
+                                                            <div className="w-full text-center space-y-6 overflow-y-auto custom-scrollbar pr-2 max-h-[70%]">
+                                                                <div className="text-lg font-black text-indigo-300">
+                                                                    {/* Show the correct option index as an indicator */}
+                                                                    Correct Option: {String.fromCharCode(65 + data.quiz[currentCardIndex].a)}
+                                                                </div>
+                                                                <div className="text-sm md:text-base font-bold text-white leading-relaxed">
+                                                                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                                                        {renderMarkdown(data.quiz[currentCardIndex].reasoning)}
+                                                                    </ReactMarkdown>
+                                                                </div>
+                                                            </div>
+                                                            <div className="absolute bottom-10 text-[8px] font-bold uppercase tracking-widest text-indigo-400 opacity-40">
+                                                                Tap to flip back
                                                             </div>
                                                         </div>
                                                     </div>
-                                                )}
+                                                </div>
+
+                                                {/* Navigation & Score */}
+                                                <div className="flex items-center gap-6 scale-110">
+                                                    <button
+                                                        disabled={currentCardIndex === 0}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setIsFlipped(false);
+                                                            setTimeout(() => setCurrentCardIndex(prev => prev - 1), 100);
+                                                        }}
+                                                        className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white disabled:opacity-20 hover:bg-white/10 transition-all active:scale-95 shadow-xl"
+                                                    >
+                                                        ←
+                                                    </button>
+
+                                                    <div className="flex gap-4">
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newKnown = new Set(knownCards);
+                                                                newKnown.add(currentCardIndex);
+                                                                setKnownCards(newKnown);
+                                                                if (currentCardIndex < data.quiz.length - 1) {
+                                                                    setIsFlipped(false);
+                                                                    setTimeout(() => setCurrentCardIndex(prev => prev + 1), 100);
+                                                                }
+                                                            }}
+                                                            className="px-6 py-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-xs uppercase tracking-widest hover:bg-emerald-500/20 transition-all active:scale-95 shadow-lg shadow-emerald-500/20"
+                                                        >
+                                                            I Know This ✅
+                                                        </button>
+                                                        <button
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                const newKnown = new Set(knownCards);
+                                                                newKnown.delete(currentCardIndex);
+                                                                setKnownCards(newKnown);
+                                                                if (currentCardIndex < data.quiz.length - 1) {
+                                                                    setIsFlipped(false);
+                                                                    setTimeout(() => setCurrentCardIndex(prev => prev + 1), 100);
+                                                                }
+                                                            }}
+                                                            className="px-6 py-3 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-400 font-bold text-xs uppercase tracking-widest hover:bg-amber-500/20 transition-all active:scale-95 shadow-lg shadow-amber-500/20"
+                                                        >
+                                                            Still Learning ❌
+                                                        </button>
+                                                    </div>
+
+                                                    <button
+                                                        disabled={currentCardIndex === data.quiz.length - 1}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setIsFlipped(false);
+                                                            setTimeout(() => setCurrentCardIndex(prev => prev + 1), 100);
+                                                        }}
+                                                        className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center text-white disabled:opacity-20 hover:bg-white/10 transition-all active:scale-95 shadow-xl"
+                                                    >
+                                                        →
+                                                    </button>
+                                                </div>
+
+                                                {/* Score Progress Bar */}
+                                                <div className="w-full max-w-xs h-1 bg-white/5 rounded-full overflow-hidden flex">
+                                                    <div
+                                                        className="h-full bg-emerald-500 transition-all duration-500"
+                                                        style={{ width: `${(knownCards.size / data.quiz.length) * 100}%` }}
+                                                    />
+                                                </div>
                                             </div>
-                                        ))}
+                                        ) : (
+                                            /* Normal MCQ Mode (for Simple and Visual formats) */
+                                            <>
+                                                <div className="text-center">
+                                                    <h4 className="text-white/40 font-black text-[11px] uppercase tracking-[0.4em] mb-2">Test Your Understanding</h4>
+                                                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Quick Review Questions</p>
+                                                </div>
+                                                {data.quiz.map((item: any, qIndex: number) => (
+                                                    <div key={qIndex} className="space-y-6">
+                                                        <div className="flex gap-3 md:gap-4">
+                                                            <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-400 flex-shrink-0">Q{qIndex + 1}</div>
+                                                            <div className="text-lg md:text-xl font-black text-slate-200 leading-tight">
+                                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                                                    {renderMarkdown(item.q)}
+                                                                </ReactMarkdown>
+                                                            </div>
+                                                        </div>
+                                                        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 pl-0 md:pl-4">
+                                                            {item.options.map((option: string, oIndex: number) => (
+                                                                <button key={oIndex} onClick={() => handleOptionSelect(qIndex, oIndex)} disabled={selectedOptions[qIndex] !== undefined} className={`p-4 md:p-5 rounded-xl md:rounded-2xl border text-left text-sm md:text-base font-bold transition-all shadow-sm active:scale-98 ${selectedOptions[qIndex] !== undefined ? (item.a === oIndex ? 'bg-green-500/20 border-green-500/40 text-green-400' : selectedOptions[qIndex] === oIndex ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.01] border-white/5 opacity-30') : 'bg-white/[0.03] border-white/5 hover:bg-white/10 hover:border-white/20'}`}>
+                                                                    <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
+                                                                        {renderMarkdown(option)}
+                                                                    </ReactMarkdown>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                        {selectedOptions[qIndex] !== undefined && (
+                                                            <div className="pl-4 animate-in zoom-in-95 duration-300">
+                                                                <div className={`p-6 rounded-3xl border ${selectedOptions[qIndex] === item.a ? 'bg-green-500/[0.03] border-green-500/20' : 'bg-red-500/[0.03] border-red-500/20'}`}>
+                                                                    <div className="text-sm text-slate-400 font-bold leading-relaxed">
+                                                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{renderMarkdown(item.reasoning)}</ReactMarkdown>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </>
+                                        )}
                                     </section>
                                 )}
                             </>
@@ -781,6 +914,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                 .prose p + p {
                     margin-top: 1.5rem !important;
                 }
+                /* 3D Flashcard Animation */
+                .perspective-1000 { perspective: 1000px; }
+                .preserve-3d { transform-style: preserve-3d; }
+                .backface-hidden { backface-visibility: hidden; }
+                .rotate-y-180 { transform: rotateY(180deg); }
             `}</style>
         </div>
     );

@@ -29,7 +29,7 @@ function getAnalysisCacheKey(
     return `${contentHash}_${mode}`.replace(/[/\\]/g, '_');
 }
 
-const geminiKey = (process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '').trim();
+const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
 const genAI = new GoogleGenerativeAI(geminiKey);
 const model_gemma = genAI.getGenerativeModel({
     model: 'gemma-3-27b-it'
