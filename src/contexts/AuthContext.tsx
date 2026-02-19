@@ -5,6 +5,7 @@ import { doc, setDoc, getDoc, serverTimestamp } from "firebase/firestore";
 
 interface AuthContextType {
     user: User | null;
+    adsEnabled: boolean;
     loading: boolean;
     login: () => Promise<void>;
     logout: () => Promise<void>;
@@ -14,6 +15,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [adsEnabled, setAdsEnabled] = useState(true);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -21,20 +23,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
                 setUser(currentUser);
 
-                if (currentUser) {
-                    // Create user record if not exists
-                    const userRef = doc(db, "users", currentUser.uid);
+                if (currentUser && currentUser.email) {
+                    // Use EMAIL as document ID (easier to manage manually in Firebase console)
+                    const userRef = doc(db, "users", currentUser.email);
                     const userSnap = await getDoc(userRef);
 
                     if (!userSnap.exists()) {
+                        // New user: create record with adsEnabled = true by default
                         await setDoc(userRef, {
+                            uid: currentUser.uid,
                             email: currentUser.email,
                             name: currentUser.displayName,
                             photoURL: currentUser.photoURL,
                             createdAt: serverTimestamp(),
+                            adsEnabled: true,
                             dailyUsage: { count: 0, date: new Date().toISOString().split('T')[0] }
                         });
+                        setAdsEnabled(true);
+                    } else {
+                        // Existing user: read adsEnabled field (default true if not set)
+                        const userData = userSnap.data();
+                        setAdsEnabled(userData.adsEnabled !== false);
                     }
+                } else {
+                    setAdsEnabled(true);
                 }
             } catch (error) {
                 console.error("Auth initialization error:", error);
@@ -58,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const logout = () => signOut(auth);
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout }}>
+        <AuthContext.Provider value={{ user, adsEnabled, loading, login, logout }}>
             {children}
         </AuthContext.Provider>
     );

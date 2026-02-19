@@ -6,6 +6,7 @@ import { LoadingScreen } from './components/LoadingScreen';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { LogoModal } from './components/LogoModal';
+import { AdSense } from './components/AdSense';
 import { extractTextFromPDFPage, processImageForAnalysis } from './utils/ocrService';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -23,7 +24,7 @@ interface Slide {
 }
 
 function MainApp() {
-  const { user, logout } = useAuth();
+  const { user, adsEnabled, logout } = useAuth();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [chapterTitle, setChapterTitle] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
@@ -60,7 +61,7 @@ function MainApp() {
             .join(' ')
             .replace(/\s+/g, ' ')
             .trim();
-          
+
           // If first page has very little text, assume it's a scanned PDF
           isScannedPDF = firstPageText.length < 50;
           console.log(`PDF type: ${isScannedPDF ? 'Scanned (OCR needed)' : 'Text-based'}`);
@@ -200,7 +201,9 @@ function MainApp() {
                 <span className="text-xs font-bold text-slate-300">
                   {user.displayName}
                 </span>
-                <span className="text-[10px] text-indigo-400/80 font-medium">Premium Member</span>
+                <span className={`text-[10px] font-medium ${!adsEnabled ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`}>
+                  {!adsEnabled ? '★ Premium Member' : 'Free Member'}
+                </span>
               </div>
               <button
                 onClick={async () => await logout()}
@@ -256,6 +259,11 @@ function MainApp() {
                   <p className="text-[10px] text-slate-500 font-bold">{f.desc}</p>
                 </div>
               ))}
+            </div>
+
+            {/* Ad Location: After feature cards */}
+            <div className="mt-12 max-w-4xl mx-auto flex justify-center">
+              <AdSense slot="1234567890" className="w-full rounded-2xl overflow-hidden border border-white/5" />
             </div>
           </div>
         ) : (
