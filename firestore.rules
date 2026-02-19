@@ -6,29 +6,24 @@ service cloud.firestore {
       return request.auth != null;
     }
     
-    // Helper function to check ownership
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // Users collection: specific user document
-    match /users/{userId} {
-      allow read: if isOwner(userId);
-      allow write: if isOwner(userId); // Explicitly allow write for initial creation
+    // Users collection: document ID is the user's EMAIL
+    match /users/{userEmail} {
+      // Allow read/write if the signed-in user's email matches the document ID
+      allow read, write: if isSignedIn() && request.auth.token.email == userEmail;
       
       // Slides subcollection
       match /slides/{slideId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isSignedIn() && request.auth.token.email == userEmail;
       }
       
       // Chats subcollection
       match /chats/{chatId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isSignedIn() && request.auth.token.email == userEmail;
       }
 
-      // Analyses cache: saved slide explanations (API writes, same user can read via API)
+      // Analyses cache
       match /analyses/{analysisId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isSignedIn() && request.auth.token.email == userEmail;
       }
     }
   }
