@@ -373,7 +373,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                                                 }}
                                                                 className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${voiceProfile === 'auto' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
                                                             >
-                                                                <span className="text-base">🇺🇸</span> US English
+                                                                <img src="https://flagcdn.com/24x18/us.png" alt="US" className="w-5 rounded-sm" /> US English
                                                             </button>
                                                             <button
                                                                 onClick={() => {
@@ -382,7 +382,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                                                 }}
                                                                 className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${voiceProfile === 'en_male_strong' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
                                                             >
-                                                                <span className="text-base">🇬🇧</span> UK English
+                                                                <img src="https://flagcdn.com/24x18/gb.png" alt="GB" className="w-5 rounded-sm" /> UK English
                                                             </button>
                                                         </div>
                                                     </div>
