@@ -127,7 +127,11 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         isPlayingRef.current = true;
         if (!audioRef.current) audioRef.current = new Audio();
 
-        playSentence(0);
+        // Unlock for iOS/Safari: Play silent stub BEFORE async fetch
+        audioRef.current.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        audioRef.current.play().finally(() => {
+            playSentence(0);
+        });
     }, [playSentence, stop, isPaused]);
 
     const pause = useCallback(() => {
@@ -160,6 +164,15 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         };
     }, []);
 
+    const initAudio = useCallback(() => {
+        if (!audioRef.current) {
+            audioRef.current = new Audio();
+        }
+        // Smallest possible silent WAV file to unlock iOS audio
+        audioRef.current.src = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA";
+        audioRef.current.play().catch(e => console.log("Audio unlock skipped or failed", e));
+    }, []);
+
     return {
         isPlaying,
         isPaused,
@@ -170,6 +183,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
         pause,
         resume,
         stop,
+        initAudio,
         totalSentences: sentencesRef.current.length
     };
 };

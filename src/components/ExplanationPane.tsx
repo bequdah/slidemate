@@ -65,7 +65,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
     const {
         isPlaying, isPaused, currentSentence, isLoadingAudio,
-        play, pause, resume, stop
+        play, pause, resume, stop, initAudio
     } = useVoicePlayer(currentContent?.voiceScript, lang, voiceProfile);
 
     const randomGame = useMemo(() => {
@@ -340,6 +340,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                         ) : (
                                             <div className="group relative">
                                                 <button
+                                                    onClick={initAudio}
                                                     disabled={loading || voiceLoading}
                                                     className="h-9 px-4 md:px-5 rounded-xl flex items-center gap-2 transition-all active:scale-95 font-black text-[10px] md:text-xs uppercase tracking-widest bg-white/5 text-slate-300 hover:text-white border border-white/5 hover:bg-white/10"
                                                 >
