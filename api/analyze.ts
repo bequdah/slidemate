@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v'; // Updated cache for voice commands improvements
+const CACHE_VERSION = 'v2-latex-fix'; // Updated: LaTeX repair system added
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -80,7 +80,13 @@ MODE RULES:
 EXAM QUIZ SCHEMA (STRICT):
 - Each quiz item MUST be exactly: { "q": string, "options": [string,string,string,string], "a": 0|1|2|3, "reasoning": string }
 
-LaTeX: Use $$ ... $$ (BLOCK) for formulas. DOUBLE BACKSLASHES (\\).
+LaTeX RULES (CRITICAL - READ CAREFULLY):
+- Use $$ ... $$ for BLOCK formulas and $ ... $ for INLINE variables.
+- Since the output is JSON, you MUST use DOUBLE BACKSLASHES for ALL LaTeX commands.
+- CORRECT: "$$\\frac{x^2}{4} + \\frac{y^2}{9} = 1$$"
+- WRONG: "$$\frac{x^2}{4}$$" (single backslash will break in JSON!)
+- WRONG: "**$$...$$**" (never put bold around math!)
+- Common commands that MUST have double backslash: \\frac, \\sum, \\int, \\sqrt, \\cdot, \\times, \\leq, \\geq, \\neq, \\infty, \\alpha, \\beta, \\theta, \\lambda, \\sigma, \\mu, \\pi, \\log, \\lim, \\sin, \\cos, \\tan, \\text, \\mathbf, \\hat, \\vec, \\bar, \\overline, \\underline, \\left, \\right, \\begin, \\end
 `;
 }
 
@@ -347,8 +353,12 @@ CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explana
    - Prohibited: "هاد", "منيح", "كتير", "تانية", "متل".
    - Use: "هاض", "مليح", "كثير", "ثانية", "مثل".
 
-3. **Math & Symbols**: 
-   - Formulas -> $$ ... $$. Variables -> $ ... $. 
+3. **Math & Symbols (CRITICAL)**: 
+   - Block formulas -> $$ ... $$ (on their own line).
+   - Inline variables -> $ ... $ (inside text).
+   - ALL LaTeX commands MUST use DOUBLE BACKSLASHES in JSON: \\frac, \\sum, \\sqrt, etc.
+   - EXAMPLE CORRECT JSON: "$$\\frac{x^2}{4} + \\frac{y^2}{9} = 1$$"
+   - EXAMPLE WRONG JSON: "$$\frac{x^2}{4}$$" (BROKEN - single backslash gets eaten by JSON!)
 
 EXAMPLE:
 {
@@ -548,16 +558,49 @@ REMINDER:
                     throw new Error(`GEMMA_INVALID_SHAPE: ${validation.reason}`);
                 }
 
+                // --- LATEX REPAIR SYSTEM ---
+                const repairLatex = (text: string): string => {
+                    // Fix broken LaTeX commands where backslash was eaten by JSON parsing
+                    // e.g. "rac{" -> "\frac{", "sum_" -> "\sum_", "sqrt{" -> "\sqrt{"
+                    const latexCommands = [
+                        'frac', 'sum', 'int', 'sqrt', 'cdot', 'times', 'div',
+                        'leq', 'geq', 'neq', 'approx', 'equiv', 'infty',
+                        'alpha', 'beta', 'gamma', 'delta', 'epsilon', 'theta',
+                        'lambda', 'sigma', 'mu', 'pi', 'omega', 'phi', 'psi',
+                        'log', 'ln', 'lim', 'sin', 'cos', 'tan', 'exp',
+                        'text', 'mathbf', 'mathrm', 'mathcal', 'mathbb',
+                        'hat', 'vec', 'bar', 'overline', 'underline', 'tilde',
+                        'left', 'right', 'begin', 'end',
+                        'partial', 'nabla', 'forall', 'exists', 'in', 'notin',
+                        'subset', 'supset', 'cup', 'cap', 'land', 'lor', 'neg',
+                        'rightarrow', 'leftarrow', 'Rightarrow', 'Leftarrow',
+                        'quad', 'qquad', 'hspace', 'vspace'
+                    ];
+                    let result = text;
+                    for (const cmd of latexCommands) {
+                        // Match the command name NOT preceded by a backslash
+                        // e.g. "rac{" at word boundary but not "\frac{"
+                        const regex = new RegExp(`(?<!\\\\)\\b${cmd}(?=[{_^(\\s])`, 'g');
+                        result = result.replace(regex, `\\${cmd}`);
+                    }
+                    return result;
+                };
+
                 // --- PUNITIVE REVIEW SYSTEM (QUDAHWAY GUARD) ---
                 const punitiveReview = (obj: any): any => {
                     if (!obj) return obj;
                     if (typeof obj === 'string') {
-                        return obj
+                        let cleaned = obj
                             .replace(/هاد/g, 'هاض')
                             .replace(/منيح/g, 'مليح')
                             .replace(/كتير/g, 'كثير')
                             .replace(/تانية/g, 'ثانية')
                             .replace(/متل/g, 'مثل');
+                        // Repair broken LaTeX if the string contains math delimiters
+                        if (cleaned.includes('$')) {
+                            cleaned = repairLatex(cleaned);
+                        }
+                        return cleaned;
                     }
                     if (Array.isArray(obj)) {
                         return obj.map(punitiveReview);
