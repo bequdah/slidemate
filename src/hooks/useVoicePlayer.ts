@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-export type VoiceProfile = 'auto' | 'en_male_strong' | 'en_female_strong' | 'ar_female';
 
-export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar', voiceProfile: VoiceProfile = 'auto') => {
+export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar') => {
     const [isPlaying, setIsPlaying] = useState(false);
     const [isPaused, setIsPaused] = useState(false);
     const [currentSentence, setCurrentSentence] = useState('');
@@ -27,9 +26,8 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
 
     const getGoogleTtsLang = useCallback(() => {
         if (lang === 'ar') return 'ar';
-        if (voiceProfile === 'en_male_strong' || voiceProfile === 'en_female_strong') return 'en-GB';
         return 'en-US';
-    }, [lang, voiceProfile]);
+    }, [lang]);
 
     const stop = useCallback(() => {
         if (audioRef.current) {

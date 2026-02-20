@@ -1,6 +1,6 @@
 // Version: Parallel Optimization Stable (Commit 901a690)
 import { useState, useEffect, useMemo } from 'react';
-import { useVoicePlayer, type VoiceProfile } from '../hooks/useVoicePlayer';
+import { useVoicePlayer } from '../hooks/useVoicePlayer';
 import { analyzeSlide, generateVoiceScript, type SlideExplanation, type ExplanationMode } from '../services/aiService';
 import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
@@ -53,7 +53,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const [mode, setMode] = useState<ExplanationMode | null>(null);
     const [selectedOptions, setSelectedOptions] = useState<Record<number, number>>({});
     const [lang] = useState<'en' | 'ar'>('en');
-    const [voiceProfile, setVoiceProfile] = useState<VoiceProfile>('auto');
     const [showIntro, setShowIntro] = useState(true);
 
     // Flashcard States
@@ -71,8 +70,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
     const {
         isPlaying, isPaused, currentSentence, isLoadingAudio,
-        play, pause, resume, stop, initAudio
-    } = useVoicePlayer(currentContent?.voiceScript, lang, voiceProfile);
+        play, pause, resume, stop
+    } = useVoicePlayer(currentContent?.voiceScript, lang);
 
     const randomGame = useMemo(() => {
         if (!loading) return null;
@@ -346,7 +345,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                         ) : (
                                             <div className="group relative">
                                                 <button
-                                                    onClick={initAudio}
+                                                    onClick={play}
                                                     disabled={loading || voiceLoading}
                                                     className="h-9 px-4 md:px-5 rounded-xl flex items-center gap-2 transition-all active:scale-95 font-black text-[10px] md:text-xs uppercase tracking-widest bg-white/5 text-slate-300 hover:text-white border border-white/5 hover:bg-white/10"
                                                 >
@@ -361,38 +360,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
                                                             </svg>
                                                             <span className="hidden xs:inline">AI Voice</span>
-                                                            <svg className="w-3 h-3 ml-1 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                            </svg>
                                                         </>
                                                     )}
                                                 </button>
-
-                                                {/* Hover Dropdown Menu */}
-                                                {!voiceLoading && (
-                                                    <div className="absolute right-0 top-full mt-2 w-40 bg-[#0f172a] border border-white/10 rounded-xl shadow-2xl overflow-hidden opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-[80] transform origin-top-right">
-                                                        <div className="p-1">
-                                                            <button
-                                                                onClick={() => {
-                                                                    setVoiceProfile('auto');
-                                                                    setTimeout(play, 0);
-                                                                }}
-                                                                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${voiceProfile === 'auto' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
-                                                            >
-                                                                <img src="https://flagcdn.com/24x18/us.png" alt="US" className="w-5 rounded-sm" /> US English
-                                                            </button>
-                                                            <button
-                                                                onClick={() => {
-                                                                    setVoiceProfile('en_male_strong');
-                                                                    setTimeout(play, 0);
-                                                                }}
-                                                                className={`w-full text-left px-3 py-2 rounded-lg text-xs font-bold transition-colors flex items-center gap-2 ${voiceProfile === 'en_male_strong' ? 'bg-indigo-500/10 text-indigo-400' : 'text-slate-400 hover:bg-white/5 hover:text-white'}`}
-                                                            >
-                                                                <img src="https://flagcdn.com/24x18/gb.png" alt="GB" className="w-5 rounded-sm" /> UK English
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                )}
                                             </div>
                                         )}
                                     </div>
