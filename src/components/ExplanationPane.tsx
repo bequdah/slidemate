@@ -336,8 +336,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+            {/* Backdrop - Solid color to hide slides underneath as requested */}
+            <div className="absolute inset-0 bg-[#020617]" onClick={onClose} />
 
             {/* Modal Content */}
             <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-t-3xl md:rounded-3xl shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${lang === 'ar' ? 'font-arabic' : ''}`}>
