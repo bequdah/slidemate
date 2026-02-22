@@ -427,7 +427,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative" dir={currentContent.dir}>
+                    <div className={`flex-1 min-h-0 ${showGame ? 'overflow-hidden' : 'overflow-y-auto'} p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative`} dir={currentContent.dir}>
                         {!mode ? (
                             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
