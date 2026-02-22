@@ -108,7 +108,15 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         };
     }, []);
 
-
+    // Auto-transition to explanation when ready
+    useEffect(() => {
+        if (!loading && data && showGame) {
+            const timer = setTimeout(() => {
+                setShowGame(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, data, showGame]);
 
     const handleModeSelect = async (selectedMode: ExplanationMode) => {
         // Check Usage Limit First
@@ -484,6 +492,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                                 <div className="w-2.5 h-2.5 bg-white rounded-full animate-bounce [animation-duration:0.6s]" />
                                                 <div className="w-2.5 h-2.5 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
                                                 <div className="w-2.5 h-2.5 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.4s]" />
+                                            </div>
+
+                                            <div className="absolute bottom-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.3em]">
+                                                Auto-transition in 3s
                                             </div>
                                         </button>
                                     </div>
