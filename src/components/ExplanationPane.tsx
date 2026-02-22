@@ -8,6 +8,7 @@ import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
 import { AdSense } from './AdSense';
+import { useAuth } from '../contexts/AuthContext';
 import WaitingGame from './WaitingGame';
 import NeuralSnake from './NeuralSnake';
 import AstroJump from './AstroJump';
@@ -61,6 +62,9 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
     const [isFlipped, setIsFlipped] = useState(false);
     const [knownCards, setKnownCards] = useState<Set<number>>(new Set());
     const [examView, setExamView] = useState<'quiz' | 'flashcards'>('quiz');
+    const [limitReached, setLimitReached] = useState(false);
+
+    const { usageLeft, incrementUsage, tier } = useAuth();
 
     const currentContent = {
         explanation: data?.explanation,
@@ -98,7 +102,19 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         };
     }, []);
 
-    const handleModeSelect = (selectedMode: ExplanationMode) => {
+    const handleModeSelect = async (selectedMode: ExplanationMode) => {
+        // Check Usage Limit First
+        if (usageLeft <= 0) {
+            setLimitReached(true);
+            return;
+        }
+
+        const success = await incrementUsage();
+        if (!success && tier !== 'unlimited') {
+            setLimitReached(true);
+            return;
+        }
+
         setMode(selectedMode);
         setLoading(true);
         setShowGame(false);
@@ -430,26 +446,59 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     <div className={`flex-1 min-h-0 ${showGame ? 'overflow-hidden' : 'overflow-y-auto'} p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative`} dir={currentContent.dir}>
                         {!mode ? (
                             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
-                                <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl" dir="ltr">
-                                    {[
-                                        { id: 'simple' as const, icon: '💡', title: 'Simple', desc: 'Easy language, intuitive examples.', bg: 'bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20', text: 'text-indigo-400' },
-                                        { id: 'visual' as const, icon: '📊', title: 'شرح مع جداول ورسوم', desc: 'للصور التي تحتوي على جداول ورسومات ومخططات وأشياء مشابهة.', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20', text: 'text-emerald-400' },
-                                        { id: 'exam' as const, icon: '📝', title: 'Exam', desc: 'Strict definitions and exam focus.', bg: 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20', text: 'text-amber-400' }
-                                    ].map(({ id, icon, title, desc, bg, text }) => (
-                                        <button
-                                            key={id}
-                                            onClick={() => handleModeSelect(id)}
-                                            className={`group p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border ${bg} hover:scale-[1.02] transition-all duration-300 text-left relative overflow-hidden active:scale-95`}
-                                        >
-                                            <div className="text-4xl mb-4 bg-white/5 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
-                                                {icon}
-                                            </div>
-                                            <h3 className={`text-xl font-black ${text} mb-2`}>{title}</h3>
-                                            <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
-                                        </button>
-                                    ))}
+                                <div className="text-center space-y-2">
+                                    <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
+                                    <div className="flex items-center justify-center gap-2">
+                                        <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                                        <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                                            {tier === 'unlimited' ? '∞ Unlimited Mode' : `${usageLeft} Trials Left Today`}
+                                        </p>
+                                    </div>
                                 </div>
+
+                                {limitReached ? (
+                                    <div className="bg-red-500/10 border-2 border-red-500/20 p-8 rounded-[2rem] max-w-md text-center space-y-6 animate-in zoom-in duration-500">
+                                        <div className="text-5xl">🛑</div>
+                                        <div className="space-y-2">
+                                            <h3 className="text-xl font-black text-white">خلصت محاولاتك لليوم!</h3>
+                                            <p className="text-sm text-slate-400 leading-relaxed font-arabic">
+                                                {tier === 'free'
+                                                    ? 'الحساب المجاني إله 10 محاولات بس. اشترك بالبريميوم عشان تاخد 100 محاولة وتخلص من الإعلانات!'
+                                                    : 'خلصت الـ 100 محاولة تبعتك لليوم! ارجع بكرة أو تواصل معنا لترقية حسابك لنظام الـ Unlimited.'}
+                                            </p>
+                                        </div>
+                                        <a
+                                            href={`https://wa.me/962792118641?text=${encodeURIComponent("مرحبا، خلصت محاولاتي وبدي أشترك بالباقة المدفوعة")}`}
+                                            target="_blank"
+                                            className="block w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl transition-all active:scale-95 shadow-xl shadow-indigo-600/20"
+                                        >
+                                            تفعيل البريميوم (1 دينار/شهر)
+                                        </a>
+                                        <button onClick={onClose} className="text-xs font-bold text-slate-500 hover:text-white transition-colors uppercase tracking-widest">
+                                            إغلاق
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 w-full max-w-4xl" dir="ltr">
+                                        {[
+                                            { id: 'simple' as const, icon: '💡', title: 'Simple', desc: 'Easy language, intuitive examples.', bg: 'bg-indigo-500/10 border-indigo-500/20 hover:bg-indigo-500/20', text: 'text-indigo-400' },
+                                            { id: 'visual' as const, icon: '📊', title: 'شرح مع جداول ورسوم', desc: 'للصور التي تحتوي على جداول ورسومات ومخططات وأشياء مشابهة.', bg: 'bg-emerald-500/10 border-emerald-500/20 hover:bg-emerald-500/20', text: 'text-emerald-400' },
+                                            { id: 'exam' as const, icon: '📝', title: 'Exam', desc: 'Strict definitions and exam focus.', bg: 'bg-amber-500/10 border-amber-500/20 hover:bg-amber-500/20', text: 'text-amber-400' }
+                                        ].map(({ id, icon, title, desc, bg, text }) => (
+                                            <button
+                                                key={id}
+                                                onClick={() => handleModeSelect(id)}
+                                                className={`group p-6 md:p-8 rounded-[1.5rem] md:rounded-[2rem] border ${bg} hover:scale-[1.02] transition-all duration-300 text-left relative overflow-hidden active:scale-95`}
+                                            >
+                                                <div className="text-4xl mb-4 bg-white/5 w-16 h-16 rounded-2xl flex items-center justify-center group-hover:rotate-12 transition-transform">
+                                                    {icon}
+                                                </div>
+                                                <h3 className={`text-xl font-black ${text} mb-2`}>{title}</h3>
+                                                <p className="text-sm text-slate-400 leading-relaxed">{desc}</p>
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
                         ) : loading ? (
                             <div className="w-full min-h-[60vh] animate-in fade-in duration-700 flex flex-col items-center justify-center py-12">
