@@ -6,7 +6,7 @@ interface UpgradeModalProps {
 }
 
 export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
-    const { tier, usageLeft } = useAuth();
+    const { tier } = useAuth();
     if (!isOpen) return null;
 
     const tiers = [
@@ -81,7 +81,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                                     href={`https://wa.me/962792118641?text=${encodeURIComponent(`مرحبا، بدي اشترك بباكة الـ ${t.name} في موقع SlideMate`)}`}
                                     target="_blank"
                                     className={`block w-full py-4 text-center rounded-2xl font-black transition-all active:scale-95 shadow-xl ${t.color === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20' :
-                                            (t.color === 'amber' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20' : 'bg-white/5 hover:bg-white/10 text-white')
+                                        (t.color === 'amber' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20' : 'bg-white/5 hover:bg-white/10 text-white')
                                         }`}
                                 >
                                     Choose {t.name}

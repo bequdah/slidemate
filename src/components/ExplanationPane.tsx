@@ -109,12 +109,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
             return;
         }
 
-        const success = await incrementUsage();
-        if (!success && tier !== 'unlimited') {
-            setLimitReached(true);
-            return;
-        }
-
         setMode(selectedMode);
         setLoading(true);
         setShowGame(false);
@@ -147,9 +141,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         }
 
         // Handle Analysis Result
-        analysisPromise.then(res => {
+        analysisPromise.then(async res => {
             setData(prev => prev ? { ...prev, ...res } : res);
             setLoading(false);
+            // Deduct only AFTER success
+            await incrementUsage();
         }).catch(err => {
             console.error("Analysis Error:", err);
             setLoading(false);
