@@ -1,0 +1,158 @@
+import { useState, useEffect } from 'react';
+import { db } from '../firebase';
+import { collection, query, getDocs, updateDoc, doc, orderBy } from 'firebase/firestore';
+import type { UserTier } from '../contexts/AuthContext';
+
+interface UserData {
+    email: string;
+    name: string;
+    tier: UserTier;
+    totalUsage: number;
+    dailyUsage: {
+        count: number;
+        date: string;
+    };
+}
+
+interface AdminDashboardProps {
+    isOpen: boolean;
+    onClose: () => void;
+}
+
+export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
+    const [users, setUsers] = useState<UserData[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            fetchUsers();
+        }
+    }, [isOpen]);
+
+    const fetchUsers = async () => {
+        setLoading(true);
+        try {
+            const q = query(collection(db, "users"), orderBy("email", "asc"));
+            const querySnapshot = await getDocs(q);
+            const usersData: UserData[] = [];
+            querySnapshot.forEach((doc) => {
+                usersData.push(doc.data() as UserData);
+            });
+            setUsers(usersData);
+        } catch (error) {
+            console.error("Error fetching users:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleTierChange = async (email: string, newTier: UserTier) => {
+        try {
+            const userRef = doc(db, "users", email);
+            await updateDoc(userRef, { tier: newTier });
+            setUsers(prev => prev.map(u => u.email === email ? { ...u, tier: newTier } : u));
+        } catch (error) {
+            console.error("Error updating tier:", error);
+            alert("Failed to update tier");
+        }
+    };
+
+    const filteredUsers = users.filter(u =>
+        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (u.name || '').toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (!isOpen) return null;
+
+    return (
+        <div className="fixed inset-0 flex items-center justify-center z-[250] p-4">
+            <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={onClose} />
+            <div className="relative w-full max-w-6xl bg-slate-950 border border-white/10 rounded-[2.5rem] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden animate-in zoom-in-95 duration-300">
+                {/* Header */}
+                <div className="p-8 border-b border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div>
+                        <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">
+                            Admin <span className="text-indigo-400">Dashboard</span>
+                        </h2>
+                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Manage Users & Subscriptions</p>
+                    </div>
+
+                    <div className="flex items-center gap-4 w-full md:w-auto">
+                        <div className="relative flex-1 md:w-64">
+                            <input
+                                type="text"
+                                placeholder="Search by email or name..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500/50 transition-colors"
+                            />
+                        </div>
+                        <button onClick={onClose} className="p-2 hover:bg-white/5 rounded-full text-slate-400 transition-colors">✕</button>
+                    </div>
+                </div>
+
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-4 md:p-8 custom-scrollbar">
+                    {loading ? (
+                        <div className="flex flex-col items-center justify-center py-20 gap-4">
+                            <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+                            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Loading Users...</p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-4">
+                            <div className="hidden md:grid grid-cols-5 gap-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">
+                                <div className="col-span-2">User / Email</div>
+                                <div>Tier</div>
+                                <div>Usage (Daily/Total)</div>
+                                <div>Actions</div>
+                            </div>
+
+                            {filteredUsers.map((u) => (
+                                <div key={u.email} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 md:px-6 md:py-4 grid grid-cols-1 md:grid-cols-5 items-center gap-4 hover:bg-white/[0.04] transition-colors group">
+                                    <div className="col-span-2">
+                                        <div className="font-bold text-white text-sm truncate">{u.name || 'No Name'}</div>
+                                        <div className="text-xs text-slate-500 truncate">{u.email}</div>
+                                    </div>
+
+                                    <div>
+                                        <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${u.tier === 'premium' ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' :
+                                            (u.tier === 'unlimited' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' : 'bg-slate-500/10 text-slate-500 border border-white/5')
+                                            }`}>
+                                            {u.tier}
+                                        </span>
+                                    </div>
+
+                                    <div className="text-sm font-mono text-slate-400">
+                                        <span className="text-white font-bold">{u.dailyUsage?.count || 0}</span> / <span className="text-xs">{u.totalUsage || 0}</span>
+                                    </div>
+
+                                    <div>
+                                        <select
+                                            value={u.tier}
+                                            onChange={(e) => handleTierChange(u.email, e.target.value as UserTier)}
+                                            className="bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-all cursor-pointer hover:bg-slate-800"
+                                        >
+                                            <option value="free">Free</option>
+                                            <option value="premium">Premium</option>
+                                            <option value="unlimited">Unlimited</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            ))}
+
+                            {filteredUsers.length === 0 && (
+                                <div className="text-center py-20 text-slate-500 italic">No users found matching your search.</div>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Footer */}
+                <div className="p-6 border-t border-white/5 bg-white/[0.01] text-center">
+                    <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">Total Users Found: {filteredUsers.length}</p>
+                </div>
+            </div>
+        </div>
+    );
+}

@@ -9,6 +9,7 @@ import { LogoModal } from './components/LogoModal';
 import { AdSense } from './components/AdSense';
 import { LegalModal } from './components/LegalModal';
 import { UpgradeModal } from './components/UpgradeModal';
+import { AdminDashboard } from './components/AdminDashboard';
 import { extractTextFromPDFPage, processImageForAnalysis } from './utils/ocrService';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -26,7 +27,7 @@ interface Slide {
 }
 
 function MainApp() {
-  const { user, adsEnabled, logout } = useAuth();
+  const { user, adsEnabled, logout, tier } = useAuth();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [chapterTitle, setChapterTitle] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
@@ -36,6 +37,7 @@ function MainApp() {
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [activeLegalModal, setActiveLegalModal] = useState<'privacy' | 'terms' | 'contact' | null>(null);
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
+  const [isAdminDashboardOpen, setIsAdminDashboardOpen] = useState(false);
 
   const handleUpload = async (file: File) => {
     setIsUploading(true);
@@ -202,7 +204,7 @@ function MainApp() {
           {user && (
             <div className="flex items-center gap-4">
               {/* Premium Nudge Button */}
-              {adsEnabled && (
+              {tier === 'free' && (
                 <button
                   onClick={() => setIsUpgradeModalOpen(true)}
                   className="relative group hidden sm:block"
@@ -218,6 +220,16 @@ function MainApp() {
                       <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
                     </div>
                   </div>
+                </button>
+              )}
+
+              {/* Admin Dashboard Button - Only for Unlimited/Admins */}
+              {tier === 'unlimited' && (
+                <button
+                  onClick={() => setIsAdminDashboardOpen(true)}
+                  className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[10px] font-black text-indigo-400 uppercase tracking-widest hover:bg-indigo-500/20 transition-all"
+                >
+                  ⚡ Admin
                 </button>
               )}
 
@@ -349,6 +361,11 @@ function MainApp() {
       <UpgradeModal
         isOpen={isUpgradeModalOpen}
         onClose={() => setIsUpgradeModalOpen(false)}
+      />
+
+      <AdminDashboard
+        isOpen={isAdminDashboardOpen}
+        onClose={() => setIsAdminDashboardOpen(false)}
       />
 
       <footer className="max-w-7xl mx-auto p-8 border-t border-white/5 mt-auto flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 hover:opacity-100 transition-opacity">
