@@ -17,6 +17,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                 '10 Daily Trials',
                 'Ads Included',
                 'History: Slides kept for 2 days',
+                'Limited Mini-games (3/day)',
                 'Standard AI Analysis'
             ],
             current: tier === 'free',

@@ -11,21 +11,25 @@ interface AuthContextType {
     tier: UserTier;
     loading: boolean;
     usageLeft: number;
+    gamesLeft: number;
     login: () => Promise<void>;
     logout: () => Promise<void>;
     incrementUsage: () => Promise<boolean>;
+    incrementGameUsage: () => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 const FREE_LIMIT = 10;
 const PREMIUM_LIMIT = 50;
+const GAME_FREE_LIMIT = 3;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [adsEnabled, setAdsEnabled] = useState(true);
     const [tier, setTier] = useState<UserTier>('free');
     const [usageCount, setUsageCount] = useState(0);
+    const [gameUsageCount, setGameUsageCount] = useState(0);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -38,7 +42,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     const userSnap = await getDoc(userRef);
 
                     if (!userSnap.exists()) {
-                        // New user: always starts as FREE
                         await setDoc(userRef, {
                             uid: currentUser.uid,
                             email: currentUser.email,
@@ -50,21 +53,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                             totalUsage: 0,
                             dailyUsage: {
                                 count: 0,
+                                gameCount: 0,
                                 date: new Date().toISOString().split('T')[0]
                             }
                         });
                         setAdsEnabled(true);
                         setTier('free');
                         setUsageCount(0);
+                        setGameUsageCount(0);
                     } else {
                         const userData = userSnap.data();
                         const today = new Date().toISOString().split('T')[0];
 
-                        // Handle tier and ads - COMPLETELY DRIVEN BY FIREBASE
                         let userTier = userData.tier;
 
-                        // Master Admin Force Unlimited
-                        if (user?.email === 'qudahmohammad36@gmail.com') {
+                        if (currentUser.email === 'qudahmohammad36@gmail.com') {
                             userTier = 'unlimited';
                             if (userData.tier !== 'unlimited') {
                                 await updateDoc(userRef, { tier: 'unlimited' });
@@ -75,20 +78,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         }
 
                         setTier(userTier as UserTier);
-
-                        // Disable ads ONLY if Tier is NOT 'free'
-                        // (Premium and Unlimited don't see ads)
                         setAdsEnabled(userTier === 'free');
 
-                        // Reset daily usage if it's a new day
                         if (userData.dailyUsage?.date !== today) {
                             setUsageCount(0);
+                            setGameUsageCount(0);
                             await updateDoc(userRef, {
                                 "dailyUsage.count": 0,
+                                "dailyUsage.gameCount": 0,
                                 "dailyUsage.date": today
                             });
                         } else {
                             setUsageCount(userData.dailyUsage.count || 0);
+                            setGameUsageCount(userData.dailyUsage.gameCount || 0);
                         }
                     }
                 } else {
@@ -118,10 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const incrementUsage = async () => {
         if (!user || !user.email) return false;
-
         const limit = tier === 'premium' ? PREMIUM_LIMIT : (tier === 'unlimited' ? Infinity : FREE_LIMIT);
-
-        // Final check before incrementing
         if (usageCount >= limit) return false;
 
         const userRef = doc(db, "users", user.email);
@@ -140,11 +139,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
     };
 
+    const incrementGameUsage = async () => {
+        if (!user || !user.email) return false;
+        if (tier !== 'free') return true;
+
+        if (gameUsageCount >= GAME_FREE_LIMIT) return false;
+
+        const userRef = doc(db, "users", user.email);
+        const newCount = gameUsageCount + 1;
+
+        try {
+            await updateDoc(userRef, {
+                "dailyUsage.gameCount": newCount
+            });
+            setGameUsageCount(newCount);
+            return true;
+        } catch (e) {
+            console.error("Failed to increment game usage:", e);
+            return false;
+        }
+    };
+
     const limit = tier === 'premium' ? PREMIUM_LIMIT : (tier === 'unlimited' ? Infinity : FREE_LIMIT);
     const usageLeft = Math.max(0, limit - usageCount);
+    const gamesLeft = tier === 'free' ? Math.max(0, GAME_FREE_LIMIT - gameUsageCount) : 999;
 
     return (
-        <AuthContext.Provider value={{ user, adsEnabled, tier, loading, usageLeft, login, logout, incrementUsage }}>
+        <AuthContext.Provider value={{ user, adsEnabled, tier, loading, usageLeft, gamesLeft, login, logout, incrementUsage, incrementGameUsage }}>
             {children}
         </AuthContext.Provider>
     );
