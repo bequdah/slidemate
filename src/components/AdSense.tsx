@@ -19,7 +19,7 @@ const WHATSAPP_NUMBER = "962792118641";
 const WHATSAPP_MSG = encodeURIComponent("مرحبا، بدي اشيل الاعلانات من موقع SlideMate (دينار/شهر)");
 
 // ⚠️ غيّر هاد لـ true لما تجي موافقة الإعلانات
-const SHOW_WHATSAPP_CTA = false;
+const SHOW_WHATSAPP_CTA = true;
 
 export function AdSense({ slot, format = 'auto', className = '', style = {} }: AdSenseProps) {
     const { adsEnabled } = useAuth();

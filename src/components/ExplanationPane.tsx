@@ -7,6 +7,7 @@ import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
 
+import { AdSense } from './AdSense';
 import WaitingGame from './WaitingGame';
 import NeuralSnake from './NeuralSnake';
 import AstroJump from './AstroJump';
@@ -469,6 +470,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             </p>
                                         </div>
 
+                                        {/* AdSense during wait */}
+                                        <div className="w-full max-w-lg flex justify-center">
+                                            <AdSense slot="3890890228" className="w-full rounded-2xl overflow-hidden border border-white/5" />
+                                        </div>
+
                                         <button
                                             onClick={() => setShowGame(true)}
                                             className="group relative flex flex-col items-center gap-2 transition-all duration-500 animate-in zoom-in slide-in-from-bottom-4 duration-1000"
@@ -519,6 +525,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                         </div>
                                     </section>
                                 ) : null}
+
+                                {/* AdSense: After Explanation */}
+                                <div className="my-8 flex justify-center">
+                                    <AdSense slot="3890890228" className="w-full rounded-2xl overflow-hidden border border-white/5" />
+                                </div>
 
 
                                 {/* MCQs / Flashcards */}

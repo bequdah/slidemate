@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { AdSense } from './AdSense';
 
 interface LoadingScreenProps {
     progress: number;
@@ -79,6 +80,11 @@ export function LoadingScreen({ progress, chapterTitle }: LoadingScreenProps) {
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2s_infinite] translate-x-[-100%]" />
                         </div>
                     </div>
+                </div>
+
+                {/* Add AdSense here */}
+                <div className="mt-8 flex justify-center w-full">
+                    <AdSense slot="3890890228" className="w-[300px] h-[100px] md:w-[468px] md:h-[60px]" format="rectangle" />
                 </div>
             </div>
 

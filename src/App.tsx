@@ -263,7 +263,7 @@ function MainApp() {
 
             {/* Ad Location: After feature cards */}
             <div className="mt-12 max-w-4xl mx-auto flex justify-center">
-              <AdSense slot="1234567890" className="w-full rounded-2xl overflow-hidden border border-white/5" />
+              <AdSense slot="3890890228" className="w-full rounded-2xl overflow-hidden border border-white/5" />
             </div>
           </div>
         ) : (
