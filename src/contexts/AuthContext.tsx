@@ -63,7 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         // Handle tier and ads - COMPLETELY DRIVEN BY FIREBASE
                         let userTier = userData.tier;
 
-                        if (!userTier) {
+                        // Master Admin Force Unlimited
+                        if (user?.email === 'qudahmohammad36@gmail.com') {
+                            userTier = 'unlimited';
+                            if (userData.tier !== 'unlimited') {
+                                await updateDoc(userRef, { tier: 'unlimited' });
+                            }
+                        } else if (!userTier) {
                             userTier = 'free';
                             await updateDoc(userRef, { tier: 'free' });
                         }
