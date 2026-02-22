@@ -427,7 +427,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative" dir={currentContent.dir}>
+                    <div className="flex-1 min-h-0 overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative" dir={currentContent.dir}>
                         {!mode ? (
                             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <h2 className="text-lg md:text-2xl font-black text-white uppercase tracking-[0.2em] md:tracking-widest text-center">Choose explanation style</h2>
@@ -802,8 +802,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     overflow: hidden;
                 }
                 .font-arabic { font-family: 'IBM Plex Sans Arabic', sans-serif; }
-                .custom-scrollbar::-webkit-scrollbar { width: 5px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 20px; }
+                .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 20px; border: 2px solid #0c111d; }
+                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
                 
                 /* Force all headings (h1, h2, h3) in explanation to red */
                 .prose h1, .prose h2, .prose h3 {
