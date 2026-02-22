@@ -452,7 +452,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 </div>
                             </div>
                         ) : loading ? (
-                            <div className="absolute inset-0 w-full h-full animate-in fade-in duration-700 overflow-hidden flex flex-col items-center justify-center">
+                            <div className="w-full min-h-[60vh] animate-in fade-in duration-700 flex flex-col items-center justify-center py-12">
                                 {showGame ? (
                                     randomGame
                                 ) : (
@@ -468,13 +468,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             <p className="text-slate-500 font-medium max-w-xs mx-auto text-sm md:text-base">
                                                 {lang === 'ar' ? 'الشرح قاعد بجهز بس شوي' : 'AI is tailoring the explanation to your chosen style.'}
                                             </p>
-                                        </div>
-
-                                        {/* AdSense during wait - Compact Version */}
-                                        <div className="w-full max-w-sm flex justify-center">
-                                            <div className="w-full bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative">
-                                                <AdSense slot="3890890228" format="fluid" className="w-full" style={{ height: '90px', minHeight: '90px' }} />
-                                            </div>
                                         </div>
 
                                         <button
@@ -500,6 +493,13 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                                 <div className="w-1 h-1 bg-indigo-500 rounded-full animate-pulse [animation-delay:0.4s]" />
                                             </div>
                                         </button>
+
+                                        {/* AdSense during wait - Now BELOW the button */}
+                                        <div className="w-full max-w-sm flex justify-center">
+                                            <div className="w-full bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative">
+                                                <AdSense slot="3890890228" format="fluid" className="w-full" style={{ height: '90px', minHeight: '90px' }} />
+                                            </div>
+                                        </div>
                                     </div>
                                 )}
                             </div>
