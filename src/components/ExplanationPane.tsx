@@ -146,8 +146,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         analysisPromise.then(async res => {
             setData(prev => prev ? { ...prev, ...res } : res);
             setLoading(false);
-            // Deduct only AFTER success
-            await incrementUsage();
+            // Deduct only AFTER success AND if not from cache
+            if (!res.isCached) {
+                await incrementUsage();
+            }
         }).catch(err => {
             console.error("Analysis Error:", err);
             setLoading(false);

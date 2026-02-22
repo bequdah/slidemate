@@ -325,7 +325,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 const ageMs = Date.now() - createdAt.toMillis();
                 if (ageMs < CACHE_TTL_DAYS * 24 * 60 * 60 * 1000) {
                     console.log('Cache hit:', cacheKey);
-                    return res.status(200).json(cached?.result ?? {});
+                    return res.status(200).json({
+                        ...(cached?.result ?? {}),
+                        isCached: true
+                    });
                 }
             }
         }

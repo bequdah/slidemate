@@ -24,6 +24,7 @@ export interface SlideExplanation {
         examInsight?: string;
         voiceScript?: string;
     };
+    isCached?: boolean;
 }
 
 /** Must match API Mode: simple, exam, or visual (tables/charts/diagrams). */
