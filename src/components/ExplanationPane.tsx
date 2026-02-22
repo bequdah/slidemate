@@ -455,16 +455,23 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 <div className="flex-1 relative">
                                     {randomGame}
                                 </div>
-                                {/* Floating "Back to Reality" button if loading is done */}
+                                {/* Result Ready Overlay (When analysis finishes while playing) */}
                                 {!loading && data && (
-                                    <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-[90] animate-in slide-in-from-bottom-10 duration-700">
+                                    <div className="absolute inset-0 z-[100] bg-black/20 backdrop-blur-[2px] flex items-center justify-center p-6 animate-in fade-in duration-500">
                                         <button
                                             onClick={() => setShowGame(false)}
-                                            className="px-8 py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-2xl shadow-[0_0_30px_rgba(79,70,229,0.5)] transition-all active:scale-95 flex items-center gap-3 group"
+                                            className="group relative px-10 py-6 md:px-14 md:py-8 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-[3rem] shadow-[0_0_80px_rgba(79,70,229,0.5)] transition-all hover:scale-105 active:scale-95 flex flex-col items-center border border-white/20 overflow-hidden"
                                         >
-                                            <span className="text-xl">✨</span>
-                                            <span>التحليل جاهز - اظهر النتيجة</span>
-                                            <span className="group-hover:translate-x-1 transition-transform">→</span>
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
+                                            <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-indigo-200/60 mb-2">Extraction Complete</span>
+                                            <span className="text-2xl md:text-3xl italic tracking-tighter drop-shadow-xl text-center">
+                                                ✨ اظهر النتيجة الآن ✨
+                                            </span>
+                                            <div className="mt-4 flex gap-1.5 opacity-50">
+                                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-duration:0.6s]" />
+                                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
+                                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.4s]" />
+                                            </div>
                                         </button>
                                     </div>
                                 )}
