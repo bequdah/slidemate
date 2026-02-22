@@ -223,8 +223,8 @@ function MainApp() {
                 </button>
               )}
 
-              {/* Admin Dashboard Button - Only for Unlimited/Admins */}
-              {tier === 'unlimited' && (
+              {/* Admin Dashboard Button - Only for Super Admins */}
+              {user?.email === 'qudahmohammad36@gmail.com' && (
                 <button
                   onClick={() => setIsAdminDashboardOpen(true)}
                   className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[10px] font-black text-indigo-400 uppercase tracking-widest hover:bg-indigo-500/20 transition-all"
