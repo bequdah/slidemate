@@ -11,18 +11,18 @@ interface Brick {
 
 export default function CyberBricks() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
     const [score, setScore] = useState(0);
     const [gameState, setGameState] = useState<'start' | 'playing' | 'gameover' | 'win'>('start');
 
-    // Constants
-    const PADDLE_HEIGHT = 10;
-    const PADDLE_WIDTH = 75;
-    const BALL_RADIUS = 6;
-    const BRICK_ROWS = 4;
+    // Constants (Relative)
+    const PADDLE_HEIGHT = 12;
+    const PADDLE_WIDTH_RATIO = 0.25; // 25% of width
+    const BALL_RADIUS = 8;
+    const BRICK_ROWS = 5;
     const BRICK_COLS = 6;
-    const BRICK_PADDING = 8;
-    const BRICK_OFFSET_TOP = 40;
-    const BRICK_OFFSET_LEFT = 20;
+    const BRICK_PADDING = 6;
+    const BRICK_OFFSET_TOP = 80;
 
     const gameData = useRef({
         paddleX: 0,
@@ -31,21 +31,23 @@ export default function CyberBricks() {
         dx: 4,
         dy: -4,
         bricks: [] as Brick[],
-        paddleSpeed: 7
+        paddleWidth: 80
     });
 
-    const initBricks = () => {
+    const initBricks = (width: number) => {
         const bricks: Brick[] = [];
-        const colors = ['#818cf8', '#6366f1', '#4f46e5', '#4338ca'];
-        const containerWidth = 360; // Standard mobile-friendly width
-        const brickW = (containerWidth - (BRICK_OFFSET_LEFT * 2) - (BRICK_PADDING * (BRICK_COLS - 1))) / BRICK_COLS;
-        const brickH = 15;
+        const colors = ['#818cf8', '#6366f1', '#4f46e5', '#4338ca', '#3730a3'];
+        const padding = BRICK_PADDING;
+        const offsetSides = 20;
+        const availableWidth = width - (offsetSides * 2);
+        const brickW = (availableWidth - (padding * (BRICK_COLS - 1))) / BRICK_COLS;
+        const brickH = 20;
 
         for (let r = 0; r < BRICK_ROWS; r++) {
             for (let c = 0; c < BRICK_COLS; c++) {
                 bricks.push({
-                    x: c * (brickW + BRICK_PADDING) + BRICK_OFFSET_LEFT,
-                    y: r * (brickH + BRICK_PADDING) + BRICK_OFFSET_TOP,
+                    x: offsetSides + c * (brickW + padding),
+                    y: BRICK_OFFSET_TOP + r * (brickH + padding),
                     w: brickW,
                     h: brickH,
                     color: colors[r % colors.length],
@@ -61,23 +63,38 @@ export default function CyberBricks() {
         if (!canvas) return;
 
         setScore(0);
-        setGameState('playing');
+        const pWidth = canvas.width * PADDLE_WIDTH_RATIO;
         gameData.current = {
-            paddleX: (canvas.width - PADDLE_WIDTH) / 2,
+            paddleX: (canvas.width - pWidth) / 2,
             ballX: canvas.width / 2,
-            ballY: canvas.height - 30,
-            dx: 3 + Math.random() * 2,
-            dy: -4,
-            bricks: initBricks(),
-            paddleSpeed: 7
+            ballY: canvas.height - 60,
+            dx: (Math.random() - 0.5) * 6,
+            dy: -5,
+            bricks: initBricks(canvas.width),
+            paddleWidth: pWidth
         };
+        setGameState('playing');
     };
 
     useEffect(() => {
         const canvas = canvasRef.current;
-        if (!canvas) return;
+        const container = containerRef.current;
+        if (!canvas || !container) return;
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
+
+        const resize = () => {
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+            if (gameState === 'start') {
+                const pWidth = canvas.width * PADDLE_WIDTH_RATIO;
+                gameData.current.paddleX = (canvas.width - pWidth) / 2;
+                gameData.current.paddleWidth = pWidth;
+            }
+        };
+
+        resize();
+        window.addEventListener('resize', resize);
 
         let animationId: number;
 
@@ -85,15 +102,16 @@ export default function CyberBricks() {
             if (gameState !== 'playing') return;
 
             // Clear canvas
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = '#0c111d';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             const data = gameData.current;
 
             // Draw Bricks
-            let bricksLeft = 0;
+            let activeBricks = 0;
             data.bricks.forEach(brick => {
                 if (brick.active) {
-                    bricksLeft++;
+                    activeBricks++;
                     ctx.beginPath();
                     ctx.roundRect(brick.x, brick.y, brick.w, brick.h, 4);
                     ctx.fillStyle = brick.color;
@@ -105,16 +123,16 @@ export default function CyberBricks() {
                 }
             });
 
-            if (bricksLeft === 0) {
+            if (activeBricks === 0) {
                 setGameState('win');
                 return;
             }
 
             // Draw Paddle
             ctx.beginPath();
-            ctx.roundRect(data.paddleX, canvas.height - PADDLE_HEIGHT - 10, PADDLE_WIDTH, PADDLE_HEIGHT, 5);
-            ctx.fillStyle = '#f87171'; // Red highlight
-            ctx.shadowBlur = 15;
+            ctx.roundRect(data.paddleX, canvas.height - PADDLE_HEIGHT - 30, data.paddleWidth, PADDLE_HEIGHT, 6);
+            ctx.fillStyle = '#f87171';
+            ctx.shadowBlur = 20;
             ctx.shadowColor = '#f87171';
             ctx.fill();
             ctx.shadowBlur = 0;
@@ -124,38 +142,43 @@ export default function CyberBricks() {
             ctx.beginPath();
             ctx.arc(data.ballX, data.ballY, BALL_RADIUS, 0, Math.PI * 2);
             ctx.fillStyle = '#fff';
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 25;
             ctx.shadowColor = '#fff';
             ctx.fill();
             ctx.shadowBlur = 0;
             ctx.closePath();
 
-            // Collision: Walls
+            // Movement
+            // Wall Collision
             if (data.ballX + data.dx > canvas.width - BALL_RADIUS || data.ballX + data.dx < BALL_RADIUS) {
                 data.dx = -data.dx;
             }
             if (data.ballY + data.dy < BALL_RADIUS) {
                 data.dy = -data.dy;
-            } else if (data.ballY + data.dy > canvas.height - BALL_RADIUS - 10) {
-                // Paddle check
-                if (data.ballX > data.paddleX && data.ballX < data.paddleX + PADDLE_WIDTH) {
-                    data.dy = -Math.abs(data.dy);
-                    // Add some Spin
-                    const diff = data.ballX - (data.paddleX + PADDLE_WIDTH / 2);
-                    data.dx = diff * 0.15;
+            } else if (data.ballY + data.dy > canvas.height - BALL_RADIUS - 30) {
+                // Paddle Collision
+                if (data.ballX > data.paddleX && data.ballX < data.paddleX + data.paddleWidth) {
+                    data.dy = -Math.abs(data.dy) * 1.02; // Slightly speed up
+                    // Spin based on where it hit the paddle
+                    const hitPoint = (data.ballX - (data.paddleX + data.paddleWidth / 2)) / (data.paddleWidth / 2);
+                    data.dx = hitPoint * 7;
                 } else if (data.ballY + data.dy > canvas.height) {
                     setGameState('gameover');
                     return;
                 }
             }
 
-            // Collision: Bricks
+            // Brick Collision
             data.bricks.forEach(brick => {
                 if (brick.active) {
-                    if (data.ballX > brick.x && data.ballX < brick.x + brick.w && data.ballY > brick.y && data.ballY < brick.y + brick.h) {
+                    if (data.ballX + BALL_RADIUS > brick.x &&
+                        data.ballX - BALL_RADIUS < brick.x + brick.w &&
+                        data.ballY + BALL_RADIUS > brick.y &&
+                        data.ballY - BALL_RADIUS < brick.y + brick.h) {
+
                         data.dy = -data.dy;
                         brick.active = false;
-                        setScore(s => s + 10);
+                        setScore(s => s + 25);
                     }
                 }
             });
@@ -166,89 +189,76 @@ export default function CyberBricks() {
             animationId = requestAnimationFrame(draw);
         };
 
-        if (gameState === 'playing') {
-            animationId = requestAnimationFrame(draw);
-        }
+        if (gameState === 'playing') animationId = requestAnimationFrame(draw);
 
-        return () => cancelAnimationFrame(animationId);
+        return () => {
+            window.removeEventListener('resize', resize);
+            cancelAnimationFrame(animationId);
+        };
     }, [gameState]);
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
+    const handleInput = (clientX: number) => {
         const canvas = canvasRef.current;
         if (!canvas) return;
         const rect = canvas.getBoundingClientRect();
-        const root = document.documentElement;
-        const mouseX = e.clientX - rect.left - root.scrollLeft;
-
-        let newX = mouseX - PADDLE_WIDTH / 2;
+        const x = clientX - rect.left;
+        const data = gameData.current;
+        let newX = x - data.paddleWidth / 2;
         if (newX < 0) newX = 0;
-        if (newX > canvas.width - PADDLE_WIDTH) newX = canvas.width - PADDLE_WIDTH;
-
-        gameData.current.paddleX = newX;
-    };
-
-    const handleTouchMove = (e: React.TouchEvent<HTMLCanvasElement>) => {
-        const canvas = canvasRef.current;
-        if (!canvas) return;
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        const touchX = touch.clientX - rect.left;
-
-        let newX = touchX - PADDLE_WIDTH / 2;
-        if (newX < 0) newX = 0;
-        if (newX > canvas.width - PADDLE_WIDTH) newX = canvas.width - PADDLE_WIDTH;
-
-        gameData.current.paddleX = newX;
+        if (newX > canvas.width - data.paddleWidth) newX = canvas.width - data.paddleWidth;
+        data.paddleX = newX;
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-2 bg-[#0c111d] select-none overflow-hidden touch-none">
-            <div className="mb-2 flex items-center justify-between w-full max-w-[320px] px-4">
-                <div className="text-center">
-                    <p className="text-[9px] uppercase font-black tracking-widest text-slate-500">Score</p>
-                    <p className="text-lg font-black text-indigo-400">{score}</p>
-                </div>
-                <div className="text-center">
-                    <p className="text-[9px] uppercase font-black tracking-widest text-slate-500">Status</p>
-                    <p className="text-[10px] font-black text-white uppercase">{gameState === 'playing' ? 'Active' : 'Standby'}</p>
-                </div>
+        <div ref={containerRef} className="absolute inset-0 w-full h-full bg-[#0c111d] overflow-hidden select-none touch-none">
+            <canvas
+                ref={canvasRef}
+                onMouseMove={(e) => handleInput(e.clientX)}
+                onTouchMove={(e) => handleInput(e.touches[0].clientX)}
+                className="w-full h-full block cursor-none"
+            />
+
+            {/* UI Layer */}
+            <div className="absolute top-6 left-6 pointer-events-none">
+                <p className="text-[10px] uppercase font-black tracking-widest text-slate-500 mb-1">Score</p>
+                <p className="text-4xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">{score}</p>
             </div>
 
-            <div className="relative border-2 border-white/5 rounded-2xl overflow-hidden bg-white/[0.02] shadow-2xl backdrop-blur-sm max-h-[70vh] aspect-[3/4]">
-                <canvas
-                    ref={canvasRef}
-                    width={360}
-                    height={480}
-                    onMouseMove={handleMouseMove}
-                    onTouchMove={handleTouchMove}
-                    className="w-full h-full cursor-none touch-none"
-                />
-
-                {gameState !== 'playing' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0c111d]/90 backdrop-blur-md p-4">
+            {gameState !== 'playing' && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0c111d]/90 backdrop-blur-xl z-[100] p-8 animate-in fade-in duration-500">
+                    <div className="max-w-md w-full text-center">
                         {gameState === 'gameover' && (
-                            <h2 className="text-2xl font-black text-red-500 uppercase italic mb-2 tracking-tighter">Mission Failed</h2>
-                        )}
-                        {gameState === 'win' && (
-                            <h2 className="text-2xl font-black text-indigo-400 uppercase italic mb-2 tracking-tighter">Bricks Cleared!</h2>
-                        )}
-                        {gameState === 'start' && (
-                            <div className="text-center mb-4">
-                                <h1 className="text-xl font-black text-white uppercase tracking-tighter mb-1">Cyber <span className="text-indigo-400">Bricks</span></h1>
-                                <p className="text-[8px] text-slate-400 uppercase tracking-widest">Destroy the Data Blocks</p>
+                            <div className="mb-8">
+                                <h2 className="text-6xl font-black text-red-500 uppercase italic tracking-tighter mb-2">Systems Failed</h2>
+                                <p className="text-slate-400 font-bold uppercase tracking-widest">Final Data Points: {score}</p>
                             </div>
                         )}
+                        {gameState === 'win' && (
+                            <div className="mb-8">
+                                <h2 className="text-6xl font-black text-indigo-400 uppercase italic tracking-tighter mb-2">Network Cleared</h2>
+                                <p className="text-white font-bold uppercase tracking-widest">You destroyed the firewall!</p>
+                            </div>
+                        )}
+                        {gameState === 'start' && (
+                            <div className="mb-12">
+                                <h1 className="text-7xl font-black text-white uppercase tracking-tighter mb-2 italic">Cyber<span className="text-indigo-500">Bricks</span></h1>
+                                <p className="text-slate-400 font-bold uppercase tracking-[0.3em] text-xs">Security Protocol Bypass Active</p>
+                            </div>
+                        )}
+
                         <button
                             onClick={startGame}
-                            className="group relative px-6 py-2.5 bg-indigo-500 text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                            className="px-16 py-5 bg-indigo-500 text-white rounded-[2rem] font-black uppercase tracking-[0.2em] text-sm transition-all hover:scale-110 active:scale-95 shadow-[0_0_50px_rgba(99,102,241,0.6)] border border-white/20"
                         >
-                            {gameState === 'start' ? 'Initialize' : 'Retry System'}
+                            {gameState === 'start' ? 'Bypass Firewall' : 'Reboot System'}
                         </button>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
-            <p className="mt-4 text-[8px] font-bold text-slate-700 uppercase tracking-widest">Protocol v5.1</p>
+            <div className="absolute bottom-6 right-6 pointer-events-none opacity-30">
+                <p className="text-[10px] font-bold text-white uppercase tracking-[0.3em]">Protocol v6.0 - Full Spectrum</p>
+            </div>
         </div>
     );
 }
