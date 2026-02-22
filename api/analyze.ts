@@ -7,7 +7,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
 
 const CACHE_TTL_DAYS = 30;
-const CACHE_VERSION = 'v57'; // Updated: LaTeX repair system added
+const CACHE_VERSION = 'v58'; // Updated: LaTeX repair system added
 
 function getAnalysisCacheKey(
     slideNumbers: number[],

@@ -457,20 +457,20 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 </div>
                                 {/* Result Ready Overlay (When analysis finishes while playing) */}
                                 {!loading && data && (
-                                    <div className="absolute inset-0 z-[100] bg-black/20 backdrop-blur-[2px] flex items-center justify-center p-6 animate-in fade-in duration-500">
+                                    <div className="absolute inset-0 z-[100] bg-black/30 backdrop-blur-[3px] flex items-center justify-center p-6 animate-in fade-in duration-500">
                                         <button
                                             onClick={() => setShowGame(false)}
-                                            className="group relative px-10 py-6 md:px-14 md:py-8 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-[3rem] shadow-[0_0_80px_rgba(79,70,229,0.5)] transition-all hover:scale-105 active:scale-95 flex flex-col items-center border border-white/20 overflow-hidden"
+                                            className="group relative px-10 py-8 md:px-16 md:py-10 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[3.5rem] shadow-[0_0_100px_rgba(79,70,229,0.6)] transition-all hover:scale-105 active:scale-95 flex flex-col items-center border border-white/20 overflow-hidden"
                                         >
-                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent pointer-events-none" />
-                                            <span className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-indigo-200/60 mb-2">Extraction Complete</span>
-                                            <span className="text-2xl md:text-3xl italic tracking-tighter drop-shadow-xl text-center">
-                                                ✨ اظهر النتيجة الآن ✨
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
+                                            <span className="text-[10px] md:text-xs uppercase tracking-[0.4em] font-black text-indigo-100/40 mb-3">AI Synthesis Complete</span>
+                                            <span className="text-3xl md:text-5xl font-arabic font-black leading-tight drop-shadow-2xl text-center">
+                                                الشرح صار جاهز، يلا؟ ✨
                                             </span>
-                                            <div className="mt-4 flex gap-1.5 opacity-50">
-                                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-duration:0.6s]" />
-                                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
-                                                <div className="w-1.5 h-1.5 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.4s]" />
+                                            <div className="mt-6 flex gap-2 opacity-60">
+                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-duration:0.6s]" />
+                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
+                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.4s]" />
                                             </div>
                                         </button>
                                     </div>
