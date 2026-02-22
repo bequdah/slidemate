@@ -1,6 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const SYMBOLS = ['💻', '🧠', '⚛️', '🚀', '⚡', '🤖'];
+const THEMES = {
+    tech: ['💻', '🧠', '⚛️', '🚀', '⚡', '🤖'],
+    animals: ['🦁', '🐯', '🦒', '🐘', '🐺', '🦊'],
+    food: ['🍕', '🍔', '🍦', '🍩', '🥑', '🌮'],
+    space: ['🌕', '🌍', '🪐', '☄️', '🌌', '🛸'],
+    coding: ['⌨️', '🖱️', '🔋', '🔌', '📡', '💾'],
+    nature: ['🌸', '🌵', '🌴', '🍂', '🍄', '🌋']
+};
 
 interface Card {
     id: number;
@@ -18,7 +25,12 @@ export default function MemoryGame() {
 
     const initializeGame = useCallback(() => {
         setIsGlimpsing(true);
-        const shuffled = [...SYMBOLS, ...SYMBOLS]
+
+        // Pick a random theme
+        const themeKeys = Object.keys(THEMES) as Array<keyof typeof THEMES>;
+        const randomTheme = THEMES[themeKeys[Math.floor(Math.random() * themeKeys.length)]];
+
+        const shuffled = [...randomTheme, ...randomTheme]
             .sort(() => Math.random() - 0.5)
             .map((symbol, index) => ({
                 id: index,
