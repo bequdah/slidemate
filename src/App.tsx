@@ -202,21 +202,21 @@ function MainApp() {
 
         <div className="flex items-center gap-4">
           {user && (
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 sm:gap-4">
               {/* Premium Nudge Button */}
               {tier === 'free' && (
                 <button
                   onClick={() => setIsUpgradeModalOpen(true)}
-                  className="relative group hidden sm:block"
+                  className="relative group block"
                 >
-                  <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-amber-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
-                  <div className="relative px-4 py-2 bg-slate-950 rounded-xl leading-none flex items-center gap-2 border border-white/10 group-hover:border-white/20 transition-all">
-                    <span className="flex items-center gap-1.5">
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-amber-500 rounded-lg sm:rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+                  <div className="relative px-2 py-1.5 sm:px-4 sm:py-2 bg-slate-950 rounded-lg sm:rounded-xl leading-none flex items-center gap-1 sm:gap-2 border border-white/10 group-hover:border-white/20 transition-all">
+                    <span className="flex items-center gap-1 sm:gap-1.5 font-black text-slate-200 uppercase tracking-widest text-[8px] sm:text-[10px]">
                       <span className="text-amber-400">★</span>
-                      <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest bg-gradient-to-r from-indigo-400 to-amber-400 bg-clip-text text-transparent group-hover:text-white transition-colors">Go Premium</span>
+                      <span className="bg-gradient-to-r from-indigo-400 to-amber-400 bg-clip-text text-transparent group-hover:text-white transition-colors">Premium</span>
                     </span>
                     {/* Shimmer Effect */}
-                    <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
+                    <div className="absolute inset-0 w-full h-full overflow-hidden rounded-lg sm:rounded-xl">
                       <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
                     </div>
                   </div>
@@ -227,32 +227,32 @@ function MainApp() {
               {user?.email === 'qudahmohammad36@gmail.com' && (
                 <button
                   onClick={() => setIsAdminDashboardOpen(true)}
-                  className="px-4 py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-xl text-[10px] font-black text-indigo-400 uppercase tracking-widest hover:bg-indigo-500/20 transition-all"
+                  className="px-2 py-1.5 sm:px-4 sm:py-2 bg-indigo-500/10 border border-indigo-500/20 rounded-lg sm:rounded-xl text-[8px] sm:text-[10px] font-black text-indigo-400 uppercase tracking-widest hover:bg-indigo-500/20 transition-all"
                 >
                   ⚡ Admin
                 </button>
               )}
 
-              <div className="flex items-center gap-3">
-                <div className="flex flex-col items-end hidden md:flex">
-                  <span className="text-xs font-bold text-slate-300">
-                    {user.displayName}
+              <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] sm:text-xs font-bold text-slate-300 max-w-[80px] sm:max-w-none truncate">
+                    {user.displayName?.split(' ')[0]}
                   </span>
                   <button
                     onClick={() => setIsUpgradeModalOpen(true)}
-                    className={`text-[10px] font-medium transition-colors hover:text-white ${tier !== 'free' ? 'text-amber-400' : 'text-slate-500'}`}
+                    className={`text-[8px] sm:text-[10px] font-medium transition-colors hover:text-white ${tier !== 'free' ? 'text-amber-400' : 'text-slate-500'}`}
                   >
                     <span className="flex items-center gap-1">
                       {tier === 'unlimited' ? (
                         <>
-                          <span className="animate-pulse">💎</span> Unlimited Mode
+                          <span className="animate-pulse">💎</span> Unlimited
                         </>
                       ) : tier === 'premium' ? (
                         <>
-                          <span className="animate-pulse">★</span> Premium Member
+                          <span className="animate-pulse">★</span> Premium
                         </>
                       ) : (
-                        'Free Member'
+                        'Free'
                       )}
                     </span>
                   </button>
