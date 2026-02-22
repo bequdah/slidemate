@@ -13,14 +13,25 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         {
             name: 'Free',
             price: '0',
-            features: ['10 Daily Trials', 'Ads Enabled', 'Standard Support'],
+            features: [
+                '10 Daily Trials',
+                'Ads Included',
+                'History: Slides kept for 2 days',
+                'Standard AI Analysis'
+            ],
             current: tier === 'free',
             color: 'slate'
         },
         {
             name: 'Premium',
             price: '1',
-            features: ['50 Daily Trials', 'No Ads', 'Priority Analysis', 'Premium Games'],
+            features: [
+                '50 Daily Trials',
+                'Zero Ads - Focus Mode',
+                'History: Slides kept for 30 days',
+                'Priority Contextual Analysis',
+                'All 5 Premium Mini-games'
+            ],
             current: tier === 'premium',
             color: 'indigo',
             popular: true
@@ -28,7 +39,12 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         {
             name: 'Unlimited',
             price: 'Custom',
-            features: ['Unlimited Trials', 'No Ads', 'Direct Owner Access', 'Early Access Features'],
+            features: [
+                '∞ Unlimited Daily Trials',
+                'Permanent History (Lifetime)',
+                'Priority Processing (VIP)',
+                'Direct WhatsApp Support'
+            ],
             current: tier === 'unlimited',
             color: 'amber'
         }
