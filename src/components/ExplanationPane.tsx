@@ -106,6 +106,16 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         };
     }, []);
 
+    // Auto-transition to explanation when ready
+    useEffect(() => {
+        if (!loading && data && showGame) {
+            const timer = setTimeout(() => {
+                setShowGame(false);
+            }, 3000);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, data, showGame]);
+
     const handleModeSelect = async (selectedMode: ExplanationMode) => {
         // Check Usage Limit First
         if (usageLeft <= 0) {
@@ -457,20 +467,24 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 </div>
                                 {/* Result Ready Overlay (When analysis finishes while playing) */}
                                 {!loading && data && (
-                                    <div className="absolute inset-0 z-[100] bg-black/30 backdrop-blur-[3px] flex items-center justify-center p-6 animate-in fade-in duration-500">
+                                    <div className="absolute inset-0 z-[100] bg-black/40 backdrop-blur-[4px] flex items-center justify-center p-6 animate-in fade-in duration-500">
                                         <button
                                             onClick={() => setShowGame(false)}
-                                            className="group relative px-10 py-8 md:px-16 md:py-10 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[3.5rem] shadow-[0_0_100px_rgba(79,70,229,0.6)] transition-all hover:scale-105 active:scale-95 flex flex-col items-center border border-white/20 overflow-hidden"
+                                            className="group relative px-12 py-10 md:px-20 md:py-14 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[4rem] shadow-[0_0_120px_rgba(79,70,229,0.7)] transition-all hover:scale-105 active:scale-95 flex flex-col items-center border border-white/20 overflow-hidden"
                                         >
                                             <div className="absolute inset-0 bg-gradient-to-tr from-white/20 to-transparent pointer-events-none" />
-                                            <span className="text-[10px] md:text-xs uppercase tracking-[0.4em] font-black text-indigo-100/40 mb-3">AI Synthesis Complete</span>
-                                            <span className="text-3xl md:text-5xl font-arabic font-black leading-tight drop-shadow-2xl text-center">
-                                                الشرح صار جاهز، يلا؟ ✨
+                                            <span className="text-4xl md:text-6xl font-arabic font-black leading-tight drop-shadow-2xl text-center">
+                                                الشرح صار جاهز، يلا؟
                                             </span>
-                                            <div className="mt-6 flex gap-2 opacity-60">
-                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-duration:0.6s]" />
-                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
-                                                <div className="w-2 h-2 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.4s]" />
+
+                                            <div className="mt-8 flex gap-3 opacity-60">
+                                                <div className="w-2.5 h-2.5 bg-white rounded-full animate-bounce [animation-duration:0.6s]" />
+                                                <div className="w-2.5 h-2.5 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.2s]" />
+                                                <div className="w-2.5 h-2.5 bg-white rounded-full animate-bounce [animation-duration:0.6s] [animation-delay:0.4s]" />
+                                            </div>
+
+                                            <div className="absolute bottom-4 text-[10px] font-bold text-white/30 uppercase tracking-[0.3em]">
+                                                Auto-transition in 3s
                                             </div>
                                         </button>
                                     </div>
