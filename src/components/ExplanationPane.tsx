@@ -340,10 +340,10 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
             <div className="absolute inset-0 bg-[#020617]" onClick={onClose} />
 
             {/* Modal Content */}
-            <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-[2.5rem] shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${lang === 'ar' ? 'font-arabic' : ''}`}>
-                <div className="flex flex-col h-full overflow-hidden">
+            <div className={`relative w-full max-w-4xl h-[95vh] md:h-[85vh] bg-[#0c111d] rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/10 animate-in zoom-in-95 duration-500 flex flex-col ${lang === 'ar' ? 'font-arabic' : ''}`}>
+                <div className="flex flex-col h-full">
                     {/* Header */}
-                    <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl relative flex-shrink-0">
+                    <div className="p-4 md:p-8 border-b border-white/5 bg-slate-900/40 backdrop-blur-2xl relative flex-shrink-0 rounded-t-[2.5rem]">
                         <div className="flex items-center justify-between w-full relative z-[70]">
                             {/* Left: Brand */}
                             <div className={`flex items-center gap-3 transition-opacity duration-300 ${isPlaying ? 'opacity-0 md:opacity-100 pointer-events-none' : 'opacity-100'}`}>
