@@ -27,7 +27,7 @@ interface Slide {
 }
 
 function MainApp() {
-  const { user, adsEnabled, logout, tier } = useAuth();
+  const { user, logout, tier } = useAuth();
   const [slides, setSlides] = useState<Slide[]>([]);
   const [chapterTitle, setChapterTitle] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
@@ -240,13 +240,21 @@ function MainApp() {
                   </span>
                   <button
                     onClick={() => setIsUpgradeModalOpen(true)}
-                    className={`text-[10px] font-medium transition-colors hover:text-white ${!adsEnabled ? 'text-amber-400' : 'text-slate-500'}`}
+                    className={`text-[10px] font-medium transition-colors hover:text-white ${tier !== 'free' ? 'text-amber-400' : 'text-slate-500'}`}
                   >
-                    {!adsEnabled ? (
-                      <span className="flex items-center gap-1">
-                        <span className="animate-pulse">★</span> Premium Member
-                      </span>
-                    ) : 'Free Member'}
+                    <span className="flex items-center gap-1">
+                      {tier === 'unlimited' ? (
+                        <>
+                          <span className="animate-pulse">💎</span> Unlimited Mode
+                        </>
+                      ) : tier === 'premium' ? (
+                        <>
+                          <span className="animate-pulse">★</span> Premium Member
+                        </>
+                      ) : (
+                        'Free Member'
+                      )}
+                    </span>
                   </button>
                 </div>
                 <button
