@@ -24,20 +24,13 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             current: tier === 'premium',
             color: 'indigo',
             popular: true
-        },
-        {
-            name: 'Unlimited',
-            price: 'Custom',
-            features: ['Unlimited Trials', 'No Ads', 'Direct Owner Access', 'Early Access Features'],
-            current: tier === 'unlimited',
-            color: 'amber'
         }
     ];
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-[200] p-4">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose} />
-            <div className="relative w-full max-w-5xl bg-[#020617] border border-white/10 rounded-[2.5rem] p-6 md:p-12 shadow-2xl animate-in zoom-in-95 duration-500 overflow-y-auto max-h-[90vh] custom-scrollbar">
+            <div className="relative w-full max-w-4xl bg-[#020617] border border-white/10 rounded-[2.5rem] p-6 md:p-12 shadow-2xl animate-in zoom-in-95 duration-500 overflow-y-auto max-h-[90vh] custom-scrollbar">
                 <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 text-slate-400 transition-colors">✕</button>
 
                 <div className="text-center mb-12">
@@ -45,7 +38,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                     <p className="text-slate-400 font-medium">Choose the plan that fits your study needs.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
                     {tiers.map((t) => (
                         <div key={t.name} className={`relative p-8 rounded-[2rem] border transition-all duration-500 ${t.current ? 'border-none ring-2 ring-white/20' : 'border-white/5 hover:border-white/20'} ${t.popular ? 'bg-indigo-600/5' : 'bg-white/[0.02]'}`}>
                             {t.popular && (
@@ -53,18 +46,18 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                                     Most Popular
                                 </div>
                             )}
-                            <h3 className={`text-2xl font-black mb-1 uppercase italic ${t.color === 'indigo' ? 'text-indigo-400' : (t.color === 'amber' ? 'text-amber-400' : 'text-slate-400')}`}>
+                            <h3 className={`text-2xl font-black mb-1 uppercase italic ${t.color === 'indigo' ? 'text-indigo-400' : 'text-slate-400'}`}>
                                 {t.name}
                             </h3>
                             <div className="flex items-baseline gap-1 mb-6">
                                 <span className="text-4xl font-black text-white tracking-tighter">{t.price}</span>
-                                <span className="text-slate-500 text-sm font-bold uppercase">{t.name === 'Unlimited' ? '' : 'JOD / month'}</span>
+                                <span className="text-slate-500 text-sm font-bold uppercase">JOD / month</span>
                             </div>
 
                             <ul className="space-y-4 mb-8">
                                 {t.features.map(f => (
                                     <li key={f} className="flex items-center gap-3 text-sm font-medium text-slate-300">
-                                        <svg className={`w-4 h-4 ${t.color === 'indigo' ? 'text-indigo-400' : (t.color === 'amber' ? 'text-amber-400' : 'text-slate-500')}`} fill="currentColor" viewBox="0 0 20 20">
+                                        <svg className={`w-4 h-4 ${t.color === 'indigo' ? 'text-indigo-400' : 'text-slate-500'}`} fill="currentColor" viewBox="0 0 20 20">
                                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                                         </svg>
                                         {f}
@@ -80,8 +73,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                                 <a
                                     href={`https://wa.me/962792118641?text=${encodeURIComponent(`مرحبا، بدي اشترك بباكة الـ ${t.name} في موقع SlideMate`)}`}
                                     target="_blank"
-                                    className={`block w-full py-4 text-center rounded-2xl font-black transition-all active:scale-95 shadow-xl ${t.color === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20' :
-                                        (t.color === 'amber' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20' : 'bg-white/5 hover:bg-white/10 text-white')
+                                    className={`block w-full py-4 text-center rounded-2xl font-black transition-all active:scale-95 shadow-xl ${t.color === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20' : 'bg-white/5 hover:bg-white/10 text-white'
                                         }`}
                                 >
                                     Choose {t.name}
