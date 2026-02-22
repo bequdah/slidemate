@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, getDocs, updateDoc, doc, orderBy } from 'firebase/firestore';
+import { collection, query, getDocs, updateDoc, doc } from 'firebase/firestore';
 import type { UserTier } from '../contexts/AuthContext';
 
 interface UserData {
@@ -33,12 +33,20 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            const q = query(collection(db, "users"), orderBy("email", "asc"));
+            // Remove orderBy to ensure we get ALL documents even if fields are missing
+            const q = query(collection(db, "users"));
             const querySnapshot = await getDocs(q);
             const usersData: UserData[] = [];
-            querySnapshot.forEach((doc) => {
-                usersData.push(doc.data() as UserData);
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                // Ensure email exists or use the document ID if it's an old record
+                usersData.push({
+                    ...data,
+                    email: data.email || docSnap.id // Use ID as fallback if email field is missing
+                } as UserData);
             });
+            // Sort in JS instead
+            usersData.sort((a, b) => (a.email || '').localeCompare(b.email || ''));
             setUsers(usersData);
         } catch (error) {
             console.error("Error fetching users:", error);
@@ -49,6 +57,7 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
 
     const handleTierChange = async (email: string, newTier: UserTier) => {
         try {
+            // The document ID is the email
             const userRef = doc(db, "users", email);
             await updateDoc(userRef, { tier: newTier });
             setUsers(prev => prev.map(u => u.email === email ? { ...u, tier: newTier } : u));
@@ -58,10 +67,12 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
         }
     };
 
-    const filteredUsers = users.filter(u =>
-        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (u.name || '').toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredUsers = users.filter(u => {
+        const search = searchTerm.toLowerCase();
+        const userEmail = (u.email || '').toLowerCase();
+        const userName = (u.name || '').toLowerCase();
+        return userEmail.includes(search) || userName.includes(search);
+    });
 
     if (!isOpen) return null;
 
