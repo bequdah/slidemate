@@ -293,17 +293,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const decodedToken = await auth.verifyIdToken(idToken);
         const uid = decodedToken.uid;
 
-        const today = new Date().toISOString().split('T')[0];
         const userRef = db.collection('users').doc(uid);
-
         const userDoc = await userRef.get();
         const userData = userDoc.data() || {};
-        const usage = userData.dailyUsage || { date: today, count: 0 };
-
-        if (usage.date === today && usage.count >= 200) {
-            res.status(429).json({ error: 'Daily limit reached (200/200)' });
-            return;
-        }
+        const userTier = userData.tier || 'free';
 
         const { slideNumbers, textContentArray, mode, thumbnail, previousTopics } = req.body as {
             slideNumbers: number[];
@@ -314,23 +307,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
 
         const resolvedMode: Mode = resolveModeForAnalysis(mode);
-
         const cacheKey = getAnalysisCacheKey(slideNumbers, textContentArray, thumbnail, resolvedMode);
         const cacheRef = userRef.collection('analyses').doc(cacheKey);
         const cacheSnap = await cacheRef.get();
+
         if (cacheSnap.exists) {
             const cached = cacheSnap.data();
             const createdAt = cached?.createdAt as admin.firestore.Timestamp | undefined;
             if (createdAt) {
                 const ageMs = Date.now() - createdAt.toMillis();
-                if (ageMs < CACHE_TTL_DAYS * 24 * 60 * 60 * 1000) {
-                    console.log('Cache hit:', cacheKey);
+                // Logic: Free users get 2 days cache, others get full TTL (30 days)
+                const effectiveTTL = userTier === 'free' ? 2 : CACHE_TTL_DAYS;
+
+                if (ageMs < effectiveTTL * 24 * 60 * 60 * 1000) {
+                    console.log(`Cache hit (${userTier}):`, cacheKey);
                     return res.status(200).json({
                         ...(cached?.result ?? {}),
                         isCached: true
                     });
                 }
             }
+        }
+
+        const today = new Date().toISOString().split('T')[0];
+        const usage = userData.dailyUsage || { date: today, count: 0 };
+
+        if (usage.date === today && usage.count >= 200) {
+            res.status(429).json({ error: 'Daily limit reached (200/200)' });
+            return;
         }
 
         const systemPrompt = buildSystemPrompt();
