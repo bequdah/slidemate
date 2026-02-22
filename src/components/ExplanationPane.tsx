@@ -12,6 +12,7 @@ import { useAuth } from '../contexts/AuthContext';
 import WaitingGame from './WaitingGame';
 import NeuralSnake from './NeuralSnake';
 import AstroJump from './AstroJump';
+import MemoryGame from './MemoryGame';
 
 /* =======================
    Structured Types
@@ -83,7 +84,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
         const games = [
             <WaitingGame key="bugs" />,
             <NeuralSnake key="snake" />,
-            <AstroJump key="jump" />
+            <AstroJump key="jump" />,
+            <MemoryGame key="memory" />
         ];
         return games[Math.floor(Math.random() * games.length)];
     }, [loading]);
