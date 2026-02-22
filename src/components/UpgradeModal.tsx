@@ -16,7 +16,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             features: [
                 '10 Daily Trials',
                 'Ads Included',
-                'History: Slides kept for 2 days',
+                'Explanations saved for 2 days',
                 'Limited Mini-games (3/day)',
                 'Standard AI Analysis'
             ],
@@ -29,7 +29,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
             features: [
                 '50 Daily Trials',
                 'Zero Ads - Focus Mode',
-                'History: Slides kept for 30 days',
+                'Explanations saved for 30 days',
                 'Priority Contextual Analysis',
                 'All 5 Premium Mini-games'
             ],
