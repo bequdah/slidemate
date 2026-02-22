@@ -202,45 +202,45 @@ export default function CyberBricks() {
     };
 
     return (
-        <div className="flex flex-col items-center justify-center h-full w-full p-4 bg-[#0c111d] select-none overflow-hidden touch-none">
-            <div className="mb-6 flex items-center justify-between w-full max-w-xs px-4">
+        <div className="flex flex-col items-center justify-center h-full w-full p-2 bg-[#0c111d] select-none overflow-hidden touch-none">
+            <div className="mb-2 flex items-center justify-between w-full max-w-[320px] px-4">
                 <div className="text-center">
-                    <p className="text-[10px] uppercase font-black tracking-widest text-slate-500">Score</p>
-                    <p className="text-xl font-black text-indigo-400">{score}</p>
+                    <p className="text-[9px] uppercase font-black tracking-widest text-slate-500">Score</p>
+                    <p className="text-lg font-black text-indigo-400">{score}</p>
                 </div>
                 <div className="text-center">
-                    <p className="text-[10px] uppercase font-black tracking-widest text-slate-500">Status</p>
-                    <p className="text-xs font-black text-white uppercase">{gameState === 'playing' ? 'Active' : 'Standby'}</p>
+                    <p className="text-[9px] uppercase font-black tracking-widest text-slate-500">Status</p>
+                    <p className="text-[10px] font-black text-white uppercase">{gameState === 'playing' ? 'Active' : 'Standby'}</p>
                 </div>
             </div>
 
-            <div className="relative border-4 border-white/5 rounded-3xl overflow-hidden bg-white/[0.02] shadow-2xl backdrop-blur-sm">
+            <div className="relative border-2 border-white/5 rounded-2xl overflow-hidden bg-white/[0.02] shadow-2xl backdrop-blur-sm max-h-[70vh] aspect-[3/4]">
                 <canvas
                     ref={canvasRef}
                     width={360}
                     height={480}
                     onMouseMove={handleMouseMove}
                     onTouchMove={handleTouchMove}
-                    className="max-w-full h-auto cursor-none touch-none"
+                    className="w-full h-full cursor-none touch-none"
                 />
 
                 {gameState !== 'playing' && (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0c111d]/80 backdrop-blur-md">
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0c111d]/90 backdrop-blur-md p-4">
                         {gameState === 'gameover' && (
-                            <h2 className="text-3xl font-black text-red-500 uppercase italic mb-2 tracking-tighter">Mission Failed</h2>
+                            <h2 className="text-2xl font-black text-red-500 uppercase italic mb-2 tracking-tighter">Mission Failed</h2>
                         )}
                         {gameState === 'win' && (
-                            <h2 className="text-3xl font-black text-indigo-400 uppercase italic mb-2 tracking-tighter">Bricks Cleared!</h2>
+                            <h2 className="text-2xl font-black text-indigo-400 uppercase italic mb-2 tracking-tighter">Bricks Cleared!</h2>
                         )}
                         {gameState === 'start' && (
-                            <div className="text-center mb-6">
-                                <h1 className="text-2xl font-black text-white uppercase tracking-tighter mb-1">Cyber <span className="text-indigo-400">Bricks</span></h1>
-                                <p className="text-[10px] text-slate-400 uppercase tracking-widest">Destroy the Data Blocks</p>
+                            <div className="text-center mb-4">
+                                <h1 className="text-xl font-black text-white uppercase tracking-tighter mb-1">Cyber <span className="text-indigo-400">Bricks</span></h1>
+                                <p className="text-[8px] text-slate-400 uppercase tracking-widest">Destroy the Data Blocks</p>
                             </div>
                         )}
                         <button
                             onClick={startGame}
-                            className="group relative px-8 py-3 bg-indigo-500 text-white rounded-xl font-black uppercase tracking-[0.2em] text-xs transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
+                            className="group relative px-6 py-2.5 bg-indigo-500 text-white rounded-xl font-black uppercase tracking-[0.2em] text-[10px] transition-all hover:scale-105 active:scale-95 shadow-[0_0_20px_rgba(99,102,241,0.5)]"
                         >
                             {gameState === 'start' ? 'Initialize' : 'Retry System'}
                         </button>
@@ -248,7 +248,7 @@ export default function CyberBricks() {
                 )}
             </div>
 
-            <p className="mt-8 text-[10px] font-bold text-slate-600 uppercase tracking-widest">Terminal v5.0 - Brick Protocol</p>
+            <p className="mt-4 text-[8px] font-bold text-slate-700 uppercase tracking-widest">Protocol v5.1</p>
         </div>
     );
 }
