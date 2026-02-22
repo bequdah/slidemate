@@ -61,8 +61,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         const today = new Date().toISOString().split('T')[0];
 
                         // Handle tier and ads - COMPLETELY DRIVEN BY FIREBASE
-                        const userTier = userData.tier || 'free';
-                        setTier(userTier);
+                        let userTier = userData.tier;
+
+                        if (!userTier) {
+                            userTier = 'free';
+                            await updateDoc(userRef, { tier: 'free' });
+                        }
+
+                        setTier(userTier as UserTier);
 
                         // Disable ads ONLY if Tier is NOT 'free'
                         // (Premium and Unlimited don't see ads)
