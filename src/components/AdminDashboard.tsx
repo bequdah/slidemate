@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
-import { collection, query, getDocs, updateDoc, doc } from 'firebase/firestore';
+import { collection, query, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
 import type { UserTier } from '../contexts/AuthContext';
 
 interface UserData {
@@ -60,13 +60,50 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
 
     const handleTierChange = async (email: string, newTier: UserTier) => {
         try {
-            // The document ID is the email
             const userRef = doc(db, "users", email);
             await updateDoc(userRef, { tier: newTier });
             setUsers(prev => prev.map(u => u.email === email ? { ...u, tier: newTier } : u));
         } catch (error) {
             console.error("Error updating tier:", error);
             alert("Failed to update tier");
+        }
+    };
+
+    const handleDeleteUser = async (email: string) => {
+        if (!window.confirm(`Are you sure you want to delete user ${email}?`)) return;
+
+        try {
+            const userRef = doc(db, "users", email);
+            await deleteDoc(userRef);
+            setUsers(prev => prev.filter(u => u.email !== email));
+        } catch (error) {
+            console.error("Error deleting user:", error);
+            alert("Failed to delete user");
+        }
+    };
+
+    const deleteNoNameUsers = async () => {
+        const noNameUsers = users.filter(u => !u.name || u.name === 'No Name');
+        if (noNameUsers.length === 0) {
+            alert("No 'No Name' users found.");
+            return;
+        }
+
+        if (!window.confirm(`Delete all ${noNameUsers.length} 'No Name' users?`)) return;
+
+        setLoading(true);
+        try {
+            for (const u of noNameUsers) {
+                const userRef = doc(db, "users", u.email);
+                await deleteDoc(userRef);
+            }
+            await fetchUsers();
+            alert("Cleanup complete!");
+        } catch (error) {
+            console.error("Cleanup error:", error);
+            alert("Error during cleanup");
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -89,7 +126,16 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                         <h2 className="text-3xl font-black text-white uppercase italic tracking-tighter">
                             Admin <span className="text-indigo-400">Dashboard</span>
                         </h2>
-                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">Manage Users & Subscriptions</p>
+                        <div className="flex items-center gap-2 mt-1">
+                            <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Manage Users & Subscriptions</p>
+                            <span className="w-1 h-1 bg-slate-700 rounded-full" />
+                            <button
+                                onClick={deleteNoNameUsers}
+                                className="text-[10px] font-black text-red-400/60 hover:text-red-400 uppercase tracking-[0.2em] transition-colors"
+                            >
+                                [ Clean No-Names ]
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex items-center gap-4 w-full md:w-auto">
@@ -121,21 +167,24 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                     {loading ? (
                         <div className="flex flex-col items-center justify-center py-20 gap-4">
                             <div className="w-8 h-8 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
-                            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Loading Users...</p>
+                            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Processing...</p>
                         </div>
                     ) : (
                         <div className="grid gap-4">
-                            <div className="hidden md:grid grid-cols-5 gap-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">
+                            <div className="hidden md:grid grid-cols-6 gap-4 px-6 text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-2">
                                 <div className="col-span-2">User / Email</div>
                                 <div>Tier</div>
-                                <div>Usage (Daily/Total)</div>
-                                <div>Actions</div>
+                                <div>Usage</div>
+                                <div>Change Tier</div>
+                                <div className="text-right text-red-500/50">Danger Zone</div>
                             </div>
 
                             {filteredUsers.map((u) => (
-                                <div key={u.email} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 md:px-6 md:py-4 grid grid-cols-1 md:grid-cols-5 items-center gap-4 hover:bg-white/[0.04] transition-colors group">
+                                <div key={u.email} className="bg-white/[0.02] border border-white/5 rounded-2xl p-4 md:px-6 md:py-4 grid grid-cols-1 md:grid-cols-6 items-center gap-4 hover:bg-white/[0.04] transition-colors group">
                                     <div className="col-span-2">
-                                        <div className="font-bold text-white text-sm truncate">{u.name || 'No Name'}</div>
+                                        <div className={`font-bold text-sm truncate ${!u.name || u.name === 'No Name' ? 'text-red-400/50' : 'text-white'}`}>
+                                            {u.name || 'No Name'}
+                                        </div>
                                         <div className="text-xs text-slate-500 truncate">{u.email}</div>
                                     </div>
 
@@ -148,19 +197,31 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                                     </div>
 
                                     <div className="text-sm font-mono text-slate-400">
-                                        <span className="text-white font-bold">{u.dailyUsage?.count || 0}</span> / <span className="text-xs">{u.totalUsage || 0}</span>
+                                        <span className="text-white font-bold">{u.dailyUsage?.count || 0}</span> <span className="text-[10px] opacity-30">/</span> <span className="text-xs">{u.totalUsage || 0}</span>
                                     </div>
 
                                     <div>
                                         <select
                                             value={u.tier}
                                             onChange={(e) => handleTierChange(u.email, e.target.value as UserTier)}
-                                            className="bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-all cursor-pointer hover:bg-slate-800"
+                                            className="bg-slate-900 border border-white/10 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 transition-all cursor-pointer hover:bg-slate-800 w-full"
                                         >
                                             <option value="free">Free</option>
                                             <option value="premium">Premium</option>
                                             <option value="unlimited">Unlimited</option>
                                         </select>
+                                    </div>
+
+                                    <div className="flex justify-end order-first md:order-last">
+                                        <button
+                                            onClick={() => handleDeleteUser(u.email)}
+                                            className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-red-500/5 border border-red-500/10 flex items-center justify-center text-red-500/40 hover:text-red-500 hover:bg-red-500/10 hover:border-red-500/20 transition-all active:scale-95"
+                                            title="Delete User Record"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 </div>
                             ))}
