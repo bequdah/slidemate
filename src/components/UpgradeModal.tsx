@@ -50,7 +50,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         }
     ];
 
-    const visibleTiers = tiers.filter(t => t.name !== 'Unlimited' || tier === 'unlimited');
+    const visibleTiers = tiers.filter(t => t.name !== 'Unlimited');
 
     return (
         <div className="fixed inset-0 flex items-center justify-center z-[200] p-4">
