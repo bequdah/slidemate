@@ -860,6 +860,12 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     gap: 0.75rem !important;
                 }
                 
+                /* Golden Yellow for English Terms & Bold Text */
+                .prose strong {
+                    color: #fbbf24 !important;
+                    font-weight: 900 !important;
+                }
+
                 .katex { 
                     font-size: 1.15em !important; 
                     color: #fbbf24;
