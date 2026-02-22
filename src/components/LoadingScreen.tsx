@@ -82,9 +82,11 @@ export function LoadingScreen({ progress, chapterTitle }: LoadingScreenProps) {
                     </div>
                 </div>
 
-                {/* Add AdSense here */}
-                <div className="mt-8 flex justify-center w-full">
-                    <AdSense slot="3890890228" className="w-[300px] h-[100px] md:w-[468px] md:h-[60px]" format="rectangle" />
+                {/* Add AdSense here - Compact Version */}
+                <div className="mt-8 flex justify-center w-full max-w-sm mx-auto">
+                    <div className="w-full bg-white/5 rounded-2xl overflow-hidden border border-white/10">
+                        <AdSense slot="3890890228" className="w-full" style={{ height: '60px', minHeight: '60px' }} format="fluid" />
+                    </div>
                 </div>
             </div>
 

@@ -470,9 +470,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             </p>
                                         </div>
 
-                                        {/* AdSense during wait */}
-                                        <div className="w-full max-w-lg flex justify-center">
-                                            <AdSense slot="3890890228" className="w-full rounded-2xl overflow-hidden border border-white/5" />
+                                        {/* AdSense during wait - Compact Version */}
+                                        <div className="w-full max-w-sm flex justify-center">
+                                            <div className="w-full bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative">
+                                                <AdSense slot="3890890228" format="fluid" className="w-full" style={{ height: '90px', minHeight: '90px' }} />
+                                            </div>
                                         </div>
 
                                         <button
@@ -526,9 +528,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                     </section>
                                 ) : null}
 
-                                {/* AdSense: After Explanation */}
-                                <div className="my-8 flex justify-center">
-                                    <AdSense slot="3890890228" className="w-full rounded-2xl overflow-hidden border border-white/5" />
+                                {/* AdSense: After Explanation - Compact Version */}
+                                <div className="my-6 flex justify-center">
+                                    <div className="w-full max-w-xl bg-white/5 rounded-2xl overflow-hidden border border-white/10 relative">
+                                        <AdSense slot="3890890228" format="fluid" className="w-full" style={{ height: '100px', minHeight: '100px' }} />
+                                    </div>
                                 </div>
 
 
