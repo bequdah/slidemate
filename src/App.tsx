@@ -8,6 +8,7 @@ import { Login } from './components/Login';
 import { LogoModal } from './components/LogoModal';
 import { AdSense } from './components/AdSense';
 import { LegalModal } from './components/LegalModal';
+import { UpgradeModal } from './components/UpgradeModal';
 import { extractTextFromPDFPage, processImageForAnalysis } from './utils/ocrService';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -34,6 +35,7 @@ function MainApp() {
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
   const [activeLegalModal, setActiveLegalModal] = useState<'privacy' | 'terms' | 'contact' | null>(null);
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const handleUpload = async (file: File) => {
     setIsUploading(true);
@@ -198,22 +200,51 @@ function MainApp() {
 
         <div className="flex items-center gap-4">
           {user && (
-            <div className="flex items-center gap-3">
-              <div className="flex flex-col items-end hidden md:flex">
-                <span className="text-xs font-bold text-slate-300">
-                  {user.displayName}
-                </span>
-                <span className={`text-[10px] font-medium ${!adsEnabled ? 'text-amber-400 animate-pulse' : 'text-slate-500'}`}>
-                  {!adsEnabled ? '★ Premium Member' : 'Free Member'}
-                </span>
+            <div className="flex items-center gap-4">
+              {/* Premium Nudge Button */}
+              {adsEnabled && (
+                <button
+                  onClick={() => setIsUpgradeModalOpen(true)}
+                  className="relative group hidden sm:block"
+                >
+                  <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-amber-500 rounded-xl blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+                  <div className="relative px-4 py-2 bg-slate-950 rounded-xl leading-none flex items-center gap-2 border border-white/10 group-hover:border-white/20 transition-all">
+                    <span className="flex items-center gap-1.5">
+                      <span className="text-amber-400">★</span>
+                      <span className="text-[10px] font-black text-slate-200 uppercase tracking-widest bg-gradient-to-r from-indigo-400 to-amber-400 bg-clip-text text-transparent group-hover:text-white transition-colors">Go Premium</span>
+                    </span>
+                    {/* Shimmer Effect */}
+                    <div className="absolute inset-0 w-full h-full overflow-hidden rounded-xl">
+                      <div className="absolute inset-0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+                    </div>
+                  </div>
+                </button>
+              )}
+
+              <div className="flex items-center gap-3">
+                <div className="flex flex-col items-end hidden md:flex">
+                  <span className="text-xs font-bold text-slate-300">
+                    {user.displayName}
+                  </span>
+                  <button
+                    onClick={() => setIsUpgradeModalOpen(true)}
+                    className={`text-[10px] font-medium transition-colors hover:text-white ${!adsEnabled ? 'text-amber-400' : 'text-slate-500'}`}
+                  >
+                    {!adsEnabled ? (
+                      <span className="flex items-center gap-1">
+                        <span className="animate-pulse">★</span> Premium Member
+                      </span>
+                    ) : 'Free Member'}
+                  </button>
+                </div>
+                <button
+                  onClick={async () => await logout()}
+                  className="text-[10px] sm:text-xs glass hover:bg-white/10 px-3 sm:px-4 py-2 rounded-xl transition-all font-bold text-white uppercase tracking-wider"
+                >
+                  Sign Out
+                </button>
+                {user.photoURL && <img src={user.photoURL} className="w-8 h-8 rounded-full border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/20" />}
               </div>
-              <button
-                onClick={async () => await logout()}
-                className="text-[10px] sm:text-xs glass hover:bg-white/10 px-3 sm:px-4 py-2 rounded-xl transition-all font-bold text-white uppercase tracking-wider"
-              >
-                Sign Out
-              </button>
-              {user.photoURL && <img src={user.photoURL} className="w-8 h-8 rounded-full border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/20" />}
             </div>
           )}
         </div>
@@ -315,6 +346,11 @@ function MainApp() {
       <LegalModal type={activeLegalModal} onClose={() => setActiveLegalModal(null)} />
 
       {/* Simplified Footer for Google AdSense Compliance */}
+      <UpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+      />
+
       <footer className="max-w-7xl mx-auto p-8 border-t border-white/5 mt-auto flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 hover:opacity-100 transition-opacity">
         <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
           © {new Date().getFullYear()} SlideMate AI. All rights reserved.
