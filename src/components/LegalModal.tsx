@@ -29,8 +29,7 @@ export function LegalModal({ type, onClose }: LegalModalProps) {
             title: "اتصل بنا (Contact Us)",
             body: [
                 "لأي استفسارات، شكاوى، أو لطلب تفعيل العضوية المميزة، يمكنك التواصل معنا مباشرة عبر الواتساب:",
-                "رقم الهاتف: 962792118641+",
-                "البريد الإلكتروني: support@slidemate.ai (قريباً)"
+                "رقم الهاتف: 962792118641+"
             ]
         }
     }[type];

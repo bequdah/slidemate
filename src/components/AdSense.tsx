@@ -52,15 +52,17 @@ export function AdSense({ slot, format = 'auto', className = '', style = {} }: A
 
             {/* WhatsApp CTA - يظهر بس لما SHOW_WHATSAPP_CTA = true */}
             {SHOW_WHATSAPP_CTA && (
-                <a
-                    href={whatsappLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 transition-all uppercase tracking-widest bg-white/5 hover:bg-white/10 px-4 py-2 rounded-xl border border-white/10 flex items-center gap-2 shadow-xl"
-                >
-                    <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                    لإزالة الإعلانات تواصل معي واتس (دينار/شهر)
-                </a>
+                <div className="w-full flex justify-center pb-2">
+                    <a
+                        href={whatsappLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[9px] font-bold text-indigo-400 hover:text-white transition-all uppercase tracking-widest bg-white/5 hover:bg-indigo-500/20 px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-2 shadow-lg backdrop-blur-sm"
+                    >
+                        <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                        إزالة الإعلانات (دينار/شهر)
+                    </a>
+                </div>
             )}
         </div>
     );
