@@ -308,19 +308,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const resolvedMode: Mode = resolveModeForAnalysis(mode);
         const cacheKey = getAnalysisCacheKey(slideNumbers, textContentArray, thumbnail, resolvedMode);
-        const cacheRef = userRef.collection('analyses').doc(cacheKey);
-        const cacheSnap = await cacheRef.get();
 
-        if (cacheSnap.exists) {
-            const cached = cacheSnap.data();
+        // 1. TIER CONFIG
+        const effectiveTTL = userTier === 'free' ? 2 : CACHE_TTL_DAYS; // 2 days for free, 30 for premium
+
+        // 2. CHECK PRIVATE USER CACHE (Always FREE)
+        const userCacheRef = userRef.collection('analyses').doc(cacheKey);
+        const userCacheSnap = await userCacheRef.get();
+
+        if (userCacheSnap.exists) {
+            const cached = userCacheSnap.data();
             const createdAt = cached?.createdAt as admin.firestore.Timestamp | undefined;
             if (createdAt) {
                 const ageMs = Date.now() - createdAt.toMillis();
-                // Logic: Free users get 2 days cache, others get full TTL (30 days)
-                const effectiveTTL = userTier === 'free' ? 2 : CACHE_TTL_DAYS;
-
                 if (ageMs < effectiveTTL * 24 * 60 * 60 * 1000) {
-                    console.log(`Cache hit (${userTier}):`, cacheKey);
+                    console.log(`User Cache hit (${userTier}):`, cacheKey);
                     return res.status(200).json({
                         ...(cached?.result ?? {}),
                         isCached: true
@@ -329,12 +331,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             }
         }
 
+        // 3. CHECK USAGE BEFORE PROCEEDING (If not in private cache, it WILL cost a point)
         const today = new Date().toISOString().split('T')[0];
         const usage = userData.dailyUsage || { date: today, count: 0 };
+        const usageLimit = 200; // Shared limit
 
-        if (usage.date === today && usage.count >= 200) {
-            res.status(429).json({ error: 'Daily limit reached (200/200)' });
+        if (usage.date === today && usage.count >= usageLimit) {
+            res.status(429).json({ error: `Daily limit reached (${usageLimit}/${usageLimit})` });
             return;
+        }
+
+        // 4. CHECK GLOBAL CACHE (Costs 1 Point for User, but Saves AI Cost for you)
+        const globalCacheRef = db.collection('global_analysis_cache').doc(cacheKey);
+        const globalCacheSnap = await globalCacheRef.get();
+
+        if (globalCacheSnap.exists) {
+            const cached = globalCacheSnap.data();
+            const createdAt = cached?.createdAt as admin.firestore.Timestamp | undefined;
+            if (createdAt) {
+                const ageMs = Date.now() - createdAt.toMillis();
+                if (ageMs < effectiveTTL * 24 * 60 * 60 * 1000) {
+                    console.log(`Global Cache hit for user ${uid}:`, cacheKey);
+
+                    // Deduct point because user is getting "new" info not in their private cache
+                    await updateUsage(uid, today, userRef);
+
+                    // Copy to user private cache so it's free next time
+                    await userCacheRef.set({
+                        mode: resolvedMode,
+                        result: cached?.result,
+                        createdAt: admin.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    return res.status(200).json({
+                        ...(cached?.result ?? {}),
+                        isCached: true
+                    });
+                }
+            }
         }
 
         const systemPrompt = buildSystemPrompt();
@@ -622,14 +656,24 @@ REMINDER:
                     return obj;
                 };
 
+                // SUCCESS: Save to BOTH Global and Private User Cache
                 const polishedResult = punitiveReview(parsed);
 
-                await cacheRef.set({
+                // Save Global
+                await db.collection('global_analysis_cache').doc(cacheKey).set({
                     mode: resolvedMode,
                     result: polishedResult,
                     createdAt: admin.firestore.FieldValue.serverTimestamp()
                 });
-                await updateUsage(uid, today, (userRef as any));
+
+                // Save Local
+                await userCacheRef.set({
+                    mode: resolvedMode,
+                    result: polishedResult,
+                    createdAt: admin.firestore.FieldValue.serverTimestamp()
+                });
+
+                await updateUsage(uid, today, userRef);
                 res.status(200).json(polishedResult);
                 return;
             } catch (err: any) {
