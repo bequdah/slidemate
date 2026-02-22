@@ -233,37 +233,59 @@ function MainApp() {
                 </button>
               )}
 
-              <div className="flex items-center gap-2 sm:gap-3">
-                <div className="flex flex-col items-end">
-                  <span className="text-[10px] sm:text-xs font-bold text-slate-300 max-w-[80px] sm:max-w-none truncate">
-                    {user.displayName?.split(' ')[0]}
-                  </span>
-                  <button
-                    onClick={() => setIsUpgradeModalOpen(true)}
-                    className={`text-[8px] sm:text-[10px] font-medium transition-colors hover:text-white ${tier !== 'free' ? 'text-amber-400' : 'text-slate-500'}`}
-                  >
-                    <span className="flex items-center gap-1">
-                      {tier === 'unlimited' ? (
-                        <>
-                          <span className="animate-pulse">💎</span> Unlimited
-                        </>
-                      ) : tier === 'premium' ? (
-                        <>
-                          <span className="animate-pulse">★</span> Premium
-                        </>
-                      ) : (
-                        'Free'
-                      )}
+              <div className="flex items-center gap-2 sm:gap-6">
+                <div className="flex flex-col sm:flex-row items-center gap-1.5 sm:gap-3">
+                  <div className="relative group flex flex-col items-center">
+                    <div className="relative">
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full blur opacity-30 group-hover:opacity-60 transition duration-1000 group-hover:duration-200"></div>
+                      <img
+                        src={user.photoURL || `https://ui-avatars.com/api/?name=${user.displayName}&background=020617&color=fff`}
+                        alt="Profile"
+                        className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-slate-950 object-cover shadow-xl"
+                      />
+                    </div>
+                    {/* Mobile Only Name & Tier Info */}
+                    <div className="flex flex-col items-center sm:hidden mt-0.5">
+                      <span className="text-[8px] font-black text-white/90 truncate max-w-[60px]">
+                        {user.displayName}
+                      </span>
+                      <button
+                        onClick={() => setIsUpgradeModalOpen(true)}
+                        className={`text-[7px] font-bold ${tier !== 'free' ? 'text-amber-400' : 'text-slate-500'}`}
+                      >
+                        {tier === 'unlimited' ? '💎 Unlimited' : tier === 'premium' ? '★ Premium' : 'Free'}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Desktop Only Name & Tier Info */}
+                  <div className="hidden sm:flex flex-col items-end leading-tight">
+                    <span className="text-xs font-black text-slate-200">
+                      {user.displayName}
                     </span>
-                  </button>
+                    <button
+                      onClick={() => setIsUpgradeModalOpen(true)}
+                      className={`text-[10px] font-bold transition-colors hover:text-white ${tier !== 'free' ? 'text-amber-400' : 'text-slate-500'}`}
+                    >
+                      <span className="flex items-center gap-1">
+                        {tier === 'unlimited' ? (
+                          <><span className="animate-pulse">💎</span> Unlimited Mode</>
+                        ) : tier === 'premium' ? (
+                          <><span className="animate-pulse">★</span> Premium Member</>
+                        ) : (
+                          'Free Member'
+                        )}
+                      </span>
+                    </button>
+                  </div>
                 </div>
+
                 <button
                   onClick={async () => await logout()}
-                  className="text-[10px] sm:text-xs glass hover:bg-white/10 px-3 sm:px-4 py-2 rounded-xl transition-all font-bold text-white uppercase tracking-wider"
+                  className="px-3 py-2 sm:px-5 sm:py-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-[10px] sm:text-xs font-black text-white transition-all uppercase tracking-[0.1em] border border-white/5 active:scale-95 shadow-lg"
                 >
                   Sign Out
                 </button>
-                {user.photoURL && <img src={user.photoURL} className="w-8 h-8 rounded-full border-2 border-indigo-500/30 shadow-lg shadow-indigo-500/20" />}
               </div>
             </div>
           )}

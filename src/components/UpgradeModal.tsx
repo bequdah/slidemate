@@ -34,10 +34,12 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
         }
     ];
 
+    const visibleTiers = tiers.filter(t => t.name !== 'Unlimited' || tier === 'unlimited');
+
     return (
         <div className="fixed inset-0 flex items-center justify-center z-[200] p-4">
             <div className="absolute inset-0 bg-black/90 backdrop-blur-md" onClick={onClose} />
-            <div className="relative w-full max-w-4xl bg-[#020617] border border-white/10 rounded-[2.5rem] p-6 md:p-12 shadow-2xl animate-in zoom-in-95 duration-500 overflow-y-auto max-h-[90vh] custom-scrollbar">
+            <div className="relative w-full max-w-5xl bg-[#020617] border border-white/10 rounded-[2.5rem] p-6 md:p-12 shadow-2xl animate-in zoom-in-95 duration-500 overflow-y-auto max-h-[90vh] custom-scrollbar">
                 <button onClick={onClose} className="absolute top-6 right-6 w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/5 text-slate-400 transition-colors">✕</button>
 
                 <div className="text-center mb-12">
@@ -45,8 +47,8 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                     <p className="text-slate-400 font-medium">Choose the plan that fits your study needs.</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {tiers.map((t) => (
+                <div className={`grid grid-cols-1 gap-6 ${visibleTiers.length === 3 ? 'md:grid-cols-3' : 'md:grid-cols-2 max-w-3xl mx-auto'}`}>
+                    {visibleTiers.map((t) => (
                         <div key={t.name} className={`relative p-8 rounded-[2rem] border transition-all duration-500 ${t.current ? 'border-none ring-2 ring-white/20' : 'border-white/5 hover:border-white/20'} ${t.popular ? 'bg-indigo-600/5' : 'bg-white/[0.02]'}`}>
                             {t.popular && (
                                 <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-xl shadow-indigo-500/40">
@@ -81,7 +83,7 @@ export function UpgradeModal({ isOpen, onClose }: UpgradeModalProps) {
                                     href={`https://wa.me/962792118641?text=${encodeURIComponent(`مرحبا، بدي اشترك بباقة الـ ${t.name} في موقع SlideMate`)}`}
                                     target="_blank"
                                     className={`block w-full py-4 text-center rounded-2xl font-black transition-all active:scale-95 shadow-xl ${t.color === 'indigo' ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20' :
-                                            (t.color === 'amber' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20' : 'bg-white/5 hover:bg-white/10 text-white')
+                                        (t.color === 'amber' ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-amber-600/20' : 'bg-white/5 hover:bg-white/10 text-white')
                                         }`}
                                 >
                                     Choose {t.name}

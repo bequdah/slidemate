@@ -33,23 +33,26 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
     const fetchUsers = async () => {
         setLoading(true);
         try {
-            // Remove orderBy to ensure we get ALL documents even if fields are missing
+            console.log("Admin: Fetching users from collection 'users'...");
             const q = query(collection(db, "users"));
             const querySnapshot = await getDocs(q);
+
+            console.log(`Admin: Found ${querySnapshot.size} documents.`);
+
             const usersData: UserData[] = [];
             querySnapshot.forEach((docSnap) => {
                 const data = docSnap.data();
-                // Ensure email exists or use the document ID if it's an old record
                 usersData.push({
                     ...data,
-                    email: data.email || docSnap.id // Use ID as fallback if email field is missing
+                    email: data.email || docSnap.id
                 } as UserData);
             });
-            // Sort in JS instead
+
             usersData.sort((a, b) => (a.email || '').localeCompare(b.email || ''));
             setUsers(usersData);
         } catch (error) {
-            console.error("Error fetching users:", error);
+            console.error("Admin Dashboard Error:", error);
+            alert("Error loading users. Check console for details.");
         } finally {
             setLoading(false);
         }
@@ -90,6 +93,16 @@ export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
                     </div>
 
                     <div className="flex items-center gap-4 w-full md:w-auto">
+                        <button
+                            onClick={fetchUsers}
+                            disabled={loading}
+                            className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-indigo-400 transition-all active:scale-95 disabled:opacity-50"
+                            title="Refresh Data"
+                        >
+                            <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                        </button>
                         <div className="relative flex-1 md:w-64">
                             <input
                                 type="text"
