@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, getDocs, updateDoc, doc, deleteDoc } from 'firebase/firestore';
-import type { UserTier } from '../contexts/AuthContext';
+import { useAuth, type UserTier } from '../contexts/AuthContext';
+
+const AUTHORIZED_ADMIN = 'qudahmohammad36@gmail.com';
 
 interface UserData {
     email: string;
@@ -20,9 +22,13 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ isOpen, onClose }: AdminDashboardProps) {
+    const { user } = useAuth();
     const [users, setUsers] = useState<UserData[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+
+    // Internal Security Lock
+    if (user?.email !== AUTHORIZED_ADMIN) return null;
 
     useEffect(() => {
         if (isOpen) {
