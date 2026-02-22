@@ -443,7 +443,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     </div>
 
                     {/* Content */}
-                    <div className={`flex-1 min-h-0 ${showGame ? 'overflow-hidden' : 'overflow-y-auto'} p-4 md:p-10 space-y-6 md:space-y-10 custom-scrollbar relative`} dir={currentContent.dir}>
+                    <div className={`flex-1 min-h-0 ${showGame ? 'overflow-hidden p-0 md:p-0' : 'overflow-y-auto p-4 md:p-10 space-y-6 md:space-y-10'} custom-scrollbar relative`} dir={currentContent.dir}>
                         {!mode ? (
                             <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-8 animate-in fade-in slide-in-from-bottom-8 duration-700">
                                 <div className="text-center space-y-2">
@@ -463,8 +463,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             <h3 className="text-xl font-black text-white">خلصت محاولاتك لليوم!</h3>
                                             <p className="text-sm text-slate-400 leading-relaxed font-arabic">
                                                 {tier === 'free'
-                                                    ? 'الحساب المجاني إله 10 محاولات بس. اشترك بالبريميوم عشان تاخد 100 محاولة وتخلص من الإعلانات!'
-                                                    : 'خلصت الـ 100 محاولة تبعتك لليوم! ارجع بكرة أو تواصل معنا لترقية حسابك لنظام الـ Unlimited.'}
+                                                    ? 'الحساب المجاني إله 10 محاولات بس. اشترك بالبريميوم عشان تاخد 50 محاولة وتخلص من الإعلانات!'
+                                                    : 'خلصت الـ 50 محاولة تبعتك لليوم! ارجع بكرة أو تواصل معنا لترقية حسابك لنظام الـ Unlimited.'}
                                             </p>
                                         </div>
                                         <a
@@ -501,9 +501,11 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 )}
                             </div>
                         ) : loading ? (
-                            <div className="w-full min-h-[60vh] animate-in fade-in duration-700 flex flex-col items-center justify-center py-12">
+                            <div className={`w-full h-full min-h-[60vh] animate-in fade-in duration-700 ${showGame ? '' : 'flex flex-col items-center justify-center py-12'}`}>
                                 {showGame ? (
-                                    randomGame
+                                    <div className="absolute inset-0 w-full h-full">
+                                        {randomGame}
+                                    </div>
                                 ) : (
                                     <div className="flex flex-col items-center space-y-10 animate-in zoom-in duration-500 p-6 md:p-0">
                                         <div className="relative">
