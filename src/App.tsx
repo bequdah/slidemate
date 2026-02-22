@@ -371,17 +371,14 @@ function MainApp() {
       </main>
 
       {selectedSlide && (
-        <>
-          <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-[90]" onClick={() => setSelectedSlide(null)} />
-          <ExplanationPane
-            slideIds={[selectedSlide.id]}
-            slideNumbers={[selectedSlide.number]}
-            textContentArray={[selectedSlide.textContent || ""]}
-            allSlidesTexts={slides.map(s => s.textContent || "")}
-            thumbnail={selectedSlide.thumbnail}
-            onClose={() => setSelectedSlide(null)}
-          />
-        </>
+        <ExplanationPane
+          slideIds={[selectedSlide.id]}
+          slideNumbers={[selectedSlide.number]}
+          textContentArray={[selectedSlide.textContent || ""]}
+          allSlidesTexts={slides.map(s => s.textContent || "")}
+          thumbnail={selectedSlide.thumbnail}
+          onClose={() => setSelectedSlide(null)}
+        />
       )}
 
       <LogoModal isOpen={isLogoModalOpen} onClose={() => setIsLogoModalOpen(false)} />
