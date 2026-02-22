@@ -275,7 +275,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
                         {'text' in s && s.text && (
                             <div className="p-6 bg-white/[0.03] rounded-[2rem] border border-white/5 shadow-inner">
-                                <MarkdownSection content={s.text} className="text-slate-200 text-base md:text-lg leading-relaxed font-medium" />
+                                <MarkdownSection content={s.text} className="text-white text-base md:text-lg leading-relaxed font-medium" />
                             </div>
                         )}
 
@@ -284,7 +284,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 {s.bullets.map((b, idx) => (
                                     <li key={idx} className="flex gap-4 group">
                                         <span className="text-red-400 font-bold mt-1 shadow-sm group-hover:scale-125 transition-transform">●</span>
-                                        <MarkdownSection content={b} className="text-slate-300 text-base md:text-lg font-medium" />
+                                        <MarkdownSection content={b} className="text-white text-base md:text-lg font-medium" />
                                     </li>
                                 ))}
                             </ul>
@@ -295,7 +295,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                 {s.definitions.map((d, idx) => (
                                     <div key={idx} className="p-6 bg-white/[0.02] rounded-[1.5rem] border border-white/5 hover:border-indigo-500/30 transition-colors group">
                                         <strong className="text-white text-lg block mb-2 group-hover:text-indigo-400 transition-colors underline underline-offset-4 decoration-indigo-500/30">{cleanText(d.term)}</strong>
-                                        <MarkdownSection content={d.def} className="text-slate-400 text-sm md:text-base font-medium" />
+                                        <MarkdownSection content={d.def} className="text-white/90 text-sm md:text-base font-medium" />
                                     </div>
                                 ))}
                             </div>
@@ -584,7 +584,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                                             const structured = tryParseStructured(currentContent.explanation);
                                                             if (structured) return <StructuredRenderer data={structured} />;
                                                             return (
-                                                                <MarkdownSection content={currentContent.explanation} className="text-slate-200 text-lg md:text-xl font-medium leading-relaxed" />
+                                                                <MarkdownSection content={currentContent.explanation} className="text-white text-lg md:text-xl font-medium leading-relaxed" />
                                                             );
                                                         })()}
                                                     </div>
