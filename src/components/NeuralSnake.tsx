@@ -130,11 +130,13 @@ const NeuralSnake: React.FC = () => {
             if (head.y < 0) head.y = gridCountRef.current.y - 1;
             if (head.y >= gridCountRef.current.y) head.y = 0;
 
-            // Self collision
+            // Self collision - Disabled for 'Never-ending' mode as requested
+            /*
             if (snakeRef.current.some(segment => segment.x === head.x && segment.y === head.y)) {
                 setGameState('gameover');
                 return;
             }
+            */
 
             snakeRef.current.unshift(head);
 
