@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Login } from './components/Login';
 import { LogoModal } from './components/LogoModal';
 import { AdSense } from './components/AdSense';
+import { LegalModal } from './components/LegalModal';
 import { extractTextFromPDFPage, processImageForAnalysis } from './utils/ocrService';
 import * as pdfjsLib from 'pdfjs-dist';
 
@@ -32,6 +33,7 @@ function MainApp() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [isLogoModalOpen, setIsLogoModalOpen] = useState(false);
+  const [activeLegalModal, setActiveLegalModal] = useState<'privacy' | 'terms' | 'contact' | null>(null);
 
   const handleUpload = async (file: File) => {
     setIsUploading(true);
@@ -310,6 +312,29 @@ function MainApp() {
       )}
 
       <LogoModal isOpen={isLogoModalOpen} onClose={() => setIsLogoModalOpen(false)} />
+      <LegalModal type={activeLegalModal} onClose={() => setActiveLegalModal(null)} />
+
+      {/* Simplified Footer for Google AdSense Compliance */}
+      <footer className="max-w-7xl mx-auto p-8 border-t border-white/5 mt-auto flex flex-col md:flex-row justify-between items-center gap-6 opacity-40 hover:opacity-100 transition-opacity">
+        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+          © {new Date().getFullYear()} SlideMate AI. All rights reserved.
+        </div>
+        <div className="flex gap-6">
+          {[
+            { id: 'privacy', label: 'Privacy' },
+            { id: 'terms', label: 'Terms' },
+            { id: 'contact', label: 'Contact' }
+          ].map(l => (
+            <button
+              key={l.id}
+              onClick={() => setActiveLegalModal(l.id as any)}
+              className="text-[10px] font-bold text-slate-500 hover:text-white uppercase tracking-widest transition-colors underline decoration-slate-500/30 underline-offset-4"
+            >
+              {l.label}
+            </button>
+          ))}
+        </div>
+      </footer>
     </div>
   );
 }
