@@ -13,6 +13,7 @@ import WaitingGame from './WaitingGame';
 import NeuralSnake from './NeuralSnake';
 import AstroJump from './AstroJump';
 import MemoryGame from './MemoryGame';
+import CyberBricks from './CyberBricks';
 
 /* =======================
    Structured Types
@@ -85,7 +86,8 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
             <WaitingGame key="bugs" />,
             <NeuralSnake key="snake" />,
             <AstroJump key="jump" />,
-            <MemoryGame key="memory" />
+            <MemoryGame key="memory" />,
+            <CyberBricks key="bricks" />
         ];
         return games[Math.floor(Math.random() * games.length)];
     }, [loading]);
