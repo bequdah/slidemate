@@ -4,7 +4,7 @@ import { auth } from './firebaseAdmin.js';
 import Groq from 'groq-sdk';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
-const DEEPSEEK_MODEL = 'deepseek-r1-distill-qwen-32b';
+const DEEPSEEK_MODEL = 'llama-3.3-70b-versatile';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
