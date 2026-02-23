@@ -129,7 +129,7 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
                                 <span className="text-3xl">👋</span>
                             </div>
                             <div className="space-y-1">
-                                <p className="text-white font-black text-base">أهلاً فيك يا وحش!</p>
+                                <p className="text-white font-black text-base">أهلاً فيك!</p>
                                 <p className="text-slate-400 text-xs font-arabic font-medium leading-relaxed">
                                     أنا هون عشان أبسطلك السلايدات. اختار وحدة:
                                 </p>
