@@ -79,33 +79,68 @@ RESPONSE FORMAT:
 One or two high-quality, smart sentences. Only expand if the student asks "وضح أكثر" or "اشرح زيادة".
 `;
 
-        const completion = await groq.chat.completions.create({
-            model: DEEPSEEK_MODEL,
-            messages: [
-                { role: 'system', content: systemPrompt },
-                ...messages
-            ],
-            temperature: 0.3, // Lowered for maximum stability
-            max_tokens: 1500,
-        });
+        let completion;
+        try {
+            // Priority 1: Groq (Llama 3.1 8B Instant)
+            completion = await groq.chat.completions.create({
+                model: DEEPSEEK_MODEL,
+                messages: [
+                    { role: 'system', content: systemPrompt },
+                    ...messages
+                ],
+                temperature: 0.3,
+                max_tokens: 1500,
+            });
+        } catch (groqError: any) {
+            console.warn('Groq failed, attempting Cerebras fallback...', groqError?.message);
 
-        const reply = completion.choices[0]?.message?.content || "عذرًا، ما قدرت أرد عليك حاليًا. جرب مرة ثانية يا بطل.";
+            const cerebrasKey = process.env.CEREBRAS_API_KEY;
+            // If we have a Cerebras key, try it as a fallback
+            if (cerebrasKey) {
+                try {
+                    const cerebrasResponse = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${cerebrasKey}`
+                        },
+                        body: JSON.stringify({
+                            model: 'llama3.1-8b',
+                            messages: [
+                                { role: 'system', content: systemPrompt },
+                                ...messages
+                            ],
+                            temperature: 0.3,
+                            max_tokens: 1500,
+                        })
+                    });
 
-        // DeepSeek R1 often includes <think> blocks. We might want to strip them or let the user see the "thinking" process.
-        // For a clean UI, we strip it, but the user liked the "reasoning" idea. 
-        // Let's strip it for the final reply to keep it clean, or keep it if we want that "R1" feel.
-        // Usually, for a chatbot, we want the clean message.
+                    if (cerebrasResponse.ok) {
+                        const cerebrasData = await cerebrasResponse.json();
+                        completion = cerebrasData;
+                    } else {
+                        const errorData = await cerebrasResponse.json();
+                        throw new Error(`Cerebras API Error: ${errorData?.error?.message || cerebrasResponse.statusText}`);
+                    }
+                } catch (cerebrasError: any) {
+                    console.error('Cerebras fallback also failed:', cerebrasError?.message);
+                    throw groqError; // Throw the original Groq error if both fail
+                }
+            } else {
+                throw groqError;
+            }
+        }
+
+        const reply = completion.choices?.[0]?.message?.content || "عذرًا، ما قدرت أرد عليك حاليًا. جرب مرة ثانية يا بطل.";
         const cleanReply = reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
         res.status(200).json({ reply: cleanReply });
     } catch (error: any) {
         console.error('Chat API Error:', error);
         const errorMessage = error?.message || 'Unknown error';
-        const errorStack = error?.stack || '';
         res.status(500).json({
             error: 'Failed to connect to AI',
-            details: errorMessage,
-            debug: process.env.NODE_ENV === 'development' ? errorStack : undefined
+            details: errorMessage
         });
     }
 }
