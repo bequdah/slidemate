@@ -15,11 +15,17 @@ function getAnalysisCacheKey(
     thumbnail: string | undefined,
     mode: Mode
 ): string {
-    const thumbHash = thumbnail
+    // If we have text content, we rely on it for the hash and ignore the thumbnail.
+    // This ensures that different devices (mobile/PC) with different image qualities 
+    // get the same cache hit if the slide text is identical.
+    const hasText = textContentArray && textContentArray.some(t => t && t.trim().length > 0);
+
+    const thumbHash = (thumbnail && !hasText)
         ? crypto.createHash('sha256').update(thumbnail).digest('hex')
         : '';
+
     const payload = JSON.stringify({
-        v: CACHE_VERSION, // Added versioning
+        v: CACHE_VERSION,
         n: slideNumbers,
         t: textContentArray || [],
         th: thumbHash,

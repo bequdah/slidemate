@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { auth, googleProvider, db } from "../firebase";
-import { signInWithPopup, signOut, onAuthStateChanged, type User } from "firebase/auth";
+import { signOut, onAuthStateChanged, type User } from "firebase/auth";
 import { doc, setDoc, getDoc, serverTimestamp, updateDoc } from "firebase/firestore";
 
 export type UserTier = 'free' | 'premium' | 'unlimited';
@@ -109,9 +109,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const login = async () => {
         try {
+            const { setPersistence, browserLocalPersistence, signInWithPopup } = await import("firebase/auth");
+            await setPersistence(auth, browserLocalPersistence);
             await signInWithPopup(auth, googleProvider);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Login failed:", error);
+            if (error.code === 'auth/popup-blocked') {
+                alert("الرجاء السماح بالنوافذ المنبثقة (Popups) أو افتح الموقع في متصفح خارجي (Safari/Chrome)");
+            } else if (error.message?.includes('initial state')) {
+                alert("مشكلة في المتصفح الداخلي. الرجاء الضغط على النقاط الثلاث بالأعلى واختيار 'Open in Safari' أو 'Open in Chrome'");
+            }
             throw error;
         }
     };
