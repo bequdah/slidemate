@@ -28,10 +28,10 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
         }
     }, [messages, isLoading]);
 
-    const handleSend = async () => {
-        if (!input.trim() || isLoading) return;
+    const sendMessage = async (content: string) => {
+        if (!content.trim() || isLoading) return;
 
-        const userMsg: Message = { role: 'user', content: input };
+        const userMsg: Message = { role: 'user', content };
         const newMessages = [...messages, userMsg];
         setMessages(newMessages);
         setInput('');
@@ -45,6 +45,24 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const handleSend = () => sendMessage(input);
+
+    const handleQuickAction = (action: string) => {
+        let prompt = "";
+        switch (action) {
+            case 'summary':
+                prompt = "لخصلي الصافي بـ 3 نقاط سريعة ومهمة عن هاد السلايد.";
+                break;
+            case 'example':
+                prompt = "اعطيني مثال عملي من واقعنا بالأردن عشان أفهم هالفكرة صح.";
+                break;
+            case 'exam':
+                prompt = "شو بيجي بالامتحان على هاد السلايد؟ ركزلي على النقاط اللي بكررها الدكاترة.";
+                break;
+        }
+        sendMessage(prompt);
     };
 
     return (
@@ -73,16 +91,30 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
                 }`}>
 
                 {/* Header */}
-                <div className="p-5 border-b border-white/5 flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
-                        <img src="/ai_robot_pro.png" alt="Tutor" className="w-8 h-8 object-contain" />
-                    </div>
-                    <div>
-                        <h4 className="text-white font-black text-sm tracking-widest uppercase">QUDAH BOT</h4>
-                        <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Online & Thinking</span>
+                <div className="p-5 border-b border-white/5 flex items-center gap-3 justify-between">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                            <img src="/ai_robot_pro.png" alt="Tutor" className="w-8 h-8 object-contain" />
+                        </div>
+                        <div>
+                            <h4 className="text-white font-black text-sm tracking-widest uppercase">QUDAH BOT</h4>
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider animate-pulse">Online & Thinking</span>
+                            </div>
                         </div>
                     </div>
+
+                    {messages.length > 0 && (
+                        <button
+                            onClick={() => setMessages([])}
+                            className="p-2.5 rounded-xl bg-white/5 text-slate-400 hover:bg-red-500/10 hover:text-red-400 transition-all active:scale-95 group"
+                            title="مسح المحادثة"
+                        >
+                            <svg className="w-4 h-4 transition-transform group-hover:rotate-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
 
                 {/* Messages Panel */}
@@ -92,12 +124,57 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
                     dir="rtl"
                 >
                     {messages.length === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
-                            <div className="text-4xl opacity-20">👋</div>
-                            <p className="text-slate-400 text-sm font-arabic font-medium leading-relaxed">
+                        <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-6">
+                            <div className="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center animate-bounce duration-[2000ms]">
+                                <span className="text-4xl">👋</span>
+                            </div>
+                            <div className="space-y-2">
+                                <p className="text-white font-black text-lg">أهلاً فيك يا وحش!</p>
+                                <p className="text-slate-400 text-sm font-arabic font-medium leading-relaxed">
+                                    أنا هون عشان أبسطلك عقد السلايدات. اختار وحدة من هذول عشان نبلش:
+                                </p>
+                            </div>
 
-                                أنا هون عشان أساعدك تفهم السلايدات بشكل مفصل
-                                . أي نقطة مش واضحة؟ اسألني عنها فوراً</p>
+                            <div className="grid grid-cols-1 w-full gap-2">
+                                <button
+                                    onClick={() => handleQuickAction('summary')}
+                                    className="p-4 bg-white/5 border border-white/10 rounded-2xl text-right hover:bg-indigo-600/20 hover:border-indigo-500/50 transition-all group active:scale-95"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl group-hover:scale-110 transition-transform">💡</span>
+                                        <div className="text-right">
+                                            <p className="text-white font-bold text-sm">لخصلي الصافي</p>
+                                            <p className="text-slate-500 text-[10px]">أهم 3 نقاط بالسلايد</p>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => handleQuickAction('example')}
+                                    className="p-4 bg-white/5 border border-white/10 rounded-2xl text-right hover:bg-emerald-600/20 hover:border-emerald-500/50 transition-all group active:scale-95"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl group-hover:scale-110 transition-transform">🇯🇴</span>
+                                        <div className="text-right">
+                                            <p className="text-white font-bold text-sm">مثال من واقعنا</p>
+                                            <p className="text-slate-500 text-[10px]">قصة أردنية تفهمك الفكرة</p>
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <button
+                                    onClick={() => handleQuickAction('exam')}
+                                    className="p-4 bg-white/5 border border-white/10 rounded-2xl text-right hover:bg-amber-600/20 hover:border-amber-500/50 transition-all group active:scale-95"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-xl group-hover:scale-110 transition-transform">📝</span>
+                                        <div className="text-right">
+                                            <p className="text-white font-bold text-sm">شو بيجي بالامتحان؟</p>
+                                            <p className="text-slate-500 text-[10px]">النقاط اللي بركز عليها الدكاترة</p>
+                                        </div>
+                                    </div>
+                                </button>
+                            </div>
                         </div>
                     )}
 
