@@ -86,4 +86,4 @@ npx vercel dev
 ```
 
 ---
-*Created with ❤️ for the SlideMate Team.*
+*Created with ❤️ by **Mohammad Qudah**.*
