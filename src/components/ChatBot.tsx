@@ -80,7 +80,7 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
                     <div>
                         <h4 className="text-white font-black text-sm tracking-widest uppercase">QUDAH BOT</h4>
                         <div className="flex items-center gap-1.5">
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
+                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Online & Thinking</span>
                         </div>
                     </div>
                 </div>
@@ -97,7 +97,7 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
                             <p className="text-slate-400 text-sm font-arabic font-medium leading-relaxed">
 
                                 أنا هون عشان أساعدك تفهم السلايدات بشكل مفصل
-                                . أي نقطة مش واضحة؟ اسألني عنها فوراً.                            </p>
+                                . أي نقطة مش واضحة؟ اسألني عنها فوراً</p>
                         </div>
                     )}
 
