@@ -124,53 +124,53 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
                     dir="rtl"
                 >
                     {messages.length === 0 && (
-                        <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-6">
-                            <div className="w-20 h-20 bg-indigo-500/10 rounded-3xl flex items-center justify-center animate-bounce duration-[2000ms]">
-                                <span className="text-4xl">👋</span>
+                        <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-4">
+                            <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center animate-bounce duration-[2000ms]">
+                                <span className="text-3xl">👋</span>
                             </div>
-                            <div className="space-y-2">
-                                <p className="text-white font-black text-lg">أهلاً فيك يا وحش!</p>
-                                <p className="text-slate-400 text-sm font-arabic font-medium leading-relaxed">
-                                    أنا هون عشان أبسطلك عقد السلايدات. اختار وحدة من هذول عشان نبلش:
+                            <div className="space-y-1">
+                                <p className="text-white font-black text-base">أهلاً فيك يا وحش!</p>
+                                <p className="text-slate-400 text-xs font-arabic font-medium leading-relaxed">
+                                    أنا هون عشان أبسطلك السلايدات. اختار وحدة:
                                 </p>
                             </div>
 
                             <div className="grid grid-cols-1 w-full gap-2">
                                 <button
                                     onClick={() => handleQuickAction('summary')}
-                                    className="p-4 bg-white/5 border border-white/10 rounded-2xl text-right hover:bg-indigo-600/20 hover:border-indigo-500/50 transition-all group active:scale-95"
+                                    className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-right hover:bg-indigo-600/20 hover:border-indigo-500/50 transition-all group active:scale-95"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xl group-hover:scale-110 transition-transform">💡</span>
+                                        <span className="text-lg group-hover:scale-110 transition-transform">💡</span>
                                         <div className="text-right">
-                                            <p className="text-white font-bold text-sm">لخصلي الصافي</p>
-                                            <p className="text-slate-500 text-[10px]">أهم 3 نقاط بالسلايد</p>
+                                            <p className="text-white font-bold text-xs">لخصلي الصافي</p>
+                                            <p className="text-slate-500 text-[9px]">أهم 3 نقاط بالسلايد</p>
                                         </div>
                                     </div>
                                 </button>
 
                                 <button
                                     onClick={() => handleQuickAction('example')}
-                                    className="p-4 bg-white/5 border border-white/10 rounded-2xl text-right hover:bg-emerald-600/20 hover:border-emerald-500/50 transition-all group active:scale-95"
+                                    className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-right hover:bg-emerald-600/20 hover:border-emerald-500/50 transition-all group active:scale-95"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xl group-hover:scale-110 transition-transform">🇯🇴</span>
+                                        <span className="text-lg group-hover:scale-110 transition-transform">🇯🇴</span>
                                         <div className="text-right">
-                                            <p className="text-white font-bold text-sm">مثال من واقعنا</p>
-                                            <p className="text-slate-500 text-[10px]">قصة أردنية تفهمك الفكرة</p>
+                                            <p className="text-white font-bold text-xs">مثال من واقعنا</p>
+                                            <p className="text-slate-500 text-[9px]">قصة أردنية تفهمك الفكرة</p>
                                         </div>
                                     </div>
                                 </button>
 
                                 <button
                                     onClick={() => handleQuickAction('exam')}
-                                    className="p-4 bg-white/5 border border-white/10 rounded-2xl text-right hover:bg-amber-600/20 hover:border-amber-500/50 transition-all group active:scale-95"
+                                    className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-right hover:bg-amber-600/20 hover:border-amber-500/50 transition-all group active:scale-95"
                                 >
                                     <div className="flex items-center gap-3">
-                                        <span className="text-xl group-hover:scale-110 transition-transform">📝</span>
+                                        <span className="text-lg group-hover:scale-110 transition-transform">📝</span>
                                         <div className="text-right">
-                                            <p className="text-white font-bold text-sm">شو بيجي بالامتحان؟</p>
-                                            <p className="text-slate-500 text-[10px]">النقاط اللي بركز عليها الدكاترة</p>
+                                            <p className="text-white font-bold text-xs">شو بيجي بالامتحان؟</p>
+                                            <p className="text-slate-500 text-[9px]">النقاط اللي بركز عليها الدكاترة</p>
                                         </div>
                                     </div>
                                 </button>
