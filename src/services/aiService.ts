@@ -149,7 +149,8 @@ export const chatWithSlide = async (
             body: JSON.stringify({
                 messages,
                 slideContext,
-                currentExplanation
+                currentExplanation,
+                userName: user.displayName || 'Student'
             })
         });
 
