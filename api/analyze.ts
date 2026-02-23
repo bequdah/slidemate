@@ -1,4 +1,4 @@
-// Version: Parallel Analysis & Voice Optimization (Commit 901a690)
+// Version: Stability & Cache Optimization (Build 2026.02.23)
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'node:crypto';
 import { db, auth } from './firebaseAdmin.js';
