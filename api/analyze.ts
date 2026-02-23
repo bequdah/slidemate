@@ -483,9 +483,9 @@ REMINDER:
         const hasGeminiKey = !!(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY);
         const hasGroqKey = !!(process.env.GROQ_API_KEY);
 
-        if (mode === 'visual' && isVisionRequest(thumbnail) && !hasGroqKey) {
-            console.error("CRITICAL: Visual mode requires GROQ_API_KEY for image analysis.");
-            return res.status(500).json({ error: "Service configuration error: Missing GROQ_API_KEY for visual mode." });
+        if (isVisionRequest(thumbnail) && !hasGroqKey) {
+            console.error("CRITICAL: Vision/OCR requires GROQ_API_KEY.");
+            return res.status(500).json({ error: "Service configuration error: Missing GROQ_API_KEY for image analysis." });
         }
         if (!hasGeminiKey) {
             console.error("CRITICAL: No Gemini API key found in environment variables.");
@@ -519,26 +519,38 @@ REMINDER:
                 let finalThumbnail = initialFinalThumbnail;
 
                 if (mode !== 'visual' && isVisionRequest(thumbnail) && thumbnail) {
-                    console.log("Vision Request Detected: Running OCR with Vision Model...");
-                    const mimeType = thumbnail.split(';')[0].split(':')[1];
-                    const base64Data = thumbnail.split(',')[1];
-
-                    const visionModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+                    console.log("Vision Request Detected: Running OCR with Groq Llama 4 Vision...");
 
                     for (let i = 0; i < 3; i++) {
                         try {
-                            const ocrResult = await visionModel.generateContent([
-                                "OCR INSTRUCTION: Extract ALL text from this slide verbatim. Preserve structure (headings, bullets). Do not summarize or add conversational filler. Output ONLY the extracted text.",
-                                { inlineData: { data: base64Data, mimeType: mimeType } }
-                            ]);
-                            const ocrText = ocrResult.response.text();
-                            console.log(`OCR Success provided ${ocrText.length} chars.`);
+                            const ocrCompletion = await groq.chat.completions.create({
+                                model: GROQ_VISION_MODEL,
+                                messages: [
+                                    {
+                                        role: 'user',
+                                        content: [
+                                            {
+                                                type: 'text',
+                                                text: 'OCR INSTRUCTION: Extract ALL text from this slide verbatim. Preserve structure (headings, bullets, numbering). Do not summarize or add any conversational filler. Output ONLY the extracted text.'
+                                            },
+                                            {
+                                                type: 'image_url',
+                                                image_url: { url: thumbnail }
+                                            }
+                                        ]
+                                    }
+                                ],
+                                max_tokens: 2048,
+                                temperature: 0.1
+                            });
+                            const ocrText = ocrCompletion.choices[0]?.message?.content?.trim() || '';
+                            console.log(`Groq OCR Success: ${ocrText.length} chars.`);
 
                             finalTextContentArray = [ocrText];
                             finalThumbnail = undefined;
                             break;
                         } catch (err: any) {
-                            console.warn(`OCR Attempt ${i + 1} failed: ${err.message}`);
+                            console.warn(`Groq OCR Attempt ${i + 1} failed: ${err.message}`);
                             await new Promise(r => setTimeout(r, 1000));
                         }
                     }
