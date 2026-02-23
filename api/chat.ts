@@ -23,6 +23,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     try {
+        console.log('Chat API called');
+        const hasGroqKey = !!process.env.GROQ_API_KEY;
+        const hasFirebaseKey = !!process.env.FIREBASE_SERVICE_ACCOUNT;
+        console.log('Env check - Groq:', hasGroqKey, 'Firebase:', hasFirebaseKey);
+
         const authHeader = req.headers.authorization;
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
             res.status(401).json({ error: 'Unauthorized' });
@@ -32,11 +37,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const idToken = authHeader.split('Bearer ')[1];
         await auth.verifyIdToken(idToken);
 
-        const { messages, slideContext, currentExplanation } = req.body as {
-            messages: { role: 'user' | 'assistant', content: string }[];
-            slideContext: string;
-            currentExplanation: string;
-        };
+        const { messages, slideContext, currentExplanation } = req.body || {};
+
+        if (!messages || !Array.isArray(messages)) {
+            console.error('Missing or invalid messages array');
+            res.status(400).json({ error: 'Invalid request body: messages must be an array' });
+            return;
+        }
 
         const systemPrompt = `
 You are the "QudahWay Expert Tutor" (AI Assistant for Mohammad Qudah's SlideMate platform). 
@@ -94,6 +101,12 @@ IMPORTANT: You are talking to a student. Be encouraging and clear.
         res.status(200).json({ reply: cleanReply });
     } catch (error: any) {
         console.error('Chat API Error:', error);
-        res.status(500).json({ error: 'Failed to connect to AI' });
+        const errorMessage = error?.message || 'Unknown error';
+        const errorStack = error?.stack || '';
+        res.status(500).json({
+            error: 'Failed to connect to AI',
+            details: errorMessage,
+            debug: process.env.NODE_ENV === 'development' ? errorStack : undefined
+        });
     }
 }

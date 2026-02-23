@@ -81,7 +81,6 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
                         <h4 className="text-white font-black text-sm tracking-widest uppercase">QUDAH BOT</h4>
                         <div className="flex items-center gap-1.5">
                             <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" />
-                            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Online & Thinking</span>
                         </div>
                     </div>
                 </div>
@@ -96,8 +95,9 @@ export const ChatBot = ({ slideContext, currentExplanation }: ChatBotProps) => {
                         <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4">
                             <div className="text-4xl opacity-20">👋</div>
                             <p className="text-slate-400 text-sm font-arabic font-medium leading-relaxed">
-                                هلا بك! أنا هون عشان أساعدك تفهم السلايدات بشكل مفصل. أي نقطة مش واضحة؟ اسألني عنها فوراً.
-                            </p>
+
+                                أنا هون عشان أساعدك تفهم السلايدات بشكل مفصل
+                                . أي نقطة مش واضحة؟ اسألني عنها فوراً.                            </p>
                         </div>
                     )}
 
