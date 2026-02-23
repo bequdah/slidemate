@@ -15,6 +15,7 @@ import AstroJump from './AstroJump';
 import MemoryGame from './MemoryGame';
 import CyberBricks from './CyberBricks';
 import { UpgradeModal } from './UpgradeModal';
+import { ChatBot } from './ChatBot';
 
 /* =======================
    Structured Types
@@ -796,6 +797,12 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
             `}</style>
             </div>
             <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
+            {data && mode !== 'exam' && (
+                <ChatBot
+                    slideContext={textContentArray?.join('\n') || ''}
+                    currentExplanation={typeof data.explanation === 'string' ? data.explanation : JSON.stringify(data.explanation)}
+                />
+            )}
         </div>
     );
 };

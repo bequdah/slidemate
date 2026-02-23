@@ -129,3 +129,36 @@ export const generateVoiceScript = async (
     }
 };
 
+export const chatWithSlide = async (
+    messages: { role: 'user' | 'assistant', content: string }[],
+    slideContext: string,
+    currentExplanation: string
+): Promise<{ reply: string }> => {
+    try {
+        const user = auth.currentUser;
+        if (!user) throw new Error("Not logged in");
+
+        const token = await user.getIdToken();
+
+        const response = await fetch('/api/chat', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+                messages,
+                slideContext,
+                currentExplanation
+            })
+        });
+
+        if (!response.ok) throw new Error("Chat failed");
+
+        return await response.json();
+    } catch (error) {
+        console.error("Chat Error:", error);
+        return { reply: "يا سيدي صار عندي مشكلة بالاتصال.. جرب مرة ثانية." };
+    }
+};
+
