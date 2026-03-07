@@ -1,11 +1,260 @@
-
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { auth } from './firebaseAdmin.js';
 import Groq from 'groq-sdk';
 
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
-// Removed global DEEPSEEK_MODEL.
-// Two-Model Routing dynamically selects between Qwen3 32B (default) and Llama 3.3 70B (complex).
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY || '',
+});
+
+type ChatMessage = {
+    role: 'system' | 'user' | 'assistant';
+    content: string;
+};
+
+type Intent =
+    | 'greeting'
+    | 'thanks'
+    | 'clarification'
+    | 'slide_question'
+    | 'followup'
+    | 'off_topic'
+    | 'general';
+
+function normalizeArabic(text: string): string {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ة/g, 'ه')
+        .replace(/ى/g, 'ي')
+        .replace(/ؤ/g, 'و')
+        .replace(/ئ/g, 'ي')
+        .replace(/ـ/g, '')
+        .replace(/[ًٌٍَُِّْ]/g, '')
+        .replace(/[^\p{L}\p{N}\s?!؟.,]/gu, '')
+        .replace(/\s+/g, ' ');
+}
+
+function detectIntent(message: string): Intent {
+    const text = normalizeArabic(message);
+
+    // Greeting / small talk
+    if (
+        /^(مرحبا|اهلا|اهلا وسهلا|هلا|هلا والله|السلام عليكم|شلونك|كيفك|شو اخبارك|شو اخبارك اليوم|صباح الخير|مساء الخير|هاي|hello|hi)\b/.test(
+            text
+        )
+    ) {
+        return 'greeting';
+    }
+
+    // Thanks
+    if (
+        /^(شكرا|شكراً|يسلمو|يعطيك العافيه|مشكور|مشكور كثير|thx|thanks)\b/.test(text)
+    ) {
+        return 'thanks';
+    }
+
+    // Clarification / correcting the bot
+    if (
+        /(قصدي|لا قصدي|مش هيك|مو هيك|غلط|فهمتني غلط|ردك غلط|مش قصدي السلايد|قصدي الرد|انا سالتك|انا سالته|انت ما فهمت)/.test(
+            text
+        )
+    ) {
+        return 'clarification';
+    }
+
+    // Direct slide/content question
+    if (
+        /(اشرح|فسر|وضح|شو يعني|ما معنى|ليش|لماذا|كيف|قارن|فرق|احسب|حل|اعطني مثال|اعطيني مثال|لخص|اختصر|ترجم|شو المقصود|ما المقصود|what|why|how|compare|difference|solve|explain)/.test(
+            text
+        )
+    ) {
+        return 'slide_question';
+    }
+
+    // Follow-up likely related to previous explanation
+    if (
+        /(هاي|هاذ|هذا|هاي النقطه|هذا الجزء|يعني|طيب وبعدين|كمل|زيد|اعاده|عيد|وضح اكثر|بشكل ابسط|اعمق|more|again|simpler)/.test(
+            text
+        )
+    ) {
+        return 'followup';
+    }
+
+    // Off-topic or generic
+    if (
+        /(مين انت|شو بتعمل|كم عمرك|وين ساكن|نكتة|نكته|احكي نكته|احكي معي|فضفضه)/.test(
+            text
+        )
+    ) {
+        return 'off_topic';
+    }
+
+    return 'general';
+}
+
+function isComplexQuery(message: string): boolean {
+    const text = normalizeArabic(message);
+
+    return (
+        /(قارن|فرق|لماذا|ليش|كيف ترتبط|كيف يختلف|اثبت|برهن|معادله|اشتق|تناقض|حل بالتفصيل|اشرح بالتفصيل|اعطني تحليل|حلل|compare|difference|prove|derive|analyze|why)/.test(
+            text
+        ) || text.length > 180
+    );
+}
+
+function buildQuickReply(intent: Intent, userName?: string): string | null {
+    switch (intent) {
+        case 'greeting':
+            return `تمام الحمد لله 😄 أنا قُضاة، جاهز أساعدك بالسلايد. شو الجزء اللي بدك نفهمه؟`;
+
+        case 'thanks':
+            return `العفو 🌷 أنا جاهز، إذا بدك نكمل بالسلايد أو أوضح نقطة معيّنة احكيلي.`;
+
+        case 'clarification':
+            return `فهمت عليك. خليني أركز على قصدك مباشرة بدون ما أفرض شرح السلايد. احكيلي شو المقصود بالضبط وأنا أجاوبك عليه.`;
+
+        default:
+            return null;
+    }
+}
+
+function summarizeRecentMessages(messages: ChatMessage[]): string {
+    const lastMessages = messages.slice(-6);
+
+    return lastMessages
+        .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+        .join('\n');
+}
+
+function buildSystemPrompt(params: {
+    userName?: string;
+    intent: Intent;
+    includeSlideContext: boolean;
+    slideContext?: string;
+    currentExplanation?: string;
+    recentSummary: string;
+}) {
+    const {
+        userName,
+        intent,
+        includeSlideContext,
+        slideContext,
+        currentExplanation,
+        recentSummary,
+    } = params;
+
+    const safeName = userName?.trim() || 'Student';
+
+    return `
+You are "Qudah Bot" (قضاة بوت), an elite AI tutor for SlideMate helping Arab university students.
+
+<pedagogy_context>
+- Student Name: "${safeName}"
+- Student Level: University undergraduate
+- Language Style: Clear natural Jordanian Arabic
+- Tone: Smart, calm, helpful, human
+</pedagogy_context>
+
+<conversation_state>
+- Detected Intent: "${intent}"
+- Recent Conversation Summary:
+${recentSummary || 'No prior summary.'}
+</conversation_state>
+
+${includeSlideContext
+            ? `
+<knowledge_context>
+- Current Slide Content:
+${slideContext || 'No slide content provided.'}
+
+- Canonical Explanation:
+${currentExplanation || 'No explanation provided.'}
+</knowledge_context>
+`
+            : ''
+        }
+
+<behavior_rules>
+1. First understand the user's social intent before answering.
+2. If the user is greeting, reply naturally and briefly. Do NOT explain the slide.
+3. If the user is correcting the bot, acknowledge the misunderstanding directly.
+4. Only explain slide content if the user's message clearly asks about the slide or likely refers to it.
+5. If explaining:
+   - explain simply
+   - add one useful analogy or real example
+   - do NOT just repeat the slide text
+   - keep it concise
+6. Do NOT hallucinate facts outside the provided lecture context.
+7. If the answer is not supported by the provided context, say that you need more lecture context.
+8. Avoid repetition and looping.
+9. Maximum answer length:
+   - greeting / thanks / clarification: 1-2 short sentences
+   - slide question: 3-5 short sentences
+10. Use Arabic only unless technical terms are necessary.
+11. NEVER force every message into tutoring mode.
+12. Your name must always be written as "قضاة" or "القضاة".
+</behavior_rules>
+`.trim();
+}
+
+async function callGroqChat(params: {
+    model: string;
+    systemPrompt: string;
+    messages: ChatMessage[];
+}) {
+    const completion = await groq.chat.completions.create({
+        model: params.model,
+        messages: [
+            { role: 'system', content: params.systemPrompt },
+            ...params.messages,
+        ],
+        temperature: 0.3,
+        max_tokens: 500,
+    });
+
+    return completion;
+}
+
+async function callCerebrasFallback(params: {
+    systemPrompt: string;
+    messages: ChatMessage[];
+}) {
+    const cerebrasKey = process.env.CEREBRAS_API_KEY;
+    if (!cerebrasKey) {
+        throw new Error('CEREBRAS_API_KEY is missing');
+    }
+
+    const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${cerebrasKey}`,
+        },
+        body: JSON.stringify({
+            model: 'llama3.1-8b',
+            messages: [
+                { role: 'system', content: params.systemPrompt },
+                ...params.messages,
+            ],
+            temperature: 0.3,
+            max_tokens: 500,
+        }),
+    });
+
+    if (!response.ok) {
+        let errorText = response.statusText;
+        try {
+            const errorData = await response.json();
+            errorText = errorData?.error?.message || errorText;
+        } catch {
+            //
+        }
+        throw new Error(`Cerebras API Error: ${errorText}`);
+    }
+
+    return await response.json();
+}
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -14,144 +263,130 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
 
     if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
+        return res.status(200).end();
     }
 
     if (req.method !== 'POST') {
-        res.status(405).json({ error: 'Method Not Allowed' });
-        return;
+        return res.status(405).json({ error: 'Method Not Allowed' });
     }
 
     try {
-        console.log('Chat API called');
-        const hasGroqKey = !!process.env.GROQ_API_KEY;
-        const hasFirebaseKey = !!process.env.FIREBASE_SERVICE_ACCOUNT;
-        console.log('Env check - Groq:', hasGroqKey, 'Firebase:', hasFirebaseKey);
-
         const authHeader = req.headers.authorization;
+
         if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
+            return res.status(401).json({ error: 'Unauthorized' });
         }
 
         const idToken = authHeader.split('Bearer ')[1];
         await auth.verifyIdToken(idToken);
 
-        const { messages, slideContext, currentExplanation, userName } = req.body || {};
+        const {
+            messages,
+            slideContext,
+            currentExplanation,
+            userName,
+        }: {
+            messages?: ChatMessage[];
+            slideContext?: string;
+            currentExplanation?: string;
+            userName?: string;
+        } = req.body || {};
 
-        if (!messages || !Array.isArray(messages)) {
-            console.error('Missing or invalid messages array');
-            res.status(400).json({ error: 'Invalid request body: messages must be an array' });
-            return;
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return res
+                .status(400)
+                .json({ error: 'Invalid request body: messages must be a non-empty array' });
         }
 
-        // --- MEMORY OPTIMIZATION (Layer F) ---
-        // Keep only the last 4 messages (2 exact turns) to prevent expensive clutter and looping.
-        // In a full architecture, older messages would be summarized here.
-        const recentMessages = messages.slice(-4);
+        const latestUserMessage =
+            [...messages].reverse().find((m) => m.role === 'user')?.content?.trim() || '';
 
-        // Extract the latest user question to determine routing
-        const latestUserMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
+        if (!latestUserMessage) {
+            return res.status(400).json({ error: 'No user message found' });
+        }
 
-        // --- TWO-MODEL ROUTING (Layer E) ---
-        // Determine complexity by checking for keywords or message length
-        const isComplexQuery = /قارن|ليش|لماذا|فرق|احسب|اشرح بالتفصيل|أثبت|معادلة|تناقض|كيف ترتبط|compare|why|difference|prove/i.test(latestUserMessage) || latestUserMessage.length > 150;
+        const intent = detectIntent(latestUserMessage);
 
-        // Fast path: Qwen 32B (Groq) OR Llama 8B fallback. Reasoning path: Llama 70B
-        const activeModel = isComplexQuery ? 'llama-3.3-70b-versatile' : 'qwen-2.5-32b';
-        console.log(`Routing chat to: ${activeModel} (Complex: ${isComplexQuery})`);
+        // Quick deterministic replies for non-content intents
+        const quickReply = buildQuickReply(intent, userName);
+        if (quickReply) {
+            return res.status(200).json({
+                reply: quickReply,
+                meta: {
+                    intent,
+                    usedModel: null,
+                    usedSlideContext: false,
+                    route: 'quick-reply',
+                },
+            });
+        }
 
-        // --- STRUCTURED TEACHING PACKET (Layer D & G) ---
-        const systemPrompt = `
-You are "Qudah Bot" (قُضاة بوت), an elite, highly intelligent AI Tutor for SlideMate.
+        // Keep only recent turns to reduce clutter
+        const recentMessages = messages.slice(-6);
 
-<pedagogy_context>
-- Student Name: "${userName || 'Student'}". (If "Mohammad Al Qudah", call him "الخال" or "أبو القضاة").
-- Student Level: University undergraduate.
-- Style: Professional yet witty, clear Jordanian Ammiya (لهجة أردنية).
-- Strategy: Use real-world analogies (e.g., ordering shawarma, driving in Amman) to make abstract concepts CONCRETE.
-- Engagement: ALWAYS end with ONE short, engaging question to test understanding.
-</pedagogy_context>
+        // Decide whether current turn needs slide context
+        const includeSlideContext =
+            intent === 'slide_question' ||
+            intent === 'followup' ||
+            (intent === 'general' && !!slideContext);
 
-<knowledge_context>
-- Slide Content (Scope 0): "${slideContext}"
-- Canonical Primary Explanation: "${currentExplanation}"
-</knowledge_context>
+        // Decide model route
+        const complex = isComplexQuery(latestUserMessage);
+        const activeModel = complex
+            ? 'llama-3.3-70b-versatile'
+            : 'qwen-2.5-32b';
 
-<grounding_rules>
-1. NEVER just repeat the Canonical Explanation. Provide a NEW perspective, analogy, or deeper insight.
-2. If unsupported by the retrieved context, say you are uncertain and need more lecture context.
-3. Prefer explaining over asserting.
-4. Prevent loops: Do NOT repeat previous analogies. Invent completely new ones.
-5. NEVER use the word "خلق" for humans/apps. Use "عمل/صمم/برمج".
-6. DO NOT use non-Arabic characters unless they are technical terms or code/LaTeX.
-7. ALWAYS write your name correctly as "قُضاة" or "القُضاة", never "قوداه".
-</grounding_rules>
-`;
+        const recentSummary = summarizeRecentMessages(recentMessages);
 
-        let completion;
+        const systemPrompt = buildSystemPrompt({
+            userName,
+            intent,
+            includeSlideContext,
+            slideContext,
+            currentExplanation,
+            recentSummary,
+        });
+
+        let completion: any;
+
         try {
-            // Priority 1: Groq (Llama 3.1 8B Instant)
-            completion = await groq.chat.completions.create({
+            completion = await callGroqChat({
                 model: activeModel,
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    ...recentMessages
-                ],
-                temperature: 0.3,
-                max_tokens: 1500,
+                systemPrompt,
+                messages: recentMessages,
             });
         } catch (groqError: any) {
-            console.warn('Groq failed, attempting Cerebras fallback...', groqError?.message);
+            console.warn('Groq failed, trying Cerebras fallback:', groqError?.message);
 
-            const cerebrasKey = process.env.CEREBRAS_API_KEY;
-            // If we have a Cerebras key, try it as a fallback
-            if (cerebrasKey) {
-                try {
-                    const cerebrasResponse = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${cerebrasKey}`
-                        },
-                        body: JSON.stringify({
-                            model: 'llama3.1-8b',
-                            messages: [
-                                { role: 'system', content: systemPrompt },
-                                ...recentMessages
-                            ],
-                            temperature: 0.3,
-                            max_tokens: 1500,
-                        })
-                    });
-
-                    if (cerebrasResponse.ok) {
-                        const cerebrasData = await cerebrasResponse.json();
-                        completion = cerebrasData;
-                    } else {
-                        const errorData = await cerebrasResponse.json();
-                        throw new Error(`Cerebras API Error: ${errorData?.error?.message || cerebrasResponse.statusText}`);
-                    }
-                } catch (cerebrasError: any) {
-                    console.error('Cerebras fallback also failed:', cerebrasError?.message);
-                    throw groqError; // Throw the original Groq error if both fail
-                }
-            } else {
-                throw groqError;
-            }
+            completion = await callCerebrasFallback({
+                systemPrompt,
+                messages: recentMessages,
+            });
         }
 
-        const reply = completion.choices?.[0]?.message?.content || "عذرًا، ما قدرت أرد عليك حاليًا. جرب مرة ثانية يا بطل.";
-        const cleanReply = reply.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        const rawReply =
+            completion?.choices?.[0]?.message?.content ||
+            'عذرًا، صار خطأ وما قدرت أرد حاليًا. جرّب مرة ثانية.';
 
-        res.status(200).json({ reply: cleanReply });
+        const cleanReply = String(rawReply)
+            .replace(/<think>[\s\S]*?<\/think>/g, '')
+            .trim();
+
+        return res.status(200).json({
+            reply: cleanReply,
+            meta: {
+                intent,
+                usedModel: activeModel,
+                usedSlideContext: includeSlideContext,
+                route: complex ? 'reasoning' : 'fast',
+            },
+        });
     } catch (error: any) {
         console.error('Chat API Error:', error);
-        const errorMessage = error?.message || 'Unknown error';
-        res.status(500).json({
+
+        return res.status(500).json({
             error: 'Failed to connect to AI',
-            details: errorMessage
+            details: error?.message || 'Unknown error',
         });
     }
 }
