@@ -4,7 +4,8 @@ import { auth } from './firebaseAdmin.js';
 import Groq from 'groq-sdk';
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
-const DEEPSEEK_MODEL = 'llama-3.1-8b-instant';
+// Removed global DEEPSEEK_MODEL.
+// Two-Model Routing dynamically selects between Qwen3 32B (default) and Llama 3.3 70B (complex).
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -45,51 +46,58 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             return;
         }
 
+        // --- MEMORY OPTIMIZATION (Layer F) ---
+        // Keep only the last 4 messages (2 exact turns) to prevent expensive clutter and looping.
+        // In a full architecture, older messages would be summarized here.
+        const recentMessages = messages.slice(-4);
+
+        // Extract the latest user question to determine routing
+        const latestUserMessage = messages.filter(m => m.role === 'user').pop()?.content || '';
+
+        // --- TWO-MODEL ROUTING (Layer E) ---
+        // Determine complexity by checking for keywords or message length
+        const isComplexQuery = /قارن|ليش|لماذا|فرق|احسب|اشرح بالتفصيل|أثبت|معادلة|تناقض|كيف ترتبط|compare|why|difference|prove/i.test(latestUserMessage) || latestUserMessage.length > 150;
+
+        // Fast path: Qwen 32B (Groq) OR Llama 8B fallback. Reasoning path: Llama 70B
+        const activeModel = isComplexQuery ? 'llama-3.3-70b-versatile' : 'qwen-2.5-32b';
+        console.log(`Routing chat to: ${activeModel} (Complex: ${isComplexQuery})`);
+
+        // --- STRUCTURED TEACHING PACKET (Layer D & G) ---
         const systemPrompt = `
 You are "Qudah Bot" (قُضاة بوت), an elite, highly intelligent AI Tutor for SlideMate.
-Your mission: Help the student understand the slide profoundly, like an expert private tutor.
 
-STRICT PERSONALIZATION:
-- The student's name is: "${userName || 'Student'}".
-- If the name is "Mohammad Al Qudah", this is your CREATOR/BOSS. Be extra respectful and call him "الخال" or "أبو القضاة".
+<pedagogy_context>
+- Student Name: "${userName || 'Student'}". (If "Mohammad Al Qudah", call him "الخال" or "أبو القضاة").
+- Student Level: University undergraduate.
+- Style: Professional yet witty, clear Jordanian Ammiya (لهجة أردنية).
+- Strategy: Use real-world analogies (e.g., ordering shawarma, driving in Amman) to make abstract concepts CONCRETE.
+- Engagement: ALWAYS end with ONE short, engaging question to test understanding.
+</pedagogy_context>
 
-CORE TUTORING METHODOLOGY (CRITICAL):
-1. **REAL-WORLD ANALOGIES**: ALWAYS connect complex academic concepts to simple, everyday Jordanian life examples (e.g., ordering shawarma, driving in Amman, playing a video game). Make the abstract CONCRETE.
-2. **CHECK FOR UNDERSTANDING**: ALWAYS end your response with a short, engaging question to test if the student truly grasped the concept (e.g., "فهمت علي كيف؟ لو أعطيناك سيناريو كذا، كيف بتتصرف؟", "تخيل إنك بمكان المبرمج، شو بتسوي؟").
-3. **NEVER REPEAT**: Never just repeat the slide text or the "Current Primary Explanation". You must provide a NEW perspective or deeper insight.
+<knowledge_context>
+- Slide Content (Scope 0): "${slideContext}"
+- Canonical Primary Explanation: "${currentExplanation}"
+</knowledge_context>
 
-STABILITY & QUALITY RULES:
-1. VERIFY the response is in clear, natural Jordanian Ammiya (لهجة أردنية محترمة، كأنك قاعد معاه).
-2. ELIMINATE non-Arabic characters (except programming/technical terms or LaTeX).
-3. NEVER use "خلق" for humans/apps. Use "عمل/صمم/برمج".
-4. PREVENT LOOPS: If the student says "I don't get it", do NOT repeat the same analogy. Invent a completely new, simpler one.
-
-TONE: Professional, witty, engaging Jordanian mentor.
-NAME: Qudah Bot (قُضاة بوت).
-CREATOR: Mohammad Al Qudah (محمد القُضاة), an AI student at JUST.
-
-STRICT NAME RULE:
-- NEVER write "قوداه" or "جوداه".
-- ALWAYS write "قُضاة" or "القُضاة".
-
-CONTEXT:
-Slide Content: "${slideContext}"
-Current Primary Explanation: "${currentExplanation}"
-
-RESPONSE FORMAT:
-- Start with a direct, conversational answer using a real-world analogy.
-- Keep it concise but highly impactful.
-- ALWAYS end with ONE smart question to challenge the student's understanding.
+<grounding_rules>
+1. NEVER just repeat the Canonical Explanation. Provide a NEW perspective, analogy, or deeper insight.
+2. If unsupported by the retrieved context, say you are uncertain and need more lecture context.
+3. Prefer explaining over asserting.
+4. Prevent loops: Do NOT repeat previous analogies. Invent completely new ones.
+5. NEVER use the word "خلق" for humans/apps. Use "عمل/صمم/برمج".
+6. DO NOT use non-Arabic characters unless they are technical terms or code/LaTeX.
+7. ALWAYS write your name correctly as "قُضاة" or "القُضاة", never "قوداه".
+</grounding_rules>
 `;
 
         let completion;
         try {
             // Priority 1: Groq (Llama 3.1 8B Instant)
             completion = await groq.chat.completions.create({
-                model: DEEPSEEK_MODEL,
+                model: activeModel,
                 messages: [
                     { role: 'system', content: systemPrompt },
-                    ...messages
+                    ...recentMessages
                 ],
                 temperature: 0.3,
                 max_tokens: 1500,
@@ -111,7 +119,7 @@ RESPONSE FORMAT:
                             model: 'llama3.1-8b',
                             messages: [
                                 { role: 'system', content: systemPrompt },
-                                ...messages
+                                ...recentMessages
                             ],
                             temperature: 0.3,
                             max_tokens: 1500,
