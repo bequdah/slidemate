@@ -57,7 +57,7 @@ export const useVoicePlayer = (scriptText: string | undefined, lang: 'en' | 'ar'
     // Fetch TTS audio as a blob URL
     const fetchTtsBlob = useCallback(async (text: string): Promise<string> => {
         const ttsLang = getTtsLang();
-        const response = await fetch('/api/tts', {
+        const response = await fetch('https://slidemate.vercel.app/api/tts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ text, lang: ttsLang })
