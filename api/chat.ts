@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { auth } from './firebaseAdmin.js';
-import Groq from 'groq-sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY || '',
-});
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Using Gemini 1.5 Flash as the primary model (fast and smart)
+const GEMINI_MODEL = 'gemini-1.5-flash';
 
 type ChatMessage = {
     role: 'system' | 'user' | 'assistant';
@@ -106,7 +106,7 @@ function isComplexQuery(message: string): boolean {
 function buildQuickReply(intent: Intent, userName?: string): string | null {
     switch (intent) {
         case 'greeting':
-            return `تمام الحمد لله 😄 أنا قُضاة بوت، جاهز أساعدك بالسلايد. شو الجزء اللي بدك نفهمه؟`;
+            return `تمام الحمد لله 😄 أنا قُضاة، جاهز أساعدك بالسلايد. شو الجزء اللي بدك نفهمه؟`;
 
         case 'thanks':
             return `العفو 🌷 أنا جاهز، إذا بدك نكمل بالسلايد أو أوضح نقطة معيّنة احكيلي.`;
@@ -147,14 +147,7 @@ function buildSystemPrompt(params: {
     const safeName = userName?.trim() || 'Student';
 
     return `
-You are "Qudah Bot" (قُضاة بوت), an elite AI tutor for SlideMate helping Arab university students.
-
-<identity>
-- Your name: قُضاة بوت (Qudah Bot). ALWAYS spell it as "قُضاة" — never "قضاء" or "قوداه" or any other spelling.
-- Your creator: Mohammad Al Qudah (محمد القُضاة), an AI student at JUST university in Jordan. He built SlideMate.
-- If the student's name is "Mohammad Al Qudah", call him "الخال" or "أبو القُضاة" with extra respect.
-- If asked who built you or who your creator is, proudly say: "أنا من تصميم وبرمجة محمد القُضاة، طالب ذكاء اصطناعي في جامعة العلوم والتكنولوجيا الأردنية (JUST) 🎓"
-</identity>
+You are "Qudah Bot" (قضاة بوت), an elite AI tutor for SlideMate helping Arab university students.
 
 <pedagogy_context>
 - Student Name: "${safeName}"
@@ -200,67 +193,31 @@ ${currentExplanation || 'No explanation provided.'}
    - slide question: 3-5 short sentences
 10. Use Arabic only unless technical terms are necessary.
 11. NEVER force every message into tutoring mode.
-12. Your name must ALWAYS be written as "قُضاة" or "قُضاة بوت" — nothing else.
+12. Your name must always be written as "قضاة" or "القضاة".
 </behavior_rules>
 `.trim();
 }
 
-async function callGroqChat(params: {
-    model: string;
+async function callGeminiChat(params: {
     systemPrompt: string;
     messages: ChatMessage[];
 }) {
-    const completion = await groq.chat.completions.create({
-        model: params.model,
-        messages: [
-            { role: 'system', content: params.systemPrompt },
-            ...params.messages,
-        ],
-        temperature: 0.3,
-        max_tokens: 500,
+    const model = genAI.getGenerativeModel({
+        model: GEMINI_MODEL,
+        systemInstruction: params.systemPrompt
     });
 
-    return completion;
-}
-
-async function callCerebrasFallback(params: {
-    systemPrompt: string;
-    messages: ChatMessage[];
-}) {
-    const cerebrasKey = process.env.CEREBRAS_API_KEY;
-    if (!cerebrasKey) {
-        throw new Error('CEREBRAS_API_KEY is missing');
-    }
-
-    const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${cerebrasKey}`,
-        },
-        body: JSON.stringify({
-            model: 'llama3.1-8b',
-            messages: [
-                { role: 'system', content: params.systemPrompt },
-                ...params.messages,
-            ],
-            temperature: 0.3,
-            max_tokens: 500,
-        }),
+    const chat = model.startChat({
+        history: params.messages.slice(0, -1).map(m => ({
+            role: m.role === 'user' ? 'user' : 'model',
+            parts: [{ text: m.content }]
+        })),
     });
 
-    if (!response.ok) {
-        let errorText = response.statusText;
-        try {
-            const errorData = await response.json();
-            errorText = errorData?.error?.message || errorText;
-        } catch {
-            //
-        }
-        throw new Error(`Cerebras API Error: ${errorText}`);
-    }
-
-    return await response.json();
+    const latestMessage = params.messages[params.messages.length - 1].content;
+    const result = await chat.sendMessage(latestMessage);
+    const response = await result.response;
+    return response.text();
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -331,17 +288,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Keep only recent turns to reduce clutter
         const recentMessages = messages.slice(-6);
 
-        // Decide whether current turn needs slide context
         const includeSlideContext =
             intent === 'slide_question' ||
             intent === 'followup' ||
             (intent === 'general' && !!slideContext);
-
-        // Decide model route
-        const complex = isComplexQuery(latestUserMessage);
-        const activeModel = complex
-            ? 'llama-3.3-70b-versatile'
-            : 'qwen-2.5-32b';
 
         const recentSummary = summarizeRecentMessages(recentMessages);
 
@@ -354,38 +304,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             recentSummary,
         });
 
-        let completion: any;
+        let cleanReply: string;
 
         try {
-            completion = await callGroqChat({
-                model: activeModel,
+            cleanReply = await callGeminiChat({
                 systemPrompt,
                 messages: recentMessages,
             });
-        } catch (groqError: any) {
-            console.warn('Groq failed, trying Cerebras fallback:', groqError?.message);
-
-            completion = await callCerebrasFallback({
-                systemPrompt,
-                messages: recentMessages,
-            });
+        } catch (error: any) {
+            console.error('Gemini call failed:', error);
+            cleanReply = 'عذرًا، صار خطأ وما قدرت أرد حاليًا من خلال Gemini. جرّب مرة ثانية.';
         }
-
-        const rawReply =
-            completion?.choices?.[0]?.message?.content ||
-            'عذرًا، صار خطأ وما قدرت أرد حاليًا. جرّب مرة ثانية.';
-
-        const cleanReply = String(rawReply)
-            .replace(/<think>[\s\S]*?<\/think>/g, '')
-            .trim();
 
         return res.status(200).json({
             reply: cleanReply,
             meta: {
                 intent,
-                usedModel: activeModel,
+                usedModel: GEMINI_MODEL,
                 usedSlideContext: includeSlideContext,
-                route: complex ? 'reasoning' : 'fast',
+                route: 'gemini-flash',
             },
         });
     } catch (error: any) {
