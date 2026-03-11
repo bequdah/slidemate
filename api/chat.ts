@@ -1,10 +1,10 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { auth } from './firebaseAdmin.js';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import Groq from 'groq-sdk';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-// Using Gemini 3.1 Flash Lite as the primary model
-const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+const groq = new Groq({
+    apiKey: process.env.GROQ_API_KEY || '',
+});
 
 type ChatMessage = {
     role: 'system' | 'user' | 'assistant';
@@ -198,26 +198,62 @@ ${currentExplanation || 'No explanation provided.'}
 `.trim();
 }
 
-async function callGeminiChat(params: {
+async function callGroqChat(params: {
+    model: string;
     systemPrompt: string;
     messages: ChatMessage[];
 }) {
-    const model = genAI.getGenerativeModel({
-        model: GEMINI_MODEL,
-        systemInstruction: params.systemPrompt
+    const completion = await groq.chat.completions.create({
+        model: params.model,
+        messages: [
+            { role: 'system', content: params.systemPrompt },
+            ...params.messages,
+        ],
+        temperature: 0.3,
+        max_tokens: 500,
     });
 
-    const chat = model.startChat({
-        history: params.messages.slice(0, -1).map(m => ({
-            role: m.role === 'user' ? 'user' : 'model',
-            parts: [{ text: m.content }]
-        })),
+    return completion;
+}
+
+async function callCerebrasFallback(params: {
+    systemPrompt: string;
+    messages: ChatMessage[];
+}) {
+    const cerebrasKey = process.env.CEREBRAS_API_KEY;
+    if (!cerebrasKey) {
+        throw new Error('CEREBRAS_API_KEY is missing');
+    }
+
+    const response = await fetch('https://api.cerebras.ai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${cerebrasKey}`,
+        },
+        body: JSON.stringify({
+            model: 'llama3.1-8b',
+            messages: [
+                { role: 'system', content: params.systemPrompt },
+                ...params.messages,
+            ],
+            temperature: 0.3,
+            max_tokens: 500,
+        }),
     });
 
-    const latestMessage = params.messages[params.messages.length - 1].content;
-    const result = await chat.sendMessage(latestMessage);
-    const response = await result.response;
-    return response.text();
+    if (!response.ok) {
+        let errorText = response.statusText;
+        try {
+            const errorData = await response.json();
+            errorText = errorData?.error?.message || errorText;
+        } catch {
+            //
+        }
+        throw new Error(`Cerebras API Error: ${errorText}`);
+    }
+
+    return await response.json();
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -288,10 +324,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         // Keep only recent turns to reduce clutter
         const recentMessages = messages.slice(-6);
 
+        // Decide whether current turn needs slide context
         const includeSlideContext =
             intent === 'slide_question' ||
             intent === 'followup' ||
             (intent === 'general' && !!slideContext);
+
+        // Decide model route
+        const complex = isComplexQuery(latestUserMessage);
+        const activeModel = complex
+            ? 'llama-3.3-70b-versatile'
+            : 'qwen-2.5-32b';
 
         const recentSummary = summarizeRecentMessages(recentMessages);
 
@@ -304,25 +347,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             recentSummary,
         });
 
-        let cleanReply: string;
+        let completion: any;
 
         try {
-            cleanReply = await callGeminiChat({
+            completion = await callGroqChat({
+                model: activeModel,
                 systemPrompt,
                 messages: recentMessages,
             });
-        } catch (error: any) {
-            console.error('Gemini call failed:', error);
-            cleanReply = 'عذرًا، صار خطأ وما قدرت أرد حاليًا من خلال Gemini. جرّب مرة ثانية.';
+        } catch (groqError: any) {
+            console.warn('Groq failed, trying Cerebras fallback:', groqError?.message);
+
+            completion = await callCerebrasFallback({
+                systemPrompt,
+                messages: recentMessages,
+            });
         }
+
+        const rawReply =
+            completion?.choices?.[0]?.message?.content ||
+            'عذرًا، صار خطأ وما قدرت أرد حاليًا. جرّب مرة ثانية.';
+
+        const cleanReply = String(rawReply)
+            .replace(/<think>[\s\S]*?<\/think>/g, '')
+            .trim();
 
         return res.status(200).json({
             reply: cleanReply,
             meta: {
                 intent,
-                usedModel: GEMINI_MODEL,
+                usedModel: activeModel,
                 usedSlideContext: includeSlideContext,
-                route: 'gemini-flash',
+                route: complex ? 'reasoning' : 'fast',
             },
         });
     } catch (error: any) {

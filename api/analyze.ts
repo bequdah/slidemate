@@ -37,8 +37,8 @@ function getAnalysisCacheKey(
 
 const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
 const genAI = new GoogleGenerativeAI(geminiKey);
-const model_gemma = genAI.getGenerativeModel({
-    model: 'gemma-3-27b-it'
+const model_gemini_31 = genAI.getGenerativeModel({
+    model: 'gemini-3.1-flash-lite-preview'
 });
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
@@ -106,7 +106,7 @@ LaTeX RULES (CRITICAL - READ CAREFULLY):
 async function repairExamJsonShape(systemPrompt: string, slidePrompt: string, badJson: any): Promise<any> {
     const repairPrompt = `Fix this JSON to match EXACTLY this schema (do not add extra keys):\n\n{\n  \"explanation\": {},\n  \"quiz\": [\n    {\n      \"q\": string,\n      \"options\": [string,string,string,string],\n      \"a\": 0|1|2|3,\n      \"reasoning\": string\n    }\n  ]\n}\n\nRules:\n- Return ONLY valid JSON.\n- Preserve the same questions/options as much as possible.\n- Ensure every quiz item has numeric \"a\" (0-3).\n\nJSON TO FIX:\n${JSON.stringify(badJson)}`;
 
-    const fixed = await model_gemma.generateContent([
+    const fixed = await model_gemini_31.generateContent([
         systemPrompt,
         slidePrompt,
         repairPrompt
@@ -195,23 +195,26 @@ OUTPUT FORMAT (Structured English Interpretation):
 3. **EXAM TRAPS**: [Explain specific highlighted points or 'gotchas' in the visuals]
 4. **DATA BREAKDOWN**: [Logical translation of facts, NOT rows/columns]`;
 
-async function extractSlideContentWithGroqVision(thumbnail: string): Promise<string> {
-    const completion = await groq.chat.completions.create({
-        model: GROQ_VISION_MODEL,
-        messages: [
-            {
-                role: 'user',
-                content: [
-                    { type: 'text', text: VISION_EXTRACT_PROMPT },
-                    { type: 'image_url', image_url: { url: thumbnail } }
-                ]
-            }
-        ],
-        max_tokens: 4096,
-        temperature: 0.2
+async function extractSlideContentWithGemini31(thumbnail: string): Promise<string> {
+    const model31 = genAI.getGenerativeModel({
+        model: 'gemini-3.1-flash-lite-preview'
     });
-    const text = completion.choices[0]?.message?.content?.trim() || '';
-    return text || '[No content extracted from image.]';
+
+    const mimeType = thumbnail.split(';')[0].split(':')[1];
+    const base64Data = thumbnail.split(',')[1];
+
+    const result = await model31.generateContent([
+        VISION_EXTRACT_PROMPT,
+        {
+            inlineData: {
+                data: base64Data,
+                mimeType: mimeType
+            }
+        }
+    ]);
+
+    const response = await result.response;
+    return response.text() || '[No content extracted from image.]';
 }
 
 function coerceMessagesForModel(messages: any[], isVisionModel: boolean) {
@@ -497,8 +500,8 @@ REMINDER:
         let initialFinalThumbnail: string | undefined = thumbnail;
         if (mode === 'visual' && thumbnail && isVisionRequest(thumbnail)) {
             try {
-                console.log("Visual mode: Running Groq Llama 4 Vision for tables/charts/diagrams...");
-                const visionText = await extractSlideContentWithGroqVision(thumbnail);
+                console.log("Visual mode: Running Gemini 3.1 Flash Lite for tables/charts/diagrams...");
+                const visionText = await extractSlideContentWithGemini31(thumbnail);
                 console.log(`Groq Vision provided ${visionText.length} chars.`);
                 const visualPrefix = `[VISUAL SLIDE ANALYSIS - GUIDE FOR TUTOR]\n\nThe following is a structural breakdown of the visual slide content (tables, diagrams, flows) provided by your assistant.\nUSE THIS DETAILED LOGIC to explain the concepts to the student.\n\n${visionText}\n\n[END VISUAL ANALYSIS]\n\n`;
                 initialFinalText = [visualPrefix + visionText];
@@ -519,38 +522,31 @@ REMINDER:
                 let finalThumbnail = initialFinalThumbnail;
 
                 if (mode !== 'visual' && isVisionRequest(thumbnail) && thumbnail) {
-                    console.log("Vision Request Detected: Running OCR with Groq Llama 4 Vision...");
+                    console.log("Vision Request Detected: Running OCR with Gemini 3.1 Flash Lite...");
 
                     for (let i = 0; i < 3; i++) {
                         try {
-                            const ocrCompletion = await groq.chat.completions.create({
-                                model: GROQ_VISION_MODEL,
-                                messages: [
-                                    {
-                                        role: 'user',
-                                        content: [
-                                            {
-                                                type: 'text',
-                                                text: 'OCR INSTRUCTION: Extract ALL text from this slide verbatim. Preserve structure (headings, bullets, numbering). Do not summarize or add any conversational filler. Output ONLY the extracted text.'
-                                            },
-                                            {
-                                                type: 'image_url',
-                                                image_url: { url: thumbnail }
-                                            }
-                                        ]
+                            const mimeType = thumbnail.split(';')[0].split(':')[1];
+                            const base64Data = thumbnail.split(',')[1];
+
+                            const ocrResult = await model_gemini_31.generateContent([
+                                'OCR INSTRUCTION: Extract ALL text from this slide verbatim. Preserve structure (headings, bullets, numbering). Do not summarize or add any conversational filler. Output ONLY the extracted text.',
+                                {
+                                    inlineData: {
+                                        data: base64Data,
+                                        mimeType: mimeType
                                     }
-                                ],
-                                max_tokens: 2048,
-                                temperature: 0.1
-                            });
-                            const ocrText = ocrCompletion.choices[0]?.message?.content?.trim() || '';
-                            console.log(`Groq OCR Success: ${ocrText.length} chars.`);
+                                }
+                            ]);
+
+                            const ocrText = (await ocrResult.response).text()?.trim() || '';
+                            console.log(`Gemini OCR Success: ${ocrText.length} chars.`);
 
                             finalTextContentArray = [ocrText];
                             finalThumbnail = undefined;
                             break;
                         } catch (err: any) {
-                            console.warn(`Groq OCR Attempt ${i + 1} failed: ${err.message}`);
+                            console.warn(`Gemini OCR Attempt ${i + 1} failed: ${err.message}`);
                             await new Promise(r => setTimeout(r, 1000));
                         }
                     }
@@ -572,7 +568,7 @@ REMINDER:
                     // Fallback to Visual Analysis if OCR failed to clear the thumbnail
                     const mimeType = finalThumbnail.split(';')[0].split(':')[1];
                     const base64Data = finalThumbnail.split(',')[1];
-                    result = await model_gemma.generateContent([
+                    result = await model_gemini_31.generateContent([
                         currentMessages[0].content, // System prompt
                         currentMessages[1].content, // User prompt (with slide content)
                         {
@@ -583,7 +579,7 @@ REMINDER:
                         }
                     ]);
                 } else {
-                    result = await model_gemma.generateContent(currentMessages.map(m => m.content).join('\n\n'));
+                    result = await model_gemini_31.generateContent(currentMessages.map(m => m.content).join('\n\n'));
                 }
 
                 const response = await result.response;
