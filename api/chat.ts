@@ -3,8 +3,8 @@ import { auth } from './firebaseAdmin.js';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-// Using Gemini 1.5 Flash as the primary model (fast and smart)
-const GEMINI_MODEL = 'gemini-1.5-flash';
+// Using Gemini 3.1 Flash Lite as the primary model
+const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
 
 type ChatMessage = {
     role: 'system' | 'user' | 'assistant';
