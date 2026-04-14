@@ -39,8 +39,7 @@ function getAnalysisCacheKey(
 const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
 const genAI = new GoogleGenerativeAI(geminiKey);
 const model_gemini_31 = genAI.getGenerativeModel({
-    model: 'gemma-3-27b-it',
-    generationConfig: { responseMimeType: 'application/json' }
+    model: 'gemma-3-27b-it'
 });
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
