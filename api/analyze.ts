@@ -529,29 +529,21 @@ REMINDER:
                 let finalThumbnail = initialFinalThumbnail;
 
                 if (mode !== 'visual' && isVisionRequest(thumbnail) && thumbnail) {
-                    console.log("Vision Request Detected: Running CDN-based OCR with Tesseract.js...");
+                    console.log("Vision Request Detected: Running local Tesseract OCR...");
                     try {
                         const base64Data = thumbnail.split(',')[1];
                         const buffer = Buffer.from(base64Data, 'base64');
-                        
-                        // Use CDN paths to avoid ENOENT errors on Vercel serverless functions
-                        const worker = await Tesseract.createWorker('eng+ara', 1, {
-                            workerPath: 'https://cdn.jsdelivr.net/npm/tesseract.js@v5.0.0/dist/worker.min.js',
-                            corePath: 'https://cdn.jsdelivr.net/npm/tesseract.js-core@v5.0.0/tesseract-core.wasm.js',
-                            langPath: 'https://tessdata.projectnaptha.com/4.0.0',
-                            logger: m => console.log(`OCR [${m.status}]: ${(m.progress * 100).toFixed(1)}%`)
-                        });
 
-                        const { data: { text } } = await worker.recognize(buffer);
-                        await worker.terminate();
+                        // Use Tesseract.recognize directly — vercel.json now includes tesseract.js-core/**
+                        const { data: { text } } = await Tesseract.recognize(buffer, 'eng+ara');
 
                         const ocrText = text?.trim() || '';
-                        console.log(`Tesseract CDN OCR Success: ${ocrText.length} chars.`);
+                        console.log(`Tesseract OCR Success: ${ocrText.length} chars.`);
 
                         finalTextContentArray = [ocrText];
                         finalThumbnail = undefined;
                     } catch (err: any) {
-                        console.warn(`Tesseract CDN OCR failed: ${err.message}`);
+                        console.warn(`Tesseract OCR failed: ${err.message}`);
                         finalTextContentArray = ['[OCR failed - falling back to slide number context]'];
                         finalThumbnail = undefined;
                     }
