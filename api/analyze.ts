@@ -5,6 +5,7 @@ import { db, auth } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import Groq from 'groq-sdk';
+import Tesseract from 'tesseract.js';
 
 const CACHE_TTL_DAYS = 30;
 const CACHE_VERSION = 'v60';
@@ -522,33 +523,24 @@ REMINDER:
                 let finalThumbnail = initialFinalThumbnail;
 
                 if (mode !== 'visual' && isVisionRequest(thumbnail) && thumbnail) {
-                    console.log("Vision Request Detected: Running OCR with Gemini 3.1 Flash Lite...");
+                    console.log("Vision Request Detected: Running local OCR with Tesseract.js...");
+                    try {
+                        const base64Data = thumbnail.split(',')[1];
+                        const buffer = Buffer.from(base64Data, 'base64');
+                        
+                        const { data: { text } } = await Tesseract.recognize(buffer, 'eng+ara', {
+                            logger: m => console.log(`OCR Progress: ${(m.progress * 100).toFixed(1)}%`)
+                        });
 
-                    for (let i = 0; i < 3; i++) {
-                        try {
-                            const mimeType = thumbnail.split(';')[0].split(':')[1];
-                            const base64Data = thumbnail.split(',')[1];
+                        const ocrText = text?.trim() || '';
+                        console.log(`Tesseract OCR Success: ${ocrText.length} chars.`);
 
-                            const ocrResult = await model_gemini_31.generateContent([
-                                'OCR INSTRUCTION: Extract ALL text from this slide verbatim. Preserve structure (headings, bullets, numbering). Do not summarize or add any conversational filler. Output ONLY the extracted text.',
-                                {
-                                    inlineData: {
-                                        data: base64Data,
-                                        mimeType: mimeType
-                                    }
-                                }
-                            ]);
-
-                            const ocrText = (await ocrResult.response).text()?.trim() || '';
-                            console.log(`Gemini OCR Success: ${ocrText.length} chars.`);
-
-                            finalTextContentArray = [ocrText];
-                            finalThumbnail = undefined;
-                            break;
-                        } catch (err: any) {
-                            console.warn(`Gemini OCR Attempt ${i + 1} failed: ${err.message}`);
-                            await new Promise(r => setTimeout(r, 1000));
-                        }
+                        finalTextContentArray = [ocrText];
+                        finalThumbnail = undefined;
+                    } catch (err: any) {
+                        console.warn(`Tesseract OCR failed, falling back to empty text: ${err.message}`);
+                        finalTextContentArray = ['[OCR failed to extract text from image]'];
+                        finalThumbnail = undefined;
                     }
                 }
 

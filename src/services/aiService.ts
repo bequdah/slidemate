@@ -44,7 +44,7 @@ export const analyzeSlide = async (
 
         const token = await user.getIdToken();
 
-        const response = await fetch('https://slidemate.vercel.app/api/analyze', {
+        const response = await fetch('/api/analyze', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -108,7 +108,7 @@ export const generateVoiceScript = async (
 
         const token = await user.getIdToken();
 
-        const response = await fetch('https://slidemate.vercel.app/api/generateVoice', {
+        const response = await fetch('/api/generateVoice', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -140,7 +140,7 @@ export const chatWithSlide = async (
 
         const token = await user.getIdToken();
 
-        const response = await fetch('https://slidemate.vercel.app/api/chat', {
+        const response = await fetch('/api/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
