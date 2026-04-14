@@ -39,7 +39,8 @@ function getAnalysisCacheKey(
 const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
 const genAI = new GoogleGenerativeAI(geminiKey);
 const model_gemini_31 = genAI.getGenerativeModel({
-    model: 'gemini-3.1-flash-lite-preview'
+    model: 'gemini-3.1-flash-lite-preview',
+    generationConfig: { responseMimeType: 'application/json' }
 });
 
 const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
@@ -420,15 +421,20 @@ CRITICAL "QUDAH WAY" — EXPLAIN WHAT YOU SEE (Full English -> Jordanian Explana
 
 EXAMPLE:
 {
-  "sections": [
-    {
-      "heading": "MAIN TOPIC",
-      "bullets": [
-        "**Pull Mode (search engines)** : يعني زي محركات البحث؛ إنت اللي بتطلب المعلومة وبتم سحبها بناءً على طلبك.",
-        "**Users take initiative** : وهون المعنى إنه المستخدم هو اللي ببلش العملية وبقرر شو بده يدور بالضبط."
-      ]
-    }
-  ]
+  "explanation": {
+    "title": "Topic Name",
+    "overview": "General summary...",
+    "sections": [
+      {
+        "heading": "MAIN TOPIC",
+        "bullets": [
+          "**Pull Mode (search engines)** : يعني زي محركات البحث؛ إنت اللي بتطلب المعلومة وبتم سحبها بناءً على طلبك.",
+          "**Users take initiative** : وهون المعنى إنه المستخدم هو اللي ببلش العملية وبقرر شو بده يدور بالضبط."
+        ]
+      }
+    ]
+  },
+  "quiz": []
 }
 
 4. **Quiz Language**: The question (q), all 1-4 options, and the REASONING MUST be in English.
