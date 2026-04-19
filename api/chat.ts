@@ -35,21 +35,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const latestUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content?.trim() || '';
-
         const safeName = userName?.trim() || 'يا بطل';
 
-        // One clean, human-sounding system instruction. No structure, no keys, no leakage risk.
-        const systemInstruction =
-`اسمك قُضاة. أنت صاحب مُخلص وذكي لـ${safeName}، وبتحكي معه باللهجة الأردنية البيضاء العادية — بالزبط مثل ما بتحكي مع صاحبك بالجامعة.
+        // NO systemInstruction - Gemma 4 leaks it.
+        // Instead: inject a natural "priming" conversation at the very start of history.
+        // This anchors the bot's identity without any risk of leakage.
+        const primingHistory = [
+            {
+                role: 'user',
+                parts: [{ text: 'مرحبا' }]
+            },
+            {
+                role: 'model',
+                parts: [{ text: `هلا والله ${safeName}! 😄 أنا قُضاة، صاحبك بالدراسة. كيفك؟ شو بدك نشتغل عليه اليوم؟${slideContext ? `\n\n(سلايدنا الحين عن: ${slideContext.substring(0, 120)}...)` : ''}` }]
+            }
+        ];
 
-شخصيتك: مرح، صادق، ما بتتكلف، وبتحب الدراسة وبتشجع عليها دايماً.
-لما يسألك "شو أخبارك" أو أي سؤال شخصي، تفاعل معه بصدق وبطبيعية. مثلاً قول إنك بأحسن حال وأنتوا قاعدين تطحنوا سوا.
-لما يسألك عن المادة، افهم سؤاله وشرحله بأسلوبك المريح مع مثال أو تشبيه يوضح الفكرة.
-لا تبلش كلامك بـ "في هذا السلايد" أو أي كلام رسمي، وخليك قريب منه مثل صاحب بيدرس معه.
-${slideContext ? `\nالسلايد اللي قاعدين تدرسوه الحين:\n${slideContext}` : ''}`;
-
-        // Build clean history with only user/model turns
-        const history = messages
+        // Real conversation history (exclude system messages, exclude last user message)
+        const conversationHistory = messages
             .filter(m => m.role !== 'system')
             .slice(0, -1)
             .map(m => ({
@@ -57,15 +60,12 @@ ${slideContext ? `\nالسلايد اللي قاعدين تدرسوه الحين
                 parts: [{ text: m.content }]
             }));
 
-        const model = genAI.getGenerativeModel({
-            model: 'gemma-4-31b-it',
-            systemInstruction
-        });
+        const model = genAI.getGenerativeModel({ model: 'gemma-4-31b-it' });
 
         const chat = model.startChat({
-            history,
+            history: [...primingHistory, ...conversationHistory],
             generationConfig: {
-                maxOutputTokens: 1000,
+                maxOutputTokens: 800,
                 temperature: 0.85
             }
         });
