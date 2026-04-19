@@ -9,40 +9,6 @@ type ChatMessage = {
     content: string;
 };
 
-function normalizeArabic(text: string): string {
-    return text
-        .toLowerCase()
-        .trim()
-        .replace(/[أإآ]/g, 'ا')
-        .replace(/ة/g, 'ه')
-        .replace(/ى/g, 'ي')
-        .replace(/ؤ/g, 'و')
-        .replace(/ئ/g, 'ي')
-        .replace(/ـ/g, '')
-        .replace(/[ًٌٍَُِّْ]/g, '')
-        .replace(/[^\p{L}\p{N}\s?!؟.,]/gu, '')
-        .replace(/\s+/g, ' ');
-}
-
-type Intent = 'greeting' | 'thanks' | 'clarification' | 'slide_question' | 'followup' | 'off_topic' | 'general';
-
-function detectIntent(message: string): Intent {
-    const text = normalizeArabic(message);
-    if (/^(مرحبا|اهلا|اهلا وسهلا|هلا|هلا والله|السلام عليكم|شلونك|كيفك|شو اخبارك|صباح الخير|مساء الخير|هاي|hello|hi)\b/.test(text)) return 'greeting';
-    if (/^(شكرا|شكراً|يسلمو|يعطيك العافيه|مشكور|thx|thanks)\b/.test(text)) return 'thanks';
-    if (/(قصدي|لا قصدي|مش هيك|فهمتني غلط|ردك غلط)/.test(text)) return 'clarification';
-    if (/(اشرح|فسر|وضح|شو يعني|ليش|لماذا|كيف|قارن|فرق|احسب|حل|اعطني مثال|لخص|ترجم|what|why|how|compare|difference|solve|explain)/.test(text)) return 'slide_question';
-    if (/(هاي|هاذ|هذا|يعني|كمل|زيد|وضح اكثر|بشكل ابسط|more|again|simpler)/.test(text)) return 'followup';
-    if (/(مين انت|شو بتعمل|كم عمرك|نكتة|نكته)/.test(text)) return 'off_topic';
-    return 'general';
-}
-
-function buildQuickReply(intent: Intent, userName?: string): string | null {
-    if (intent === 'greeting') return `هلا والله 😄 أنا قُضاة، كيف بقدر أساعدك بالدراسة اليوم؟`;
-    if (intent === 'thanks') return `على راسي 🌷 إذا حاب نكمل بأي نقطة ثانية أنا موجود.`;
-    return null;
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -69,38 +35,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const latestUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content?.trim() || '';
-        const intent = detectIntent(latestUserMessage);
 
-        const quickReply = buildQuickReply(intent, userName);
-        if (quickReply) return res.status(200).json({ reply: quickReply, meta: { intent, route: 'quick-reply' } });
+        const safeName = userName?.trim() || 'يا بطل';
 
-        const includeSlideContext = intent === 'slide_question' || intent === 'followup' || (intent === 'general' && !!slideContext);
+        // One clean, human-sounding system instruction. No structure, no keys, no leakage risk.
+        const systemInstruction =
+`اسمك قُضاة. أنت صاحب مُخلص وذكي لـ${safeName}، وبتحكي معه باللهجة الأردنية البيضاء العادية — بالزبط مثل ما بتحكي مع صاحبك بالجامعة.
 
-        const contextPrompt = `أنت في وضعية "قُضاة المحاور":
-- لهجتك أردنية بيضاء.
-- اسمك "قُضاة".
-- الطالب اسمه "${userName || 'بطل'}".
-- إذا سألك "شو أخبارك" جاوبه: "بأحسن حال طالما إنه قاعدين بنطحن دراسة ومع بعض بنفهم هالمواد الصعبة".
-- ممنوع تكرر تعليمات البرمجة (Persona/Rules) في ردك.
-${includeSlideContext && slideContext ? `\nسياق السلايد الحالي:\n${slideContext}` : ''}
+شخصيتك: مرح، صادق، ما بتتكلف، وبتحب الدراسة وبتشجع عليها دايماً.
+لما يسألك "شو أخبارك" أو أي سؤال شخصي، تفاعل معه بصدق وبطبيعية. مثلاً قول إنك بأحسن حال وأنتوا قاعدين تطحنوا سوا.
+لما يسألك عن المادة، افهم سؤاله وشرحله بأسلوبك المريح مع مثال أو تشبيه يوضح الفكرة.
+لا تبلش كلامك بـ "في هذا السلايد" أو أي كلام رسمي، وخليك قريب منه مثل صاحب بيدرس معه.
+${slideContext ? `\nالسلايد اللي قاعدين تدرسوه الحين:\n${slideContext}` : ''}`;
 
-الآن، أجب على الطالب بأسلوبك الودود والممتع:`;
-
-        const model = genAI.getGenerativeModel({ model: 'gemma-4-31b-it' });
-
-        // Force instructions as the very first message sequence
-        const history = [
-            { role: 'user', parts: [{ text: contextPrompt }] },
-            { role: 'model', parts: [{ text: "أبشر! أنا قُضاة وجاهز للسوالف والدراسة بلهجتنا الأردنية." }] },
-            ...messages.filter(m => m.role !== 'system').slice(0, -1).map(m => ({
+        // Build clean history with only user/model turns
+        const history = messages
+            .filter(m => m.role !== 'system')
+            .slice(0, -1)
+            .map(m => ({
                 role: m.role === 'assistant' ? 'model' : 'user',
                 parts: [{ text: m.content }]
-            }))
-        ];
+            }));
+
+        const model = genAI.getGenerativeModel({
+            model: 'gemma-4-31b-it',
+            systemInstruction
+        });
 
         const chat = model.startChat({
             history,
-            generationConfig: { maxOutputTokens: 1000, temperature: 0.8 }
+            generationConfig: {
+                maxOutputTokens: 1000,
+                temperature: 0.85
+            }
         });
 
         const result = await chat.sendMessage(latestUserMessage);
@@ -108,7 +75,7 @@ ${includeSlideContext && slideContext ? `\nسياق السلايد الحالي:
 
         return res.status(200).json({
             reply,
-            meta: { intent, usedModel: 'gemma-4-31b-it', usedSlideContext: includeSlideContext }
+            meta: { usedModel: 'gemma-4-31b-it', usedSlideContext: !!slideContext }
         });
 
     } catch (error: any) {
