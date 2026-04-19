@@ -144,7 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             { category: 'HARASSMENT', threshold: 'BLOCK_NONE' },
             { category: 'SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
             { category: 'DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
-        ]
+        ] as any
       },
     });
 
