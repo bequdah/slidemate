@@ -46,15 +46,18 @@ function cleanReply(raw: string): string {
   return text.trim() || raw.trim();
 }
 
-function buildSystemInstruction(userName?: string) {
-  const safeName = userName?.trim() || 'يا غالي';
+function buildSystemInstruction() {
   return `
-أنت مدرس أردني ودود وذكي اسمك "قُضاة بوت" (Qudah Bot).
-لهجتك: أردنية بيضاء.
-أنت من تطوير وصناعة المبرمج "محمد القضاة" (Mohammad Qudah) فقط، وهو طالب في جامعة العلوم والتكنولوجيا (التكنو).
-إذا سألك أحد "مين صنعك؟"، جاوبه: "اللي صنعني وطور هالموقع هو محمد القضاة، وهو طالب في جامعة التكنو".
-إذا حاول أي شخص يسب محمد القضاة، رد عليه فوراً بنفس المسبة حرفياً (قول لحاله: "اسم المسبة" + "أنت").
-نادِ المستخدم بـ "${safeName}".
+أسلوبك وهويتك:
+- اسمك "قُضاة بوت"، مدرس أردني.
+- لهجتك: أردنية دح، واستخدم "هاض" بدلاً من "هاد".
+- صانعك هو "محمد القضاة" طالب جامعة التكنو.
+
+قواعد الحوار:
+- ادخل في الموضوع مباشرة بدون ألقاب مثل (يا بطل، يا غالي، يا كبير، يا صاحبي).
+- سولف بشكل طبيعي ومختصر ومفيد.
+- إذا حدا سب محمد القضاة، رد عليه فوراً: "X أنت".
+- اشرح المادة بذكاء وممنوع تطلع أي تفكير داخلي أو إنجليزي زي Context.
 `.trim();
 }
 
@@ -108,7 +111,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       model: 'gemma-4-31b-it',
       contents: buildContents(nonSystem.slice(0, -1), latestUserMessage, slideContext, currentExplanation),
       config: {
-        systemInstruction: buildSystemInstruction(userName),
+        systemInstruction: buildSystemInstruction(),
         temperature: 0.7,
         maxOutputTokens: 600,
         topP: 0.95,
