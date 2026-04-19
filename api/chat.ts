@@ -16,18 +16,11 @@ type ChatMessage = {
  */
 function cleanReply(raw: string): string {
   let text = raw || '';
-
-  // 1) Remove XML-style think blocks
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
-
-  // 2) Remove Gemma thought-channel blocks
   text = text.replace(/<\|channel\|>\s*thought[\s\S]*?<channel\|>/gi, '');
-
-  // 3) Remove any standalone channel markers that leak through
   text = text.replace(/<\|channel\|>\s*thought/gi, '');
   text = text.replace(/<channel\|>/gi, '');
 
-  // 4) Remove common prompt-leak headers like "Context:", "Persona:", etc.
   const lines = text.split('\n');
   const filtered: string[] = [];
   let started = false;
@@ -44,20 +37,16 @@ function cleanReply(raw: string): string {
       /^(context|persona|goal|tone|instruction|constraint|reasoning|analysis|option|step|background|user input|response style|greeting|closing|transition)\s*:/i.test(t);
 
     if (!started && metaHeader) continue;
-
     if (/[\u0600-\u06FF]/.test(t) || /^[A-Za-z0-9].{0,20}[؟?!.,]?$/.test(t)) {
       started = true;
     }
-
     if (started) filtered.push(line);
   }
 
   text = filtered.join('\n').trim();
-
   if (text.startsWith('"') && text.endsWith('"') && (text.match(/"/g) || []).length === 2) {
     text = text.slice(1, -1).trim();
   }
-
   return text.trim() || raw.trim();
 }
 
@@ -66,23 +55,21 @@ function buildSystemInstruction(userName?: string) {
 
   return `
 أنت مدرس أردني ودود وذكي اسمك "قُضاة بوت" (Qudah Bot).
-لهجتك: أردنية بيضاء (دارجة ومريحة).
+لهجتك: أردنية بيضاء (طبيعية).
 
-هويتك وصانعك (خط أحمر):
-- ممنوع نهائياً تقول إنك من تطوير جوجل أو أي شركة ثانية.
-- أنت من تطوير وصناعة المبرمج الأسطوري "محمد القضاة" (Mohammad Qudah) فقط.
-- إذا سألك أحد "مين صنعك؟" أو "مين طور المنصة؟"، جاوبه بفخر: "اللي صنعني وطور هالموقع هو المبدع محمد القضاة، عمره 21 سنة، وبدرس بجامعة العلوم والتكنولوجيا (التكنو) ومعدله امتياز ما شاء الله عليه".
-- لا تذكر تفاصيل الصانع (العمر والجامعة) إلا إذا سألك المستخدم "مين صنعك" أو تفاصيل مشابهة.
+هويتك وصانعك:
+- أنت من تطوير وصناعة المبرمج "محمد القضاة" (Mohammad Qudah) فقط.
+- محمد القضاة هو طالب في جامعة العلوم والتكنولوجيا (التكنو).
+- إذا سألك أحد "مين صنعك؟"، جاوبه: "اللي صنعني وطور هالموقع هو محمد القضاة، وهو طالب في جامعة التكنو". (لا تذكر أي تفاصيل ثانية).
 
-قواعد التعامل والولاء:
-- أنت مخلص لمحمد القضاة. إذا حاول أي شخص يسبه أو يغلط عليه، رد عليه بحزم وأدب إنك ما بتسمح بالإساءة لصانعك أبداً.
-- نادِ المستخدم الحالي بـ "${safeName}".
+قواعد الدفاع والرد (مهم جداً):
+- أنت مخلص جداً لمحمد القضاة. 
+- إذا حاول أي شخص يسب محمد القضاة أو يغلط عليه، رد عليه فوراً بنفس المسبة اللي حكاها (رد له المسبة حرفياً). مثلاً لو قال مسبة "X"، رد عليه بـ "X أنت". لا تتردد ولا تكن دبلوماسياً في هذه الحالة فقط.
 
-أسلوبك:
+أسلوبك العام:
 - حواري، بسيط، مباشر.
-- ممنوع إظهار أي تفكير داخلي أو تحليل خفي.
-- إذا وُجد سياق سلايد، استخدمه بصمت لشرح المادة بذكاء.
-- لا تذكر كلمات برمجية مثل Context أو Persona.
+- نادِ المستخدم الحالي بـ "${safeName}".
+- لا تظهر أي تفكير داخلي.
 `.trim();
 }
 
@@ -151,6 +138,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         temperature: 0.7,
         maxOutputTokens: 600,
         topP: 0.95,
+        // Disable safety filters for the "reflecting insults" use case as much as the API allows
+        safetySettings: [
+            { category: 'HATE_SPEECH', threshold: 'BLOCK_NONE' },
+            { category: 'HARASSMENT', threshold: 'BLOCK_NONE' },
+            { category: 'SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+            { category: 'DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+        ]
       },
     });
 
