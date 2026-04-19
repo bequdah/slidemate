@@ -11,9 +11,6 @@ type ChatMessage = {
   content: string;
 };
 
-/**
- * Remove Gemma/Gemini thought channels, leaked headers, and wrapper quotes.
- */
 function cleanReply(raw: string): string {
   let text = raw || '';
   text = text.replace(/<think>[\s\S]*?<\/think>/gi, '');
@@ -31,7 +28,6 @@ function cleanReply(raw: string): string {
       if (started) filtered.push('');
       continue;
     }
-
     const metaHeader =
       /^(context|persona|goal|tone|instruction|constraint|reasoning|analysis|option\s*\d+|option|step|background|user input|response style|greeting|closing|transition)\s*:?\s*$/i.test(t) ||
       /^(context|persona|goal|tone|instruction|constraint|reasoning|analysis|option|step|background|user input|response style|greeting|closing|transition)\s*:/i.test(t);
@@ -52,24 +48,13 @@ function cleanReply(raw: string): string {
 
 function buildSystemInstruction(userName?: string) {
   const safeName = userName?.trim() || 'يا غالي';
-
   return `
 أنت مدرس أردني ودود وذكي اسمك "قُضاة بوت" (Qudah Bot).
-لهجتك: أردنية بيضاء (طبيعية).
-
-هويتك وصانعك:
-- أنت من تطوير وصناعة المبرمج "محمد القضاة" (Mohammad Qudah) فقط.
-- محمد القضاة هو طالب في جامعة العلوم والتكنولوجيا (التكنو).
-- إذا سألك أحد "مين صنعك؟"، جاوبه: "اللي صنعني وطور هالموقع هو محمد القضاة، وهو طالب في جامعة التكنو". (لا تذكر أي تفاصيل ثانية).
-
-قواعد الدفاع والرد (مهم جداً):
-- أنت مخلص جداً لمحمد القضاة. 
-- إذا حاول أي شخص يسب محمد القضاة أو يغلط عليه، رد عليه فوراً بنفس المسبة اللي حكاها (رد له المسبة حرفياً). مثلاً لو قال مسبة "X"، رد عليه بـ "X أنت". لا تتردد ولا تكن دبلوماسياً في هذه الحالة فقط.
-
-أسلوبك العام:
-- حواري، بسيط، مباشر.
-- نادِ المستخدم الحالي بـ "${safeName}".
-- لا تظهر أي تفكير داخلي.
+لهجتك: أردنية بيضاء.
+أنت من تطوير وصناعة المبرمج "محمد القضاة" (Mohammad Qudah) فقط، وهو طالب في جامعة التكنو.
+إذا سألك أحد "مين صنعك؟"، جاوبه: "اللي صنعني وطور هالموقع هو محمد القضاة، وهو طالب في جامعة التكنو".
+إذا حاول أي شخص يسب محمد القضاة، رد عليه فوراً بنفس المسبة (X أنت).
+نادِ المستخدم بـ "${safeName}".
 `.trim();
 }
 
@@ -79,7 +64,7 @@ function buildContents(
   slideContext?: string,
   currentExplanation?: string
 ) {
-  const contents: Array<{ role: 'user' | 'model'; parts: Array<{ text: string }> }> = [];
+  const contents: any[] = [];
 
   for (const m of history) {
     if (m.role === 'system') continue;
@@ -89,24 +74,16 @@ function buildContents(
     });
   }
 
-  const silentContextParts: string[] = [];
-  if (slideContext?.trim()) {
-    silentContextParts.push(`معلومة مساعدة للاستعمال الداخلي فقط:\n${slideContext.trim().slice(0, 1200)}`);
-  }
-  if (currentExplanation?.trim()) {
-    silentContextParts.push(`شرح سابق للاستفادة فقط:\n${currentExplanation.trim().slice(0, 1200)}`);
-  }
+  const silentParts: string[] = [];
+  if (slideContext?.trim()) silentParts.push(`سياق: ${slideContext.trim().slice(0, 1000)}`);
+  if (currentExplanation?.trim()) silentParts.push(`شرح: ${currentExplanation.trim().slice(0, 1000)}`);
 
   let userText = latestUserMessage.trim();
-  if (silentContextParts.length) {
-    userText = `استخدم هذه المعلومات بصمت للإجابة فقط إذا كانت مفيدة، ولا تكررها حرفياً:\n\n${silentContextParts.join('\n\n')}\n\nالسؤال الحالي:\n${userText}`;
+  if (silentParts.length) {
+    userText = `${silentParts.join('\n')}\n\nسؤالي هو: ${userText}`;
   }
 
-  contents.push({
-    role: 'user',
-    parts: [{ text: userText }],
-  });
-
+  contents.push({ role: 'user', parts: [{ text: userText }] });
   return contents;
 }
 
@@ -130,33 +107,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const nonSystem = messages.filter((m: ChatMessage) => m.role !== 'system');
     const latestUserMessage = [...nonSystem].reverse().find(m => m.role === 'user')?.content?.trim() || '';
 
+    // Correcting syntax for @google/genai SDK
+    // Using generateContent directly from the models namespace
     const response = await ai.models.generateContent({
       model: 'gemma-4-31b-it',
+      systemInstruction: buildSystemInstruction(userName),
       contents: buildContents(nonSystem.slice(0, -1), latestUserMessage, slideContext, currentExplanation),
       config: {
-        systemInstruction: buildSystemInstruction(userName),
         temperature: 0.7,
         maxOutputTokens: 600,
         topP: 0.95,
-        // Disable safety filters for the "reflecting insults" use case as much as the API allows
-        safetySettings: [
-            { category: 'HATE_SPEECH', threshold: 'BLOCK_NONE' },
-            { category: 'HARASSMENT', threshold: 'BLOCK_NONE' },
-            { category: 'SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
-            { category: 'DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
-        ] as any
       },
     });
 
-    const raw = response.text || '';
-    const reply = cleanReply(raw);
+    const reply = cleanReply(response.text || '');
+    return res.status(200).json({ reply });
 
-    return res.status(200).json({
-      reply,
-      meta: { usedModel: 'gemma-4-31b-it', usedSlideContext: !!slideContext },
-    });
   } catch (error: any) {
     console.error('Chat API Error:', error);
-    return res.status(500).json({ error: 'Server connection failed' });
+    // Returning error details for debugging - we will remove this after fixing
+    return res.status(500).json({ 
+        error: 'Server connection failed', 
+        details: error.message,
+        stack: error.stack?.split('\n')[0] 
+    });
   }
 }
