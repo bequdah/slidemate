@@ -1,11 +1,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { db, auth } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
-import Groq from 'groq-sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const groq = new Groq({
-    apiKey: process.env.GROQ_API_KEY
-});
+const genAI = new GoogleGenerativeAI((process.env.GEMINI_API_KEY || '').trim());
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
@@ -16,25 +14,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
     );
 
-    if (req.method === 'OPTIONS') {
-        res.status(200).end();
-        return;
-    }
-
-    if (req.method !== 'POST') {
-        res.status(405).json({ error: 'Method Not Allowed' });
-        return;
-    }
+    if (req.method === 'OPTIONS') { res.status(200).end(); return; }
+    if (req.method !== 'POST') { res.status(405).json({ error: 'Method Not Allowed' }); return; }
 
     try {
         const authHeader = req.headers.authorization;
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            res.status(401).json({ error: 'Unauthorized: Missing Token' });
-            return;
-        }
-
-        const idToken = authHeader.split('Bearer ')[1];
-        await auth.verifyIdToken(idToken);
+        if (!authHeader?.startsWith('Bearer ')) { res.status(401).json({ error: 'Unauthorized: Missing Token' }); return; }
+        await auth.verifyIdToken(authHeader.split('Bearer ')[1]);
 
         const { textContentArray, slideNumbers } = req.body as {
             textContentArray?: string[];
@@ -45,42 +31,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
             .map((num: number, i: number) => `[SLIDE ${num}]: ${textContentArray?.[i] || 'No text'}`)
             .join('\n\n');
 
-        const systemPrompt = `
-You are the "QudahWay Storyteller", an expert English-speaking tutor who explains slides like a fascinating narrative.
-Your goal is to create a natural, comprehensive voice script that tells the "story" of the slide's content.
+        const systemInstruction = `You are the "QudahWay Storyteller", an expert English-speaking tutor.
+Create a natural, comprehensive voice script for the slide content.
+RULES:
+1. Start directly — NO "Hello", "In this slide", or "I will explain".
+2. Flowing narrative, NOT bullet points.
+3. Professional yet friendly tone.
+4. 1-3 well-structured paragraphs covering EVERYTHING on the slide.`;
 
-STORYTELLING RULES:
-1. **THE HOOK**: Start directly with the core logic. "The main idea here is..." or "Imagine you're dealing with..."
-2. **COMPREHENSIVE NARRATIVE**: Do not just list bullet points. Connect every concept on the slide into a single, flowing explanation. Explain the "Why" and "How" behind the data.
-3. **TONE**: Professional yet very friendly and engaging. Like a mentor talking to a student 1-on-1.
-4. **STRICTLY NO INTROS**: Do NOT say "Hello", "In this slide", or "I will explain". Just start teaching the concepts immediately.
-5. **LANGUAGE**: Professional English.
-6. **FLOW**: 1-3 well-structured paragraphs that cover EVERYTHING important on the slide. 
-
-OUTPUT: Return ONLY a valid JSON object with the key "voiceScript".
-`;
-
-        const userPrompt = `
-SLIDE CONTENT:
-${slideContexts}
-
-Generate the narrative voice script now.
-`;
-
-        const completion = await groq.chat.completions.create({
-            model: 'llama-3.3-70b-versatile',
-            messages: [
-                { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
-            ],
-            temperature: 0.5,
-            response_format: { type: 'json_object' }
+        const model = genAI.getGenerativeModel({
+            model: 'gemma-4-31b-it',
+            systemInstruction,
+            generationConfig: {
+                responseMimeType: 'application/json',
+                temperature: 0.5
+            }
         });
 
-        const raw = completion.choices[0]?.message?.content || '';
-        const parsed = JSON.parse(raw);
+        const result = await model.generateContent(
+            `SLIDE CONTENT:\n${slideContexts}\n\nReturn a JSON object with key "voiceScript" containing the narrative script.`
+        );
 
-        res.status(200).json(parsed);
+        const raw = result.response.text() || '{}';
+        res.status(200).json(JSON.parse(raw));
 
     } catch (error: any) {
         console.error('Voice Gen Error:', error);

@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import './ExplanationPane.css';
 
 import { AdSense } from './AdSense';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,7 +16,9 @@ import AstroJump from './AstroJump';
 import MemoryGame from './MemoryGame';
 import CyberBricks from './CyberBricks';
 import { UpgradeModal } from './UpgradeModal';
+import { QuizItem } from './QuizItem';
 import { ChatBot } from './ChatBot';
+import { jordanianCleanText } from '../utils/linguistic';
 
 /* =======================
    Structured Types
@@ -68,7 +71,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
 
     const currentContent = {
         explanation: data?.explanation,
-        examInsight: data?.examInsight,
         voiceScript: data?.voiceScript,
         dir: 'rtl' as const
     };
@@ -240,15 +242,7 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
        Linguistic Guard
     ======================= */
 
-    const cleanText = (text: string | undefined): string => {
-        if (!text) return "";
-        return text
-            .replace(/هاد/g, 'هاض')
-            .replace(/منيح/g, 'مليح')
-            .replace(/كتير/g, 'كثير')
-            .replace(/تانية/g, 'ثانية')
-            .replace(/متل/g, 'مثل');
-    };
+    const cleanText = jordanianCleanText;
 
     const renderMarkdown = (content: any) => {
         if (!content) return "";
@@ -643,86 +637,29 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                                             </div>
                                         </div>
 
-                                        {/* MCQs / Flashcards */}
                                         {data.quiz && data.quiz.length > 0 && (
                                             <section className="space-y-10 animate-in fade-in slide-in-from-bottom-10 duration-700 pb-10">
-                                                {mode === 'exam' && (
-                                                    <div className="w-full space-y-10 py-4">
-                                                        <div className="text-center">
-                                                            <h4 className="text-white/40 font-black text-[11px] uppercase tracking-[0.4em] mb-2">Quiz Mode</h4>
-                                                            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Classic MCQ Selection</p>
-                                                        </div>
-                                                        {data.quiz.map((item: any, qIndex: number) => (
-                                                            <div key={qIndex} className="space-y-6">
-                                                                <div className="flex gap-3 md:gap-4">
-                                                                    <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-400 flex-shrink-0">Q{qIndex + 1}</div>
-                                                                    <div className="text-lg md:text-xl font-black text-slate-200 leading-tight">
-                                                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                                            {renderMarkdown(item.q)}
-                                                                        </ReactMarkdown>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 pl-0 md:pl-4">
-                                                                    {item.options.map((option: string, oIndex: number) => (
-                                                                        <button key={oIndex} onClick={() => handleOptionSelect(qIndex, oIndex)} disabled={selectedOptions[qIndex] !== undefined} className={`p-4 md:p-5 rounded-xl md:rounded-2xl border text-left text-sm md:text-base font-bold transition-all shadow-sm active:scale-98 ${selectedOptions[qIndex] !== undefined ? (item.a === oIndex ? 'bg-green-500/20 border-green-500/40 text-green-400' : selectedOptions[qIndex] === oIndex ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.01] border-white/5 opacity-30') : 'bg-white/[0.03] border-white/5 hover:bg-white/10 hover:border-white/20'}`}>
-                                                                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                                                {renderMarkdown(option)}
-                                                                            </ReactMarkdown>
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                                {selectedOptions[qIndex] !== undefined && (
-                                                                    <div className="pl-4 animate-in zoom-in-95 duration-300">
-                                                                        <div className={`p-6 rounded-3xl border ${selectedOptions[qIndex] === item.a ? 'bg-green-500/[0.03] border-green-500/20' : 'bg-red-500/[0.03] border-red-500/20'}`}>
-                                                                            <div className="text-sm text-slate-400 font-bold leading-relaxed">
-                                                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{renderMarkdown(item.reasoning)}</ReactMarkdown>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                )}
-
-                                                {mode !== 'exam' && (
-                                                    <>
-                                                        <div className="text-center">
-                                                            <h4 className="text-white/40 font-black text-[11px] uppercase tracking-[0.4em] mb-2">Test Your Understanding</h4>
-                                                            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">Quick Review Questions</p>
-                                                        </div>
-                                                        {data.quiz.map((item: any, qIndex: number) => (
-                                                            <div key={qIndex} className="space-y-6">
-                                                                <div className="flex gap-3 md:gap-4">
-                                                                    <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center text-xs font-black text-indigo-400 flex-shrink-0">Q{qIndex + 1}</div>
-                                                                    <div className="text-lg md:text-xl font-black text-slate-200 leading-tight">
-                                                                        <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                                            {renderMarkdown(item.q)}
-                                                                        </ReactMarkdown>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-3 pl-0 md:pl-4">
-                                                                    {item.options.map((option: string, oIndex: number) => (
-                                                                        <button key={oIndex} onClick={() => handleOptionSelect(qIndex, oIndex)} disabled={selectedOptions[qIndex] !== undefined} className={`p-4 md:p-5 rounded-xl md:rounded-2xl border text-left text-sm md:text-base font-bold transition-all shadow-sm active:scale-98 ${selectedOptions[qIndex] !== undefined ? (item.a === oIndex ? 'bg-green-500/20 border-green-500/40 text-green-400' : selectedOptions[qIndex] === oIndex ? 'bg-red-500/20 border-red-500/40 text-red-400' : 'bg-white/[0.01] border-white/5 opacity-30') : 'bg-white/[0.03] border-white/5 hover:bg-white/10 hover:border-white/20'}`}>
-                                                                            <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>
-                                                                                {renderMarkdown(option)}
-                                                                            </ReactMarkdown>
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-                                                                {selectedOptions[qIndex] !== undefined && (
-                                                                    <div className="pl-4 animate-in zoom-in-95 duration-300">
-                                                                        <div className={`p-6 rounded-3xl border ${selectedOptions[qIndex] === item.a ? 'bg-green-500/[0.03] border-green-500/20' : 'bg-red-500/[0.03] border-red-500/20'}`}>
-                                                                            <div className="text-sm text-slate-400 font-bold leading-relaxed">
-                                                                                <ReactMarkdown remarkPlugins={[remarkMath]} rehypePlugins={[rehypeKatex]}>{renderMarkdown(item.reasoning)}</ReactMarkdown>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </>
-                                                )}
+                                                <div className="text-center">
+                                                    <h4 className="text-white/40 font-black text-[11px] uppercase tracking-[0.4em] mb-2">
+                                                        {mode === 'exam' ? 'Quiz Mode' : 'Test Your Understanding'}
+                                                    </h4>
+                                                    <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                                                        {mode === 'exam' ? 'Classic MCQ Selection' : 'Quick Review Questions'}
+                                                    </p>
+                                                </div>
+                                                {data.quiz.map((item: any, qIndex: number) => (
+                                                    <QuizItem
+                                                        key={qIndex}
+                                                        qIndex={qIndex}
+                                                        question={item.q}
+                                                        options={item.options}
+                                                        correctIndex={item.a}
+                                                        reasoning={item.reasoning}
+                                                        selectedOption={selectedOptions[qIndex]}
+                                                        onSelect={handleOptionSelect}
+                                                        renderMarkdown={renderMarkdown}
+                                                    />
+                                                ))}
                                             </section>
                                         )}
                                     </>
@@ -738,63 +675,6 @@ export const ExplanationPane = ({ slideNumbers, textContentArray, allSlidesTexts
                     </div>
                 </div>
 
-                <style>{`
-                @keyframes robot-write {
-                    0% { transform: translate(-100px, -50%) scale(0.6) rotate(-10deg); opacity: 0; }
-                    15% { transform: translate(-60px, -50%) scale(1.2) rotate(5deg); opacity: 1; }
-                    85% { transform: translate(60px, -50%) scale(1.2) rotate(-5deg); opacity: 1; }
-                    100% { transform: translate(100px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
-                }
-                @media (min-width: 768px) {
-                    @keyframes robot-write {
-                        0% { transform: translate(-300px, -50%) scale(0.5) rotate(-10deg); opacity: 0; }
-                        15% { transform: translate(-200px, -50%) scale(1.3) rotate(5deg); opacity: 1; }
-                        85% { transform: translate(250px, -50%) scale(1.3) rotate(-5deg); opacity: 1; }
-                        100% { transform: translate(350px, -50%) scale(0.8) rotate(10deg); opacity: 0; }
-                    }
-                }
-                @keyframes reveal-text {
-                    0%, 15% { width: 0; opacity: 0; }
-                    20% { opacity: 1; }
-                    85%, 100% { width: 100%; opacity: 1; }
-                }
-                .animate-robot-write { animation: robot-write 3s cubic-bezier(0.45, 0, 0.55, 1) forwards; }
-                .animate-reveal-text { 
-                    animation: reveal-text 3s cubic-bezier(0.45, 0, 0.55, 1) forwards; 
-                    mask-image: linear-gradient(to right, black 85%, transparent 100%);
-                    -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-                    overflow: hidden;
-                }
-                .font-arabic { font-family: 'IBM Plex Sans Arabic', sans-serif; }
-                .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-                .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 20px; border: 2px solid #0c111d; }
-                .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
-                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                
-                /* Force headings red */
-                .prose h3 {
-                    color: #f87171 !important;
-                    text-transform: uppercase !important;
-                    font-weight: 900 !important;
-                    letter-spacing: 0.1em !important;
-                    display: flex !important;
-                    align-items: center !important;
-                    gap: 0.75rem !important;
-                }
-                
-                /* Golden Yellow for English Terms & Bold Text */
-                .prose strong {
-                    color: #fbbf24 !important;
-                    font-weight: 900 !important;
-                }
-
-                .katex { 
-                    font-size: 1.15em !important; 
-                    color: #fbbf24;
-                }
-                
-                .custom-scrollbar { scroll-behavior: smooth; }
-            `}</style>
             </div>
             <UpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
             {data && mode !== 'exam' && (

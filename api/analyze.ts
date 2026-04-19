@@ -1,14 +1,15 @@
-// Version: Stability & Cache Optimization (Build 2026.02.23)
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'node:crypto';
 import { db, auth } from './firebaseAdmin.js';
 import admin from 'firebase-admin';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import Groq from 'groq-sdk';
 import Tesseract from 'tesseract.js';
 
 const CACHE_TTL_DAYS = 30;
 const CACHE_VERSION = 'v60';
+
+const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
+const genAI = new GoogleGenerativeAI(geminiKey);
 
 function getAnalysisCacheKey(
     slideNumbers: number[],
@@ -36,14 +37,9 @@ function getAnalysisCacheKey(
     return `${contentHash}_${mode}`.replace(/[/\\]/g, '_');
 }
 
-const geminiKey = (process.env.GEMINI_API_KEY || '').trim();
-const genAI = new GoogleGenerativeAI(geminiKey);
 const model_gemini_31 = genAI.getGenerativeModel({
-    model: 'gemma-3-27b-it'
+    model: 'gemma-4-31b-it'
 });
-
-const groq = new Groq({ apiKey: process.env.GROQ_API_KEY || '' });
-const GROQ_VISION_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
 
 type Mode = 'simple' | 'exam' | 'visual';
 
@@ -218,15 +214,6 @@ async function extractSlideContentWithGemini31(thumbnail: string): Promise<strin
     return response.text() || '[No content extracted from image.]';
 }
 
-function coerceMessagesForModel(messages: any[], isVisionModel: boolean) {
-    return messages.map(m => {
-        if (!isVisionModel && Array.isArray(m.content)) {
-            const textPart = m.content.find((p: any) => p.type === 'text');
-            return { ...m, content: textPart ? textPart.text : '' };
-        }
-        return m;
-    });
-}
 
 function isStructuredObject(x: any) {
     return x && typeof x === 'object' && !Array.isArray(x);
@@ -466,10 +453,7 @@ REMINDER:
         }
 
 
-        // STRATEGY: Use ONLY the smartest model (70b).
-        // We list it multiple times to act as "retries" in case of a random network glitch or bad output.
-        // We DO NOT fallback to dumber models (8b/Mixtral) to preserve quality.
-        let messages: any[] = [{ role: 'system', content: systemPrompt }];
+        // STRATEGY: Gemma-3-27b-it with up to 4 retries + exponential backoff.
 
         const isRetryable = (err: any) => {
             const msg = String(err?.message || '').toLowerCase();
@@ -488,14 +472,8 @@ REMINDER:
         let lastError: any = null;
         let errorDetails: string[] = [];
 
-        // Validation: Check if we have at least one valid key
         const hasGeminiKey = !!(process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY);
-        const hasGroqKey = !!(process.env.GROQ_API_KEY);
 
-        if (isVisionRequest(thumbnail) && !hasGroqKey) {
-            console.error("CRITICAL: Vision/OCR requires GROQ_API_KEY.");
-            return res.status(500).json({ error: "Service configuration error: Missing GROQ_API_KEY for image analysis." });
-        }
         if (!hasGeminiKey) {
             console.error("CRITICAL: No Gemini API key found in environment variables.");
             return res.status(500).json({ error: "Service configuration error: Missing API keys." });
@@ -506,14 +484,14 @@ REMINDER:
         let initialFinalThumbnail: string | undefined = thumbnail;
         if (mode === 'visual' && thumbnail && isVisionRequest(thumbnail)) {
             try {
-                console.log("Visual mode: Running Gemini 3.1 Flash Lite for tables/charts/diagrams...");
+                console.log("Visual mode: Running Gemini Flash Lite for tables/charts/diagrams...");
                 const visionText = await extractSlideContentWithGemini31(thumbnail);
-                console.log(`Groq Vision provided ${visionText.length} chars.`);
+                console.log(`Gemini Vision extracted ${visionText.length} chars.`);
                 const visualPrefix = `[VISUAL SLIDE ANALYSIS - GUIDE FOR TUTOR]\n\nThe following is a structural breakdown of the visual slide content (tables, diagrams, flows) provided by your assistant.\nUSE THIS DETAILED LOGIC to explain the concepts to the student.\n\n${visionText}\n\n[END VISUAL ANALYSIS]\n\n`;
                 initialFinalText = [visualPrefix + visionText];
                 initialFinalThumbnail = undefined;
             } catch (err: any) {
-                console.warn("Groq Vision failed, falling back to text content:", err?.message);
+                console.warn("Gemini Vision failed, falling back to text content:", err?.message);
             }
         }
 
@@ -557,7 +535,7 @@ REMINDER:
                 currentMessages.push({ role: 'user', content: userPrompt.replace('[[SLIDE_CONTENT]]', slideContexts || '') });
 
                 const isVision = isVisionRequest(finalThumbnail);
-                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-3-27b-it | Vision: ${isVision}`);
+                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-4-31b-it | Vision: ${isVision}`);
 
                 let result;
                 if (isVision && finalThumbnail) {
@@ -645,15 +623,21 @@ REMINDER:
                 };
 
                 // --- PUNITIVE REVIEW SYSTEM (QUDAHWAY GUARD) ---
+                const ARABIC_RULES: Record<string, string> = {
+                    'هاد': 'هاض',
+                    'منيح': 'مليح',
+                    'كتير': 'كثير',
+                    'تانية': 'ثانية',
+                    'متل': 'مثل'
+                };
+
                 const punitiveReview = (obj: any): any => {
                     if (!obj) return obj;
                     if (typeof obj === 'string') {
-                        let cleaned = obj
-                            .replace(/هاد/g, 'هاض')
-                            .replace(/منيح/g, 'مليح')
-                            .replace(/كتير/g, 'كثير')
-                            .replace(/تانية/g, 'ثانية')
-                            .replace(/متل/g, 'مثل');
+                        let cleaned = obj;
+                        for (const [target, replacement] of Object.entries(ARABIC_RULES)) {
+                            cleaned = cleaned.replace(new RegExp(target, 'g'), replacement);
+                        }
                         // Repair broken LaTeX if the string contains math delimiters
                         if (cleaned.includes('$')) {
                             cleaned = repairLatex(cleaned);
