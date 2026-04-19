@@ -9,6 +9,45 @@ type ChatMessage = {
     content: string;
 };
 
+/**
+ * Strips any model "thinking" / analysis preamble that Gemma 4 sometimes outputs
+ * before giving the actual conversational reply.
+ */
+function cleanReply(raw: string): string {
+    // Remove <think>...</think> blocks (explicit thinking tags)
+    let cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, '');
+
+    // Split into lines and drop any "analysis" lines we can detect heuristically
+    const lines = cleaned.split('\n');
+    const replyLines: string[] = [];
+    let foundRealReply = false;
+
+    for (const line of lines) {
+        const trimmed = line.trim();
+
+        // Skip empty lines before we have real content
+        if (!foundRealReply && trimmed === '') continue;
+
+        // Heuristic: lines that look like meta-commentary / reasoning
+        const isMetaLine =
+            /^[\*\-•]\s*\*(Incorrect|Too formal|Too slang|Correct|Balanced|Option \d|Greeting|Casual|Study)/.test(trimmed) ||
+            /^[\*\-•]?\s*(Option \d|✅|❌)/.test(trimmed) ||
+            /^(Needs to be|Since the persona|Background in|Persona:|Dialect:|Cheerful|Avoid formal|Jordanian)/.test(trimmed) ||
+            /^(NLP|Machine Translation|Sentiment Analysis|Text Generation|Text Classification|Named Entity)/.test(trimmed) ||
+            /^"قُضاة"\s*\(Qudah\)/.test(trimmed);
+
+        if (isMetaLine) continue;
+
+        foundRealReply = true;
+        replyLines.push(line);
+    }
+
+    cleaned = replyLines.join('\n').trim();
+
+    // If stripping made it empty, return the raw (something is better than nothing)
+    return cleaned || raw.trim();
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -37,21 +76,21 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const latestUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content?.trim() || '';
         const safeName = userName?.trim() || 'يا بطل';
 
-        // NO systemInstruction - Gemma 4 leaks it.
-        // Instead: inject a natural "priming" conversation at the very start of history.
-        // This anchors the bot's identity without any risk of leakage.
+        // Priming history: multiple shot examples showing the DIRECT, friendly Jordanian style.
+        // Each pair anchors a different conversational scenario so the model learns the pattern.
         const primingHistory = [
-            {
-                role: 'user',
-                parts: [{ text: 'مرحبا' }]
-            },
-            {
-                role: 'model',
-                parts: [{ text: `هلا والله ${safeName}! 😄 أنا قُضاة، صاحبك بالدراسة. كيفك؟ شو بدك نشتغل عليه اليوم؟${slideContext ? `\n\n(سلايدنا الحين عن: ${slideContext.substring(0, 120)}...)` : ''}` }]
-            }
+            // Shot 1: simple greeting
+            { role: 'user', parts: [{ text: 'هلا' }] },
+            { role: 'model', parts: [{ text: `هلا والله ${safeName}! 😄 كيفك؟ شو بدك نطحن اليوم؟` }] },
+            // Shot 2: "how are you"
+            { role: 'user', parts: [{ text: 'شو اخبارك' }] },
+            { role: 'model', parts: [{ text: `بأحسن حال طالما إنه قاعدين بنطحن دراسة ومع بعض بنفهم هالمواد 💪 وانت كيفك ${safeName}؟` }] },
+            // Shot 3: who are you
+            { role: 'user', parts: [{ text: 'مين انت؟' }] },
+            { role: 'model', parts: [{ text: `أنا قُضاة، صاحبك بالدراسة 😎 لما بدك تفهم شي بالسلايدات أنا موجود وبشرحلك بأسلوبي.` }] },
         ];
 
-        // Real conversation history (exclude system messages, exclude last user message)
+        // Actual conversation history (strip system messages, exclude the latest user message)
         const conversationHistory = messages
             .filter(m => m.role !== 'system')
             .slice(0, -1)
@@ -60,18 +99,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
                 parts: [{ text: m.content }]
             }));
 
+        // Append slide context as a silent model note only when relevant
+        const contextNote = slideContext
+            ? `[سياق: الطالب قاعد يدرس السلايد التالي — ${slideContext.substring(0, 200)}]`
+            : null;
+
         const model = genAI.getGenerativeModel({ model: 'gemma-4-31b-it' });
 
         const chat = model.startChat({
             history: [...primingHistory, ...conversationHistory],
-            generationConfig: {
-                maxOutputTokens: 800,
-                temperature: 0.85
-            }
+            generationConfig: { maxOutputTokens: 800, temperature: 0.8 }
         });
 
-        const result = await chat.sendMessage(latestUserMessage);
-        const reply = result.response.text().trim();
+        // If there's slide context, prepend it silently to the user message
+        const messageToSend = contextNote
+            ? `${contextNote}\n${latestUserMessage}`
+            : latestUserMessage;
+
+        const result = await chat.sendMessage(messageToSend);
+        const rawReply = result.response.text();
+        const reply = cleanReply(rawReply);
 
         return res.status(200).json({
             reply,
