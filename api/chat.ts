@@ -106,20 +106,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const response = await ai.models.generateContent({
       model: 'gemma-4-31b-it',
-      systemInstruction: buildSystemInstruction(userName),
       contents: buildContents(nonSystem.slice(0, -1), latestUserMessage, slideContext, currentExplanation),
       config: {
+        systemInstruction: buildSystemInstruction(userName),
         temperature: 0.7,
         maxOutputTokens: 600,
         topP: 0.95,
-        // Correcting safety keys to the full official names
         safetySettings: [
           { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
           { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
           { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
           { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
         ] as any
-      },
+      } as any,
     });
 
     const reply = cleanReply(response.text || '');
