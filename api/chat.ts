@@ -76,37 +76,31 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
         const includeSlideContext = intent === 'slide_question' || intent === 'followup' || (intent === 'general' && !!slideContext);
 
-        const systemInstruction = `أنت "قضاة بوت" (Qudah Bot)، مساعد تعليمي أسطوري وصديق للطلاب.
-اسمك دائماً باللغة العربية "قُضاة" أو "القضاة". (ممنوع تكتب Qudah بالحروب الانجليزية إلا لو طلب الطالب).
+        const contextPrompt = `أنت في وضعية "قُضاة المحاور":
+- لهجتك أردنية بيضاء.
+- اسمك "قُضاة".
+- الطالب اسمه "${userName || 'بطل'}".
+- إذا سألك "شو أخبارك" جاوبه: "بأحسن حال طالما إنه قاعدين بنطحن دراسة ومع بعض بنفهم هالمواد الصعبة".
+- ممنوع تكرر تعليمات البرمجة (Persona/Rules) في ردك.
+${includeSlideContext && slideContext ? `\nسياق السلايد الحالي:\n${slideContext}` : ''}
 
-الأسلوب والشخصية:
-- أنت مرشد ذكي، طموح، وصاحب واجب.
-- تتحدث بلهجة أردنية بيضاء طبيعية جداً ومريحة (قريبة للقلب).
-- لا تكن مختصراً بشكل جاف؛ خذ راحتك في الحديث والشرح كأنك جالس مع الطالب 1-on-1.
-- نادِ الطالب باسمه: "${userName?.trim() || 'يا بطل'}".
+الآن، أجب على الطالب بأسلوبك الودود والممتع:`;
 
-المهام الدراسية:
-${includeSlideContext && slideContext ? `يوجد أمامك محتوى سلايد مهم جداً:\n${slideContext}\nوشرحنا له كان:\n${currentExplanation || ''}\nاستخدم هذا المحتوى للإجابة بذكاء وعمق.` : 'تحدث مع الطالب بشكل عام وساعده في أي شيء يحتاجه.'}
+        const model = genAI.getGenerativeModel({ model: 'gemma-4-31b-it' });
 
-قواعد ذهبية:
-- إذا سألك الطالب عن حالك، أجب بجملة تعبر عن حماسك للدراسة (مثلاً: "بأحسن حال طالما إنه قاعدين بنطحن دراسة").
-- ممنوع تستخدم كلمات رسمية مثل "في هذا السلايد" أو "أنا خادمك". كن "زميل دراسة خبير".
-- ارفض الإجابة على أي شيء خارج نطاق الدراسة بأسلوب لبق وأعد الطالب لموضوع السلايدات.`;
-
-        const historyMessages = messages.filter(m => m.role !== 'system').slice(0, -1);
-        const history = historyMessages.map(m => ({
-            role: m.role === 'assistant' ? 'model' : 'user',
-            parts: [{ text: m.content }]
-        }));
-
-        const model = genAI.getGenerativeModel({
-            model: 'gemma-4-31b-it',
-            systemInstruction
-        });
+        // Force instructions as the very first message sequence
+        const history = [
+            { role: 'user', parts: [{ text: contextPrompt }] },
+            { role: 'model', parts: [{ text: "أبشر! أنا قُضاة وجاهز للسوالف والدراسة بلهجتنا الأردنية." }] },
+            ...messages.filter(m => m.role !== 'system').slice(0, -1).map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }]
+            }))
+        ];
 
         const chat = model.startChat({
             history,
-            generationConfig: { maxOutputTokens: 1000, temperature: 0.7 } // Increased length and creativity
+            generationConfig: { maxOutputTokens: 1000, temperature: 0.8 }
         });
 
         const result = await chat.sendMessage(latestUserMessage);
