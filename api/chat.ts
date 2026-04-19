@@ -37,10 +37,9 @@ function detectIntent(message: string): Intent {
     return 'general';
 }
 
-function buildQuickReply(intent: Intent): string | null {
-    if (intent === 'greeting') return `تمام الحمد لله 😄 أنا قُضاة، جاهز أساعدك بالسلايد. شو الجزء اللي بدك نفهمه؟`;
-    if (intent === 'thanks') return `العفو 🌷 إذا بدك نكمل بالسلايد أو أوضح نقطة معيّنة احكيلي.`;
-    if (intent === 'clarification') return `فهمت عليك. احكيلي شو المقصود بالضبط.`;
+function buildQuickReply(intent: Intent, userName?: string): string | null {
+    if (intent === 'greeting') return `هلا والله 😄 أنا قُضاة، كيف بقدر أساعدك بالدراسة اليوم؟`;
+    if (intent === 'thanks') return `على راسي 🌷 إذا حاب نكمل بأي نقطة ثانية أنا موجود.`;
     return null;
 }
 
@@ -72,21 +71,28 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const latestUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content?.trim() || '';
         const intent = detectIntent(latestUserMessage);
 
-        const quickReply = buildQuickReply(intent);
+        const quickReply = buildQuickReply(intent, userName);
         if (quickReply) return res.status(200).json({ reply: quickReply, meta: { intent, route: 'quick-reply' } });
 
         const includeSlideContext = intent === 'slide_question' || intent === 'followup' || (intent === 'general' && !!slideContext);
 
-        const systemInstruction = `أنت "قضاة بوت"، مساعد تعليمي ذكي لموقع SlideMate.
-اسم الطالب: "${userName?.trim() || 'Student'}".
-أجب باللهجة الأردنية بشكل مختصر وذكي.
-${includeSlideContext && slideContext ? `\nمحتوى السلايد:\n${slideContext}\nالشرح:\n${currentExplanation || ''}` : ''}
-القواعد:
-- جاوب بإيجاز (3-5 جمل).
-- استخدم مثال أو تشبيه عند الشرح.
-- اسمك دائماً "قضاة".`;
+        const systemInstruction = `أنت "قضاة بوت" (Qudah Bot)، مساعد تعليمي أسطوري وصديق للطلاب.
+اسمك دائماً باللغة العربية "قُضاة" أو "القضاة". (ممنوع تكتب Qudah بالحروب الانجليزية إلا لو طلب الطالب).
 
-        // Build history for Gemini: only 'user' and 'model' roles, exclude the last message
+الأسلوب والشخصية:
+- أنت مرشد ذكي، طموح، وصاحب واجب.
+- تتحدث بلهجة أردنية بيضاء طبيعية جداً ومريحة (قريبة للقلب).
+- لا تكن مختصراً بشكل جاف؛ خذ راحتك في الحديث والشرح كأنك جالس مع الطالب 1-on-1.
+- نادِ الطالب باسمه: "${userName?.trim() || 'يا بطل'}".
+
+المهام الدراسية:
+${includeSlideContext && slideContext ? `يوجد أمامك محتوى سلايد مهم جداً:\n${slideContext}\nوشرحنا له كان:\n${currentExplanation || ''}\nاستخدم هذا المحتوى للإجابة بذكاء وعمق.` : 'تحدث مع الطالب بشكل عام وساعده في أي شيء يحتاجه.'}
+
+قواعد ذهبية:
+- إذا سألك الطالب عن حالك، أجب بجملة تعبر عن حماسك للدراسة (مثلاً: "بأحسن حال طالما إنه قاعدين بنطحن دراسة").
+- ممنوع تستخدم كلمات رسمية مثل "في هذا السلايد" أو "أنا خادمك". كن "زميل دراسة خبير".
+- ارفض الإجابة على أي شيء خارج نطاق الدراسة بأسلوب لبق وأعد الطالب لموضوع السلايدات.`;
+
         const historyMessages = messages.filter(m => m.role !== 'system').slice(0, -1);
         const history = historyMessages.map(m => ({
             role: m.role === 'assistant' ? 'model' : 'user',
@@ -100,7 +106,7 @@ ${includeSlideContext && slideContext ? `\nمحتوى السلايد:\n${slideCo
 
         const chat = model.startChat({
             history,
-            generationConfig: { maxOutputTokens: 500, temperature: 0.3 }
+            generationConfig: { maxOutputTokens: 1000, temperature: 0.7 } // Increased length and creativity
         });
 
         const result = await chat.sendMessage(latestUserMessage);
