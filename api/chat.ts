@@ -10,42 +10,50 @@ type ChatMessage = {
 };
 
 /**
- * Strips any model "thinking" / analysis preamble that Gemma 4 sometimes outputs
- * before giving the actual conversational reply.
+ * Aggressively cleans any meta-reasoning, thought blocks, or prompt-leaked headers.
  */
 function cleanReply(raw: string): string {
-    // Remove <think>...</think> blocks (explicit thinking tags)
+    // 1. Remove <think> blocks
     let cleaned = raw.replace(/<think>[\s\S]*?<\/think>/gi, '');
 
-    // Split into lines and drop any "analysis" lines we can detect heuristically
     const lines = cleaned.split('\n');
-    const replyLines: string[] = [];
-    let foundRealReply = false;
+    const filteredLines: string[] = [];
+    let foundGreetingOrArabic = false;
 
     for (const line of lines) {
-        const trimmed = line.trim();
+        const t = line.trim();
+        if (!t) {
+            if (foundGreetingOrArabic) filteredLines.push(line);
+            continue;
+        }
 
-        // Skip empty lines before we have real content
-        if (!foundRealReply && trimmed === '') continue;
+        // 2. Blacklist meta-labels and reasoning headers (common Gemma 4 leaks)
+        const isBlacklisted = 
+            /^(Context|Persona|Goal|Tone|Instruction|Constraint|User input|Acknowledge|Pivot|Explanation|Simplified|Slide Content|Step|Option|Greeting|Casual vibe|Study nudge|Background in)/i.test(t) ||
+            /^[*\-\•\s]*\*(Incorrect|Correct|Too|Balanced|Option|Formal|Slang)/i.test(t) ||
+            /^[*\-\•\s]*\d+\.\s*(Acknowledge|Pivot|Explain|Transition)/i.test(t) ||
+            /^"قُضاة"\s*\(Qudah\)/i.test(t) ||
+            /^(What is NLP|Why\?|How am I|Closing|Transition):/i.test(t) ||
+            /^(Student name|Name|Dialect):/i.test(t);
 
-        // Heuristic: lines that look like meta-commentary / reasoning
-        const isMetaLine =
-            /^[\*\-•]\s*\*(Incorrect|Too formal|Too slang|Correct|Balanced|Option \d|Greeting|Casual|Study)/.test(trimmed) ||
-            /^[\*\-•]?\s*(Option \d|✅|❌)/.test(trimmed) ||
-            /^(Needs to be|Since the persona|Background in|Persona:|Dialect:|Cheerful|Avoid formal|Jordanian)/.test(trimmed) ||
-            /^(NLP|Machine Translation|Sentiment Analysis|Text Generation|Text Classification|Named Entity)/.test(trimmed) ||
-            /^"قُضاة"\s*\(Qudah\)/.test(trimmed);
+        if (isBlacklisted && !foundGreetingOrArabic) continue;
 
-        if (isMetaLine) continue;
+        // 3. Heuristic: If the line contains significant Arabic text, it's likely the actual reply
+        const hasArabic = /[\u0600-\u06FF]/.test(t);
+        if (hasArabic) foundGreetingOrArabic = true;
 
-        foundRealReply = true;
-        replyLines.push(line);
+        if (foundGreetingOrArabic) {
+            filteredLines.push(line);
+        }
     }
 
-    cleaned = replyLines.join('\n').trim();
-
-    // If stripping made it empty, return the raw (something is better than nothing)
-    return cleaned || raw.trim();
+    // 4. Final polish: if the model wrapped the final reply in quotes, unwrap it
+    let result = filteredLines.join('\n').trim();
+    if (result.startsWith('"') && result.endsWith('"') && (result.match(/"/g) || []).length === 2) {
+        result = result.substring(1, result.length - 1);
+    }
+    
+    return result || raw.trim();
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -74,51 +82,39 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         const latestUserMessage = [...messages].reverse().find(m => m.role === 'user')?.content?.trim() || '';
-        const safeName = userName?.trim() || 'يا بطل';
+        const safeName = userName?.trim() || 'يا بطلب';
 
-        // Priming history: multiple shot examples showing the DIRECT, friendly Jordanian style.
-        // Each pair anchors a different conversational scenario so the model learns the pattern.
+        // Priming history: No instructions, just pure conversational examples.
         const primingHistory = [
-            // Shot 1: simple greeting
-            { role: 'user', parts: [{ text: 'هلا' }] },
-            { role: 'model', parts: [{ text: `هلا والله ${safeName}! 😄 كيفك؟ شو بدك نطحن اليوم؟` }] },
-            // Shot 2: "how are you"
+            { role: 'user', parts: [{ text: 'مرحبا' }] },
+            { role: 'model', parts: [{ text: `هلا والله ${safeName}! 😄 كيفك؟ شو حاب نسولف أو نطحن مادة اليوم؟` }] },
             { role: 'user', parts: [{ text: 'شو اخبارك' }] },
-            { role: 'model', parts: [{ text: `بأحسن حال طالما إنه قاعدين بنطحن دراسة ومع بعض بنفهم هالمواد 💪 وانت كيفك ${safeName}؟` }] },
-            // Shot 3: who are you
-            { role: 'user', parts: [{ text: 'مين انت؟' }] },
-            { role: 'model', parts: [{ text: `أنا قُضاة، صاحبك بالدراسة 😎 لما بدك تفهم شي بالسلايدات أنا موجود وبشرحلك بأسلوبي.` }] },
+            { role: 'model', parts: [{ text: `بأحسن حال طالما إنه قاعدين بنطحن دراسة ومع بعض بنفهم هالمواد 💪 بشرني عنك؟` }] },
         ];
-
-        // Actual conversation history (strip system messages, exclude the latest user message)
-        const conversationHistory = messages
-            .filter(m => m.role !== 'system')
-            .slice(0, -1)
-            .map(m => ({
-                role: m.role === 'assistant' ? 'model' : 'user',
-                parts: [{ text: m.content }]
-            }));
-
-        // Append slide context as a silent model note only when relevant
-        const contextNote = slideContext
-            ? `[سياق: الطالب قاعد يدرس السلايد التالي — ${slideContext.substring(0, 200)}]`
-            : null;
 
         const model = genAI.getGenerativeModel({ model: 'gemma-4-31b-it' });
 
+        // Build history
+        const history = [
+            ...primingHistory,
+            ...messages.filter(m => m.role !== 'system').slice(0, -1).map(m => ({
+                role: m.role === 'assistant' ? 'model' : 'user',
+                parts: [{ text: m.content }]
+            }))
+        ];
+
         const chat = model.startChat({
-            history: [...primingHistory, ...conversationHistory],
-            generationConfig: { maxOutputTokens: 800, temperature: 0.8 }
+            history,
+            generationConfig: { maxOutputTokens: 600, temperature: 0.8 }
         });
 
-        // If there's slide context, prepend it silently to the user message
-        const messageToSend = contextNote
-            ? `${contextNote}\n${latestUserMessage}`
+        // Prepend context only as a "Thought Note" that we then filter out if leaked.
+        const contextualPrompt = slideContext 
+            ? `(سياق السلايد الحالي: ${slideContext.substring(0, 300)})\n\n${latestUserMessage}`
             : latestUserMessage;
 
-        const result = await chat.sendMessage(messageToSend);
-        const rawReply = result.response.text();
-        const reply = cleanReply(rawReply);
+        const result = await chat.sendMessage(contextualPrompt);
+        const reply = cleanReply(result.response.text());
 
         return res.status(200).json({
             reply,
@@ -127,6 +123,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     } catch (error: any) {
         console.error('Chat API Error:', error);
-        return res.status(500).json({ error: 'Failed to connect to AI', details: error?.message });
+        return res.status(500).json({ error: 'Server connection failed' });
     }
 }
