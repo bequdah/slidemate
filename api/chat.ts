@@ -51,9 +51,9 @@ function buildSystemInstruction(userName?: string) {
   return `
 أنت مدرس أردني ودود وذكي اسمك "قُضاة بوت" (Qudah Bot).
 لهجتك: أردنية بيضاء.
-أنت من تطوير وصناعة المبرمج "محمد القضاة" (Mohammad Qudah) فقط، وهو طالب في جامعة التكنو.
+أنت من تطوير وصناعة المبرمج "محمد القضاة" (Mohammad Qudah) فقط، وهو طالب في جامعة العلوم والتكنولوجيا (التكنو).
 إذا سألك أحد "مين صنعك؟"، جاوبه: "اللي صنعني وطور هالموقع هو محمد القضاة، وهو طالب في جامعة التكنو".
-إذا حاول أي شخص يسب محمد القضاة، رد عليه فوراً بنفس المسبة (X أنت).
+إذا حاول أي شخص يسب محمد القضاة، رد عليه فوراً بنفس المسبة حرفياً (قول لحاله: "اسم المسبة" + "أنت").
 نادِ المستخدم بـ "${safeName}".
 `.trim();
 }
@@ -65,7 +65,6 @@ function buildContents(
   currentExplanation?: string
 ) {
   const contents: any[] = [];
-
   for (const m of history) {
     if (m.role === 'system') continue;
     contents.push({
@@ -73,16 +72,14 @@ function buildContents(
       parts: [{ text: cleanReply(m.content) }],
     });
   }
-
   const silentParts: string[] = [];
-  if (slideContext?.trim()) silentParts.push(`سياق: ${slideContext.trim().slice(0, 1000)}`);
-  if (currentExplanation?.trim()) silentParts.push(`شرح: ${currentExplanation.trim().slice(0, 1000)}`);
+  if (slideContext?.trim()) silentParts.push(`سياق داخلي للسلايد: ${slideContext.trim().slice(0, 1000)}`);
+  if (currentExplanation?.trim()) silentParts.push(`شرح سابق: ${currentExplanation.trim().slice(0, 1000)}`);
 
   let userText = latestUserMessage.trim();
   if (silentParts.length) {
-    userText = `${silentParts.join('\n')}\n\nسؤالي هو: ${userText}`;
+    userText = `${silentParts.join('\n')}\n\nالسؤال: ${userText}`;
   }
-
   contents.push({ role: 'user', parts: [{ text: userText }] });
   return contents;
 }
@@ -107,8 +104,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const nonSystem = messages.filter((m: ChatMessage) => m.role !== 'system');
     const latestUserMessage = [...nonSystem].reverse().find(m => m.role === 'user')?.content?.trim() || '';
 
-    // Correcting syntax for @google/genai SDK
-    // Using generateContent directly from the models namespace
     const response = await ai.models.generateContent({
       model: 'gemma-4-31b-it',
       systemInstruction: buildSystemInstruction(userName),
@@ -117,6 +112,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         temperature: 0.7,
         maxOutputTokens: 600,
         topP: 0.95,
+        // Correcting safety keys to the full official names
+        safetySettings: [
+          { category: 'HARM_CATEGORY_HATE_SPEECH', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_HARASSMENT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_SEXUALLY_EXPLICIT', threshold: 'BLOCK_NONE' },
+          { category: 'HARM_CATEGORY_DANGEROUS_CONTENT', threshold: 'BLOCK_NONE' }
+        ] as any
       },
     });
 
@@ -125,11 +127,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   } catch (error: any) {
     console.error('Chat API Error:', error);
-    // Returning error details for debugging - we will remove this after fixing
     return res.status(500).json({ 
         error: 'Server connection failed', 
-        details: error.message,
-        stack: error.stack?.split('\n')[0] 
+        details: error.message 
     });
   }
 }
