@@ -56,27 +56,62 @@ Got a follow-up question? Or just want to talk? The interactive chat panel allow
 *   **🧠 Simple Mode**: In-depth concepts breakdown. Explains bullet points thoroughly in Jordanian Arabic, providing the background, the "Why", and the "How".
 *   **👁️ Visual Mode**: Analyzes diagrams, flowcharts, tables, and graphs in detail, extracting the underlying logic and context rather than just describing the image.
 *   **🎮 Waiting Room Arcade**: Built-in interactive HTML5 retro games so you can game while the AI works in the background.
-*   **🛡️ Multi-Tier Smart Caching**:
-    *   *Global Cache*: Instantly retrieves previously analyzed slides across all users via SHA-256 hash matching.
-    *   *Private Cache*: Saves history directly in Firestore for seamless, free revisiting.
 *   **⚡ Premium Tier**: Seamlessly integrates Firebase auth and payment/tier gating (Free vs. Premium limits, custom TTL caches).
 
 ---
 
-## 🏗️ Technical Architecture
+## ⚙️ Under the Hood: Deep Technical Details
 
-### 1. The Stack
-*   **Frontend**: React 19, TypeScript, Vite, Tailwind CSS 4.0 (Custom Glassmorphic styles).
-*   **Backend**: Vercel Serverless Functions (Node.js/TypeScript).
-*   **Database & Auth**: Firebase (Firestore for cache/user data, Firebase Auth for security).
-*   **OCR Engine**: Tesseract.js for client-side text/image extraction fallbacks.
+### 1. 2-Tier Caching System (API Cost & Token Optimization)
+To optimize response times and minimize LLM token costs, SlideMate AI features a highly efficient caching pipeline using Firestore:
 
-### 2. AI Model Matrix
+```mermaid
+graph TD
+    A[Request Slide Analysis] --> B(Generate SHA-256 Cache Key)
+    B --> C{Check Private User Cache}
+    C -- Hit (Age < TTL) --> D[Serve Instant 0-Cost Cache]
+    C -- Miss --> E{Check Daily Limit Status}
+    E -- Limit Exceeded --> F[Return 429 Too Many Requests]
+    E -- Normal --> G{Check Global Cache}
+    G -- Hit (Age < TTL) --> H[Copy to User Cache + Deduct Usage]
+    H --> I[Serve Cached Result]
+    G -- Miss --> J[Call Gemini AI Engine]
+    J --> K[Validate & Normalize Schema]
+    K --> L[Save to Global & Private Caches]
+    L --> M[Serve Clean JSON Response]
+```
+
+*   **SHA-256 Fingerprinting (`getAnalysisCacheKey`)**:
+    The system generates a unique hash based on a version token (`v60`), the array of slide numbers, text contents, the requested mode, and the thumbnail.
+    > [!IMPORTANT]  
+    > **Device-Independent Cache Key**: If text content is successfully extracted from the slide, the system **ignores the thumbnail in the hash calculation**. This ensures that users scanning the same slide on different screen resolutions or mobile vs. PC browsers still get cache hits!
+*   **Cache Retention (TTL)**:
+    *   **Free Tier**: Analyses expire after **2 days** to maintain database hygiene.
+    *   **Premium Tier**: Analyses remain cached for **30 days** (`CACHE_TTL_DAYS = 30`).
+*   **Private vs. Global Scope**:
+    *   *Private Cache* (`/users/{uid}/analyses/{cacheKey}`): Free to access. Re-visiting your own slide costs **0 points**.
+    *   *Global Cache* (`/global_analysis_cache/{cacheKey}`): Shared across all users. If user A already processed a slide, user B gets the cached result instantly, avoiding new LLM charges, and costing user B only 1 daily usage point.
+
+### 2. Frontend Architecture
+*   **React 19 + TypeScript + Vite**: Built on modern hooks and context providers (e.g., `AuthContext` for tier tracking).
+*   **Glassmorphic UI**: Styled using Tailwind CSS v4.0. It incorporates layered backdrops, custom blurs (`backdrop-blur-md`), and neon theme accents to deliver a premium IDE-like feel.
+*   **Waiting Room State Machine**: While waiting for the API promise to resolve, a state switcher mounts one of 4 HTML5 canvas-based games (`NeuralSnake`, `AstroJump`, `CyberBricks`, `MemoryGame`). This makes processing wait times feel like play times.
+
+### 3. Backend & AI Pipeline (Vercel Serverless)
+*   **Node.js Serverless Functions**: Located under `/api/`, utilizing the `@google/generative-ai` and `@vercel/node` packages.
+*   **Self-Healing JSON Shape Repair (`repairExamJsonShape`)**:
+    LLMs can sometimes output invalid JSON structure for MCQ arrays. SlideMate features a self-correcting routing function that detects bad schemas and automatically feeds the malformed output back through Gemini 3.5 Flash to enforce the strict MCQ TypeScript schema.
+*   **Hybrid OCR Fallback**:
+    Text is extracted on the client side using Tesseract.js. For complex slides with diagrams or text-embedded tables, the server falls back to Gemini 3.1 Flash-Lite Vision (`extractSlideContentWithGemini31`) to parse visual elements directly.
+
+---
+
+## 🏗️ AI Model Matrix
 We employ a **Best-of-Breed** model routing strategy to optimize speed, cost, and reasoning capability:
 
 | Task / Feature | Model | Provider |
 | :--- | :--- | :--- |
-| **Arabic Logic & Explanations** | `Gemma-3-27b-it` | Google AI |
+| **Arabic Logic & Explanations** | `gemini-3.5-flash` | Google AI |
 | **Visual Reasoning (Diagrams/Tables)** | `Llama-4-Scout-17b` | Meta (via Groq) |
 | **OCR Fallback Parsing** | `Llama-4-Scout-17b` | Meta (via Groq) |
 | **English MCQ Reasoning Generation** | `Llama-3.3-70b` | Meta (via Groq) |
