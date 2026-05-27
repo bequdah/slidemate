@@ -2,7 +2,7 @@
 ### *The Ultimate AI Study Partner | Powered by the "QudahWay"*
 
 <p align="center">
-  <img src="./public/logo.png" alt="SlideMate AI Logo" width="180" />
+  <img src="./public/logo_white_bg.jpg" alt="SlideMate AI Logo" width="180" />
 </p>
 
 **SlideMate AI** is a state-of-the-art learning platform designed to transform boring, passive lecture slides into an active, engaging, and personalized tutoring experience. It bridges the gap between dry academic content and real student understanding using the unique **"QudahWay"**—a persona-driven tutoring style that speaks the student's language (friendly Jordanian Arabic) while maintaining high academic standards.
