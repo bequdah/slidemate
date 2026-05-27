@@ -38,7 +38,7 @@ function getAnalysisCacheKey(
 }
 
 const model_gemini_31 = genAI.getGenerativeModel({
-    model: 'gemma-4-31b-it'
+    model: 'gemini-3.5-flash'
 });
 
 type Mode = 'simple' | 'exam' | 'visual';
@@ -535,7 +535,7 @@ REMINDER:
                 currentMessages.push({ role: 'user', content: userPrompt.replace('[[SLIDE_CONTENT]]', slideContexts || '') });
 
                 const isVision = isVisionRequest(finalThumbnail);
-                console.log(`Attempt ${attempt + 1}/4 | Model: gemma-4-31b-it | Vision: ${isVision}`);
+                console.log(`Attempt ${attempt + 1}/4 | Model: gemini-3.5-flash | Vision: ${isVision}`);
 
                 let result;
                 if (isVision && finalThumbnail) {

@@ -40,7 +40,7 @@ RULES:
 4. 1-3 well-structured paragraphs covering EVERYTHING on the slide.`;
 
         const model = genAI.getGenerativeModel({
-            model: 'gemma-4-31b-it',
+            model: 'gemini-3.5-flash',
             systemInstruction,
             generationConfig: {
                 responseMimeType: 'application/json',

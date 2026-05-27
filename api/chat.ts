@@ -108,7 +108,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const latestUserMessage = [...nonSystem].reverse().find(m => m.role === 'user')?.content?.trim() || '';
 
     const response = await ai.models.generateContent({
-      model: 'gemma-4-31b-it',
+      model: 'gemini-3.5-flash',
       contents: buildContents(nonSystem.slice(0, -1), latestUserMessage, slideContext, currentExplanation),
       config: {
         systemInstruction: buildSystemInstruction(),
